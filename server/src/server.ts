@@ -1,25 +1,51 @@
 import Fastify from 'fastify'
+import cors from '@fastify/cors'
+import dotenv from 'dotenv'
+import { protocolRoutes } from './routes/protocols.js'
+import { vaultRoutes } from './routes/vaults.js'
+import { analyticsRoutes } from './routes/analytics.js'
+import { ProtocolMonitor } from './services/ProtocolMonitor.js'
 
-const fastify = Fastify({
-  logger: true
-})
-
-fastify.register(import('@fastify/cors'), {
-  origin: true
-})
-
-fastify.get('/', async (request, reply) => {
-  return { message: 'Hello World!' }
-})
-
-fastify.get('/health', async (request, reply) => {
-  return { status: 'ok', timestamp: new Date().toISOString() }
-})
+dotenv.config()
 
 const start = async () => {
+  const fastify = Fastify({
+    logger: {
+      level: 'info',
+      transport: {
+        target: 'pino-pretty'
+      }
+    }
+  })
+
   try {
-    await fastify.listen({ port: 3000, host: '0.0.0.0' })
-    fastify.log.info('Server listening on http://localhost:3000')
+    // Register CORS
+    await fastify.register(cors, {
+      origin: process.env.FRONTEND_URL || 'http://localhost:3000'
+    })
+
+    // Register routes
+    await fastify.register(protocolRoutes, { prefix: '/api/protocols' })
+    await fastify.register(vaultRoutes, { prefix: '/api/vaults' })
+    await fastify.register(analyticsRoutes, { prefix: '/api/analytics' })
+
+    // Health check
+    fastify.get('/health', async () => {
+      return { status: 'operational', timestamp: new Date().toISOString() }
+    })
+
+    // Initialize protocol monitoring
+    const monitor = new ProtocolMonitor()
+    monitor.startMonitoring()
+
+    // Start server
+    const port = parseInt(process.env.PORT || '8080', 10)
+    await fastify.listen({ 
+      port,
+      host: '0.0.0.0'
+    })
+    
+    fastify.log.info('Veyra API server running')
   } catch (err) {
     fastify.log.error(err)
     process.exit(1)

@@ -1,5 +1,5 @@
 {
-  "name": "web",
+  "name": "veyra-frontend",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,7 +11,17 @@
   "dependencies": {
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.2"
+    "next": "15.5.2",
+    "@rainbow-me/rainbowkit": "^2.0.0",
+    "wagmi": "^2.0.0",
+    "viem": "^2.0.0",
+    "@tanstack/react-query": "^5.0.0",
+    "lucide-react": "^0.300.0",
+    "recharts": "^2.8.0",
+    "framer-motion": "^10.16.0",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^2.0.0"
   },
   "devDependencies": {
     "typescript": "^5",

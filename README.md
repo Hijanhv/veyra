@@ -1,0 +1,248 @@
+# Veyra Protocol
+
+**AI-Powered Yield Optimization on Sonic Network**
+
+Veyra is an advanced DeFi yield aggregator that leverages artificial intelligence to automatically optimize yield farming strategies across multiple protocols on the Sonic blockchain. The protocol provides users with maximized returns while managing risk through intelligent asset allocation.
+
+## 🌟 Features
+
+- **AI-Driven Strategy Optimization**: Advanced algorithms continuously analyze market conditions to maximize yields
+- **Multi-Protocol Integration**: Supports major DeFi protocols including Aave, Silo, Pendle, and Beefy
+- **ERC4626 Tokenized Vaults**: Standard yield-bearing vaults where you deposit tokens and receive vault shares representing your stake + earned yield
+- **Real-time Monitoring**: Continuous tracking of yield opportunities and market conditions
+- **Risk Management**: Intelligent risk assessment and balanced portfolio allocation
+- **Automated Rebalancing**: Dynamic reallocation based on market conditions and AI recommendations
+
+## 🏗️ Architecture
+
+### Backend (`/server`)
+- **Fastify** TypeScript server providing REST API
+- **Protocol Monitors**: Real-time data collection from DeFi protocols
+- **Analytics Engine**: AI-powered market analysis and yield predictions
+- **Strategy Services**: Automated portfolio management and rebalancing
+
+### Smart Contracts (`/contracts`)
+- **VeyraVault**: Main ERC4626 vault contract with strategy management
+- **Strategy Contracts**: Protocol-specific yield strategies (Aave, Silo, etc.)
+- **Interfaces**: Standardized interfaces for yield strategies and protocol adapters
+
+### Frontend (`/web`)
+- **Next.js** React application with modern UI/UX
+- **RainbowKit** wallet integration for Sonic network
+- **Real-time Dashboard**: Live yield tracking, portfolio metrics, and analytics
+- **Strategy Insights**: AI-generated market insights and recommendations
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+ and npm/yarn
+- Foundry for smart contract development
+- Git for version control
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd veyra
+   ```
+
+2. **Install Backend Dependencies**
+   ```bash
+   cd server
+   npm install
+   ```
+
+3. **Install Frontend Dependencies**
+   ```bash
+   cd ../web
+   npm install
+   ```
+
+4. **Install Smart Contract Dependencies**
+   ```bash
+   cd ../contracts
+   forge install
+   # This installs dependencies locally to contracts/lib/
+   # All dependencies are self-contained within the contracts/ directory
+   ```
+
+### Environment Setup
+
+1. **Backend Environment** (`server/.env`)
+   ```env
+   PORT=8080
+   FRONTEND_URL=http://localhost:3000
+   SONIC_RPC_URL=https://sonic-rpc.publicnode.com
+   SONIC_SCAN_API_KEY=your_api_key_here
+   ```
+
+2. **Frontend Environment** (`web/.env.local`)
+   ```env
+   NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id_here
+   NEXT_PUBLIC_API_URL=http://localhost:8080
+   ```
+
+3. **Contracts Environment** (`contracts/.env`)
+   ```env
+   SONIC_RPC_URL=https://sonic-rpc.publicnode.com
+   SONIC_SCAN_API_KEY=your_api_key_here
+   PRIVATE_KEY=your_private_key_here
+   ```
+
+### Development
+
+1. **Start Backend Server**
+   ```bash
+   cd server
+   npm run dev
+   ```
+
+2. **Start Frontend Development Server**
+   ```bash
+   cd web
+   npm run dev
+   ```
+
+3. **Compile Smart Contracts**
+   ```bash
+   cd contracts
+   forge build
+   ```
+
+4. **Run Tests**
+   ```bash
+   # Backend tests
+   cd server && npm test
+   
+   # Contract tests
+   cd contracts && forge test
+   
+   # Frontend tests
+   cd web && npm test
+   ```
+
+### Deployment
+
+#### Full Stack Deployment
+
+1. **Deploy Smart Contracts**
+   ```bash
+   cd contracts
+   forge script script/Deploy.s.sol --rpc-url sonic --broadcast --verify
+   ```
+
+2. **Deploy Backend**
+   ```bash
+   cd server
+   npm run build
+   npm start
+   ```
+
+3. **Deploy Frontend**
+   ```bash
+   cd web
+   npm run build
+   npm start
+   ```
+
+#### Independent Component Deployment
+
+Each component can be deployed independently:
+
+**Contracts Only:**
+```bash
+# Clone just contracts or copy contracts/ folder to new location
+git clone <repo-url> veyra-contracts
+cd veyra-contracts/contracts
+forge install  # All dependencies are self-contained
+forge build
+forge script script/Deploy.s.sol --rpc-url sonic --broadcast
+```
+
+**Backend Only:**
+```bash
+# Copy server/ folder to new location
+cd server
+npm install
+npm run build
+npm start
+```
+
+**Frontend Only:**
+```bash
+# Copy web/ folder to new location
+cd web
+npm install
+npm run build
+npm start
+```
+
+## 🔗 Supported Protocols
+
+### Aave V3
+- Lending and borrowing with variable/stable rates
+- Rewards collection and auto-compounding
+- Risk assessment and utilization monitoring
+
+### Silo Finance
+- Isolated lending pools for reduced risk
+- Unique asset strategies
+- Optimized capital efficiency
+
+### Pendle Finance
+- Yield tokenization (PT/YT)
+- Fixed yield opportunities
+- Maturity-based strategies
+
+### Beefy Finance
+- Auto-compounding vault strategies
+- Diversified protocol exposure
+- Low-risk yield farming
+
+## 📊 API Endpoints
+
+### Protocol Data
+- `GET /api/protocols/opportunities` - Get all yield opportunities
+- `GET /api/protocols/{protocol}` - Get specific protocol data
+
+### Vault Management
+- `GET /api/vaults/{vaultId}/metrics` - Vault performance metrics
+- `GET /api/vaults/{vaultId}/strategy` - AI strategy recommendations
+
+### Analytics
+- `GET /api/analytics/insights` - Market insights and trends
+- `GET /api/analytics/predictions` - Yield predictions
+
+## 🔒 Security
+
+- **Smart Contract Audits**: All contracts undergo thorough security reviews
+- **Multi-signature Controls**: Critical functions require multiple approvals
+- **Emergency Pause**: Circuit breaker for emergency situations
+- **Risk Assessment**: Continuous monitoring of protocol and market risks
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🌐 Links
+
+- **Website**: [Coming Soon]
+- **Documentation**: [Coming Soon]
+
+## ⚠️ Disclaimer
+
+Veyra Protocol is experimental software. Use at your own risk. DeFi investments carry inherent risks including smart contract vulnerabilities, market volatility, and potential loss of funds. Always do your own research and never invest more than you can afford to lose.
+
+---
+
+**Built with ❤️ for the Sonic ecosystem**
