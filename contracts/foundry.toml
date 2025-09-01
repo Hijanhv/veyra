@@ -4,6 +4,11 @@ out = "out"
 libs = ["lib"]
 solc_version = "0.8.20"
 
+[fmt]
+line_length = 100
+tab_width = 4
+bracket_spacing = true
+
 [rpc_endpoints]
 sonic = "https://sonic-rpc.publicnode.com"
 

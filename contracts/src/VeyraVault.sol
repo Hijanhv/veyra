@@ -40,7 +40,7 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
 
     /// @notice Active yield strategies
     IYieldStrategy[] public strategies;
-    
+
     /// @notice Strategy allocation percentages (basis points)
     mapping(IYieldStrategy => uint256) public allocations;
 
@@ -55,7 +55,10 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
     //////////////////////////////////////////////////////////////*/
 
     modifier onlyStrategyManager() {
-        require(msg.sender == strategyManager, "Not authorized strategy manager");
+        require(
+            msg.sender == strategyManager,
+            "Not authorized strategy manager"
+        );
         _;
     }
 
@@ -73,11 +76,7 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
         string memory _name,
         string memory _symbol,
         address _strategyManager
-    )
-        ERC4626(_asset)
-        ERC20(_name, _symbol)
-        Ownable(msg.sender)
-    {
+    ) ERC4626(_asset) ERC20(_name, _symbol) Ownable(msg.sender) {
         strategyManager = _strategyManager;
     }
 
@@ -90,13 +89,16 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
      * @param strategy The strategy contract to add
      * @param allocation Initial allocation in basis points (0-10000)
      */
-    function addStrategy(IYieldStrategy strategy, uint256 allocation) 
-        external 
-        onlyOwner 
-    {
+    function addStrategy(
+        IYieldStrategy strategy,
+        uint256 allocation
+    ) external onlyOwner {
         require(strategies.length < MAX_STRATEGIES, "Max strategies reached");
         require(allocation <= 10000, "Allocation too high");
-        require(totalAllocation + allocation <= 10000, "Total allocation exceeded");
+        require(
+            totalAllocation + allocation <= 10000,
+            "Total allocation exceeded"
+        );
 
         strategies.push(strategy);
         allocations[strategy] = allocation;
@@ -109,20 +111,20 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
      * @notice Rebalance allocations across strategies (AI-driven)
      * @param newAllocations Array of new allocation percentages
      */
-    function rebalance(uint256[] calldata newAllocations) 
-        external 
-        onlyStrategyManager 
-        whenNotPaused 
-        nonReentrant 
-    {
-        require(newAllocations.length == strategies.length, "Invalid allocations length");
-        
+    function rebalance(
+        uint256[] calldata newAllocations
+    ) external onlyStrategyManager whenNotPaused nonReentrant {
+        require(
+            newAllocations.length == strategies.length,
+            "Invalid allocations length"
+        );
+
         uint256 totalNewAllocation;
         for (uint256 i = 0; i < newAllocations.length; i++) {
             totalNewAllocation += newAllocations[i];
             allocations[strategies[i]] = newAllocations[i];
         }
-        
+
         require(totalNewAllocation <= 10000, "Total allocation exceeded");
         totalAllocation = totalNewAllocation;
 
@@ -172,13 +174,14 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
     /**
      * @notice Deposit with automatic strategy allocation
      */
-    function _deposit(address caller, address receiver, uint256 assets, uint256 shares) 
-        internal 
-        override 
-        whenNotPaused 
-    {
+    function _deposit(
+        address caller,
+        address receiver,
+        uint256 assets,
+        uint256 shares
+    ) internal override whenNotPaused {
         super._deposit(caller, receiver, assets, shares);
-        
+
         // Deploy assets to strategies based on current allocations
         _deployAssets(assets);
     }
@@ -186,12 +189,15 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
     /**
      * @notice Withdraw from strategies if needed
      */
-    function _withdraw(address caller, address receiver, address owner, uint256 assets, uint256 shares) 
-        internal 
-        override 
-    {
+    function _withdraw(
+        address caller,
+        address receiver,
+        address owner,
+        uint256 assets,
+        uint256 shares
+    ) internal override {
         uint256 idleAssets = IERC20(asset()).balanceOf(address(this));
-        
+
         if (assets > idleAssets) {
             // Withdraw from strategies
             uint256 needed = assets - idleAssets;
@@ -211,9 +217,13 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
     function _deployAssets(uint256 assets) internal {
         for (uint256 i = 0; i < strategies.length; i++) {
             if (allocations[strategies[i]] > 0) {
-                uint256 strategyAmount = (assets * allocations[strategies[i]]) / 10000;
+                uint256 strategyAmount = (assets * allocations[strategies[i]]) /
+                    10000;
                 if (strategyAmount > 0) {
-                    IERC20(asset()).safeTransfer(address(strategies[i]), strategyAmount);
+                    IERC20(asset()).safeTransfer(
+                        address(strategies[i]),
+                        strategyAmount
+                    );
                     strategies[i].deposit(strategyAmount);
                 }
             }
@@ -225,11 +235,13 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
      */
     function _withdrawFromStrategies(uint256 needed) internal {
         uint256 remaining = needed;
-        
+
         for (uint256 i = 0; i < strategies.length && remaining > 0; i++) {
             uint256 strategyBalance = strategies[i].totalAssets();
             if (strategyBalance > 0) {
-                uint256 toWithdraw = remaining > strategyBalance ? strategyBalance : remaining;
+                uint256 toWithdraw = remaining > strategyBalance
+                    ? strategyBalance
+                    : remaining;
                 strategies[i].withdraw(toWithdraw);
                 remaining -= toWithdraw;
             }
