@@ -10,8 +10,8 @@ import {IYieldStrategy} from "../interfaces/IYieldStrategy.sol";
 abstract contract BaseStrategy is IYieldStrategy, ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
-    IERC20 public immutable asset;     // vault's asset()
-    address public immutable vault;    // VeyraVault
+    IERC20 public immutable asset; // the token the vault holds
+    address public immutable vault; // the vault contract
 
     modifier onlyVault() {
         require(msg.sender == vault, "Only vault");
@@ -24,7 +24,7 @@ abstract contract BaseStrategy is IYieldStrategy, ReentrancyGuard, Ownable {
         vault = _vault;
     }
 
-    // helpers
+    // helper functions for safe transfers
     function _safePull(address from, uint256 amount) internal {
         if (amount > 0) asset.safeTransferFrom(from, address(this), amount);
     }
@@ -33,7 +33,7 @@ abstract contract BaseStrategy is IYieldStrategy, ReentrancyGuard, Ownable {
         if (amount > 0) asset.safeTransfer(to, amount);
     }
 
-    // mandatory IYieldStrategy funcs implemented by children:
+    // functions that child strategies must implement:
     // - deposit(uint256)
     // - withdraw(uint256)
     // - harvest() returns (uint256)
