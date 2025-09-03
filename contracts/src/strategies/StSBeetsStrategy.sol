@@ -3,8 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "lib/openzeppelin-contracts/contracts/utils/ReentrancyGuard.sol";
-import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
+// Removed unused imports (BaseStrategy already includes required guards)
 
 import {BaseStrategy} from "../strategies/BaseStrategy.sol";
 import {IStSAdapter} from "../interfaces/adapters/IStSAdapter.sol";
@@ -19,17 +18,17 @@ contract StSBeetsStrategy is BaseStrategy {
     using SafeERC20 for IERC20;
 
     /// @notice Adapter for converting S to stS tokens and back
-    IStSAdapter public immutable sts;
+    IStSAdapter public immutable STS;
     /// @notice Adapter for working with BEETS pools and gauges
-    IBeetsAdapter public immutable beets;
+    IBeetsAdapter public immutable BEETS;
     /// @notice BEETS pool where we provide S and stS liquidity
-    address public immutable pool;
+    address public immutable POOL;
 
     /// @notice stS token contract address from the adapter
-    address public immutable stSToken;
+    address public immutable STS_TOKEN;
 
     /// @notice How many LP tokens we have staked in the gauge
-    uint256 public stakedLP;
+    uint256 public stakedLp;
 
     /// @param _sToken S token address (what the vault holds)
     /// @param _vault The vault contract address
@@ -48,16 +47,16 @@ contract StSBeetsStrategy is BaseStrategy {
             "bad adapters"
         );
         require(_pool != address(0), "bad pool");
-        sts = IStSAdapter(_stsAdapter);
-        beets = IBeetsAdapter(_beetsAdapter);
-        pool = _pool;
-        stSToken = sts.stSToken();
+        STS = IStSAdapter(_stsAdapter);
+        BEETS = IBeetsAdapter(_beetsAdapter);
+        POOL = _pool;
+        STS_TOKEN = STS.stSToken();
 
         // Let adapters spend our tokens
         IERC20(_sToken).approve(_stsAdapter, type(uint256).max);
-        IERC20(stSToken).approve(_beetsAdapter, type(uint256).max);
+        IERC20(STS_TOKEN).approve(_beetsAdapter, type(uint256).max);
         // Let staking adapter spend stS tokens when we unstake
-        IERC20(stSToken).approve(_stsAdapter, type(uint256).max);
+        IERC20(STS_TOKEN).approve(_stsAdapter, type(uint256).max);
         IERC20(_sToken).approve(_beetsAdapter, type(uint256).max);
         // we'll approve LP token spending later when we first get some
     }
@@ -68,35 +67,35 @@ contract StSBeetsStrategy is BaseStrategy {
     function deposit(uint256 amount) external override onlyVault nonReentrant {
         require(amount > 0, "zero deposit");
         // check S balance (vault should have sent it already)
-        uint256 sBal = IERC20(address(asset)).balanceOf(address(this));
+        uint256 sBal = ASSET.balanceOf(address(this));
         require(sBal >= amount, "insufficient funds");
 
         // Convert half to stS, keep half as S
         uint256 half = amount / 2;
-        uint256 stSAmount = sts.stakeS(half);
+        uint256 stSAmount = STS.stakeS(half);
         uint256 sAmount = amount - half;
 
         // Add liquidity to BEETS pool with slippage protection
-        uint256 minLPOut = ((sAmount + stSAmount) * 95) / 100; // allow 5% slippage
-        uint256 lpOut = beets.joinPool(
-            pool,
-            address(asset),
-            stSToken,
+        uint256 minLpOut = ((sAmount + stSAmount) * 95) / 100; // allow 5% slippage
+        uint256 lpOut = BEETS.joinPool(
+            POOL,
+            address(ASSET),
+            STS_TOKEN,
             sAmount,
             stSAmount,
-            minLPOut
+            minLpOut
         );
 
         // Get gauge and approve LP token spending if we haven't yet
-        address gauge = beets.getPoolGauge(pool);
-        address lpToken = beets.getPoolLPToken(pool);
-        if (IERC20(lpToken).allowance(address(this), address(beets)) == 0) {
-            IERC20(lpToken).approve(address(beets), type(uint256).max);
+        address gauge = BEETS.getPoolGauge(POOL);
+        address lpToken = BEETS.getPoolLpToken(POOL);
+        if (IERC20(lpToken).allowance(address(this), address(BEETS)) == 0) {
+            IERC20(lpToken).approve(address(BEETS), type(uint256).max);
         }
 
         // Stake the LP tokens to earn rewards
-        beets.stakeInGauge(gauge, lpOut);
-        stakedLP += lpOut;
+        BEETS.stakeInGauge(gauge, lpOut);
+        stakedLp += lpOut;
     }
 
     /// @notice Withdraw S back to vault. If we don't have enough free S,
@@ -105,39 +104,36 @@ contract StSBeetsStrategy is BaseStrategy {
     /// @param amount How much S to withdraw
     function withdraw(uint256 amount) external override onlyVault nonReentrant {
         require(amount > 0, "zero withdraw");
-        uint256 freeS = IERC20(address(asset)).balanceOf(address(this));
+        uint256 freeS = ASSET.balanceOf(address(this));
 
         if (freeS < amount) {
             // Figure out how many LP tokens to unstake. For simplicity,
             // we unstake everything if needed
-            uint256 lpBal = stakedLP;
+            uint256 lpBal = stakedLp;
             if (lpBal > 0) {
-                address gauge = beets.getPoolGauge(pool);
-                beets.unstakeFromGauge(gauge, lpBal);
-                stakedLP = 0;
+                address gauge = BEETS.getPoolGauge(POOL);
+                BEETS.unstakeFromGauge(gauge, lpBal);
+                stakedLp = 0;
 
                 // Remove liquidity from the pool
-                (, uint256 outStS) = beets.exitPool(
-                    pool,
+                (, uint256 outStS) = BEETS.exitPool(
+                    POOL,
                     lpBal,
-                    address(asset),
-                    stSToken,
+                    address(ASSET),
+                    STS_TOKEN,
                     0,
                     0
                 );
 
                 // Convert any stS we got back to S
                 if (outStS > 0) {
-                    sts.unstakeToS(outStS);
+                    STS.unstakeToS(outStS);
                 }
             }
         }
 
-        require(
-            IERC20(address(asset)).balanceOf(address(this)) >= amount,
-            "insufficient after exit"
-        );
-        IERC20(address(asset)).safeTransfer(vault, amount);
+        require(ASSET.balanceOf(address(this)) >= amount, "insufficient after exit");
+        ASSET.safeTransfer(VAULT, amount);
     }
 
     /// @notice Collect rewards from BEETS gauge and keep them as free S.
@@ -151,8 +147,8 @@ contract StSBeetsStrategy is BaseStrategy {
         nonReentrant
         returns (uint256 harvested)
     {
-        address gauge = beets.getPoolGauge(pool);
-        harvested = beets.harvestRewards(gauge);
+        address gauge = BEETS.getPoolGauge(POOL);
+        harvested = BEETS.harvestRewards(gauge);
         // adapter transfers rewards to us automatically
     }
 
@@ -160,12 +156,12 @@ contract StSBeetsStrategy is BaseStrategy {
     ///         only counts free S balance. Doesn't include LP or stS value since
     ///         that needs price oracles. Could be improved to include LP/stS valuation
     function totalAssets() public view override returns (uint256) {
-        return IERC20(address(asset)).balanceOf(address(this));
+        return ASSET.balanceOf(address(this));
     }
 
     /// @notice Get current yield percentage. Just returns the BEETS pool APR.
     ///         External services can calculate more accurate yield from harvested rewards
     function apy() external view override returns (uint256) {
-        return beets.getPoolAPR(pool);
+        return BEETS.getPoolApr(POOL);
     }
 }

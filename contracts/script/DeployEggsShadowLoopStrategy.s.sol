@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Script.sol";
+import {Script} from "forge-std/Script.sol";
+import {console2} from "forge-std/console2.sol";
 import {EggsShadowLoopStrategy} from "../src/strategies/EggsShadowLoopStrategy.sol";
 
 /// @title Deploy EggsShadowLoopStrategy
@@ -19,7 +20,7 @@ contract DeployEggsShadowLoopStrategy is Script {
         address pool = vm.envAddress("POOL");
         address gauge = vm.envAddress("GAUGE");
         uint256 borrowRatio = vm.envUint("BORROW_RATIO");
-        uint256 targetHF = vm.envUint("TARGET_HF");
+        uint256 targetHf = vm.envUint("TARGET_HF");
         uint256 maxIter = vm.envUint("MAX_ITERATIONS");
 
         vm.startBroadcast(deployerPrivateKey);
@@ -33,7 +34,7 @@ contract DeployEggsShadowLoopStrategy is Script {
             pool,
             gauge,
             borrowRatio,
-            targetHF,
+            targetHf,
             maxIter
         );
 
@@ -48,7 +49,7 @@ contract DeployEggsShadowLoopStrategy is Script {
         console2.log("Pool:", pool);
         console2.log("Gauge:", gauge);
         console2.log("Borrow Ratio (bps):", borrowRatio);
-        console2.log("Target Health Factor:", targetHF);
+        console2.log("Target Health Factor:", targetHf);
         console2.log("Max Iterations:", maxIter);
     }
 }

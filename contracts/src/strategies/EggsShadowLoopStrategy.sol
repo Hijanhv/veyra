@@ -18,26 +18,26 @@ import {IStSAdapter} from "../interfaces/adapters/IStSAdapter.sol";
 contract EggsShadowLoopStrategy is BaseStrategy {
     using SafeERC20 for IERC20;
 
-    IEggsAdapter public immutable eggs;
-    IShadowAdapter public immutable shadow;
-    IStSAdapter public immutable sts;
+    IEggsAdapter public immutable EGGS;
+    IShadowAdapter public immutable SHADOW;
+    IStSAdapter public immutable STS;
 
     /// @notice The stS token contract address from the StS adapter
-    address public immutable stSToken;
+    address public immutable STS_TOKEN;
     /// @notice Shadow pool where we provide S/stS liquidity
-    address public immutable pool;
+    address public immutable POOL;
     /// @notice Gauge where we stake LP tokens to earn rewards
-    address public immutable gauge;
+    address public immutable GAUGE;
 
     /// @notice How much to borrow as percentage of EGGS collateral
-    uint256 public immutable borrowRatio;
+    uint256 public immutable BORROW_RATIO;
     /// @notice Target health factor - we stop leveraging when we reach this level
-    uint256 public immutable targetHF;
+    uint256 public immutable TARGET_HF;
     /// @notice Max times we'll loop to add more leverage
-    uint256 public immutable maxIterations;
+    uint256 public immutable MAX_ITERATIONS;
 
     /// @notice How many LP tokens we have staked in the gauge
-    uint256 public stakedLP;
+    uint256 public stakedLp;
 
     /// @param _sToken S token address (what the vault holds)
     /// @param _vault The vault contract address
@@ -47,7 +47,7 @@ contract EggsShadowLoopStrategy is BaseStrategy {
     /// @param _pool S/stS pool identifier on Shadow
     /// @param _gauge Gauge for staking LP tokens
     /// @param _borrowRatio Borrow percentage in basis points (0-10000)
-    /// @param _targetHF Target health factor to maintain
+    /// @param _targetHf Target health factor to maintain
     /// @param _maxIter Max leverage loops to perform
     constructor(
         address _sToken,
@@ -58,7 +58,7 @@ contract EggsShadowLoopStrategy is BaseStrategy {
         address _pool,
         address _gauge,
         uint256 _borrowRatio,
-        uint256 _targetHF,
+        uint256 _targetHf,
         uint256 _maxIter
     ) BaseStrategy(_sToken, _vault) {
         require(
@@ -69,24 +69,24 @@ contract EggsShadowLoopStrategy is BaseStrategy {
         );
         require(_pool != address(0) && _gauge != address(0), "bad pool");
         require(_borrowRatio <= 10000, "bad ratio");
-        require(_targetHF > 0, "bad HF");
+        require(_targetHf > 0, "bad HF");
 
-        eggs = IEggsAdapter(_eggsAdapter);
-        shadow = IShadowAdapter(_shadowAdapter);
-        sts = IStSAdapter(_stSAdapter);
-        pool = _pool;
-        gauge = _gauge;
-        borrowRatio = _borrowRatio;
-        targetHF = _targetHF;
-        maxIterations = _maxIter;
+        EGGS = IEggsAdapter(_eggsAdapter);
+        SHADOW = IShadowAdapter(_shadowAdapter);
+        STS = IStSAdapter(_stSAdapter);
+        POOL = _pool;
+        GAUGE = _gauge;
+        BORROW_RATIO = _borrowRatio;
+        TARGET_HF = _targetHf;
+        MAX_ITERATIONS = _maxIter;
 
-        stSToken = sts.stSToken();
+        STS_TOKEN = STS.stSToken();
 
         // Let adapters spend our tokens
         IERC20(_sToken).approve(_eggsAdapter, type(uint256).max);
         IERC20(_sToken).approve(_stSAdapter, type(uint256).max);
-        IERC20(stSToken).approve(_stSAdapter, type(uint256).max);
-        IERC20(stSToken).approve(_shadowAdapter, type(uint256).max);
+        IERC20(STS_TOKEN).approve(_stSAdapter, type(uint256).max);
+        IERC20(STS_TOKEN).approve(_shadowAdapter, type(uint256).max);
         IERC20(_sToken).approve(_shadowAdapter, type(uint256).max);
         // Let Eggs adapter spend EGGS tokens when we redeem
         address eggsTok = IEggsAdapter(_eggsAdapter).eggsToken();
@@ -101,16 +101,16 @@ contract EggsShadowLoopStrategy is BaseStrategy {
     /// @param amount How much S to deposit
     function deposit(uint256 amount) external override onlyVault nonReentrant {
         require(amount > 0, "zero deposit");
-        uint256 sBal = IERC20(address(asset)).balanceOf(address(this));
+        uint256 sBal = ASSET.balanceOf(address(this));
         require(sBal >= amount, "insufficient S");
 
         // Convert S to EGGS tokens (Eggs keeps them as collateral and charges a fee)
-        eggs.mintEGGS(amount);
+        EGGS.mintEggs(amount);
         // EGGS tokens automatically become collateral in Eggs Finance
 
         // Figure out how much to borrow based on our EGGS collateral
-        uint256 eggsColl = eggs.collateralOf(address(this));
-        uint256 borrowAmount = (eggsColl * borrowRatio) / 10000;
+        uint256 eggsColl = EGGS.collateralOf(address(this));
+        uint256 borrowAmount = (eggsColl * BORROW_RATIO) / 10000;
 
         // Do the first leverage step
         if (borrowAmount > 0) {
@@ -118,15 +118,12 @@ contract EggsShadowLoopStrategy is BaseStrategy {
         }
 
         // Keep looping until we hit target health factor or max loops
-        for (uint256 i = 0; i < maxIterations; i++) {
-            uint256 hf = eggs.healthFactor(address(this));
-            if (hf <= targetHF) {
-                break;
-            }
+        for (uint256 i = 0; i < MAX_ITERATIONS; i++) {
+            uint256 hf = EGGS.healthFactor(address(this));
+            if (hf <= TARGET_HF) break;
             // Borrow 10% of EGGS collateral each loop
-            uint256 stepBorrow = eggs.collateralOf(address(this)) / 10;
+            uint256 stepBorrow = EGGS.collateralOf(address(this)) / 10;
             if (stepBorrow == 0) break;
-            eggs.borrowS(stepBorrow);
             _borrowAndProvideLiquidity(stepBorrow);
         }
     }
@@ -135,29 +132,29 @@ contract EggsShadowLoopStrategy is BaseStrategy {
     /// @param sAmount How much S we just borrowed
     function _borrowAndProvideLiquidity(uint256 sAmount) internal {
         // Borrow S tokens from Eggs Finance
-        eggs.borrowS(sAmount);
+        EGGS.borrowS(sAmount);
         // Split the S - half stays S, half becomes stS
         uint256 half = sAmount / 2;
-        uint256 stSAmount = sts.stakeS(half);
+        uint256 stSAmount = STS.stakeS(half);
         uint256 sAmountRemaining = sAmount - half;
         // Provide liquidity to Shadow's S/stS pool
-        uint256 minLPOut = ((sAmountRemaining + stSAmount) * 95) / 100; // allow 5% slippage
-        uint256 lpOut = shadow.joinPool(
-            pool,
-            address(asset),
-            stSToken,
+        uint256 minLpOut = ((sAmountRemaining + stSAmount) * 95) / 100; // allow 5% slippage
+        uint256 lpOut = SHADOW.joinPool(
+            POOL,
+            address(ASSET),
+            STS_TOKEN,
             sAmountRemaining,
             stSAmount,
-            minLPOut
+            minLpOut
         );
         // Let Shadow adapter stake our LP tokens if not approved yet
-        address lpToken = shadow.getPoolLPToken(pool);
-        if (IERC20(lpToken).allowance(address(this), address(shadow)) == 0) {
-            IERC20(lpToken).approve(address(shadow), type(uint256).max);
+        address lpToken = SHADOW.getPoolLpToken(POOL);
+        if (IERC20(lpToken).allowance(address(this), address(SHADOW)) == 0) {
+            IERC20(lpToken).approve(address(SHADOW), type(uint256).max);
         }
         // Stake the LP tokens to earn rewards
-        shadow.stakeInGauge(gauge, lpOut);
-        stakedLP += lpOut;
+        SHADOW.stakeInGauge(GAUGE, lpOut);
+        stakedLp += lpOut;
     }
 
     /// @notice Withdraw S tokens back to vault. Uses any free S first,
@@ -166,59 +163,59 @@ contract EggsShadowLoopStrategy is BaseStrategy {
     /// @param amount How much S to withdraw
     function withdraw(uint256 amount) external override onlyVault nonReentrant {
         require(amount > 0, "zero withdraw");
-        uint256 freeS = IERC20(address(asset)).balanceOf(address(this));
+        uint256 freeS = ASSET.balanceOf(address(this));
         // If we don't have enough free S, unwind the leveraged position
         if (freeS < amount) {
             _unwindPosition();
         }
         // Convert EGGS collateral back to S
-        uint256 eggsColl = eggs.collateralOf(address(this));
+        uint256 eggsColl = EGGS.collateralOf(address(this));
         if (eggsColl > 0) {
-            eggs.redeemEGGS(eggsColl);
+            EGGS.redeemEggs(eggsColl);
         }
         // Pay back any remaining debt
-        uint256 debt = eggs.debtOf(address(this));
+        uint256 debt = EGGS.debtOf(address(this));
         uint256 repayAmount = debt;
         if (repayAmount > 0) {
-            uint256 bal = IERC20(address(asset)).balanceOf(address(this));
+            uint256 bal = ASSET.balanceOf(address(this));
             if (repayAmount > bal) repayAmount = bal;
-            eggs.repayS(repayAmount);
+            EGGS.repayS(repayAmount);
         }
         // Send the requested S back to vault
-        uint256 available = IERC20(address(asset)).balanceOf(address(this));
+        uint256 available = ASSET.balanceOf(address(this));
         require(available >= amount, "insufficient after exit");
-        IERC20(address(asset)).safeTransfer(vault, amount);
+        ASSET.safeTransfer(VAULT, amount);
     }
 
     /// @dev Unwind the whole leveraged position - unstake LP, exit pool,
     /// convert stS back to S, repay debt and reset tracking
     function _unwindPosition() internal {
         // Remove LP tokens from staking if we have any
-        uint256 lpBal = stakedLP;
+        uint256 lpBal = stakedLp;
         if (lpBal > 0) {
-            shadow.unstakeFromGauge(gauge, lpBal);
-            stakedLP = 0;
+            SHADOW.unstakeFromGauge(GAUGE, lpBal);
+            stakedLp = 0;
             // Remove liquidity from Shadow pool
-            (, uint256 outStS) = shadow.exitPool(
-                pool,
+            (, uint256 outStS) = SHADOW.exitPool(
+                POOL,
                 lpBal,
-                address(asset),
-                stSToken,
+                address(ASSET),
+                STS_TOKEN,
                 0,
                 0
             );
             // Convert stS tokens back to S
             if (outStS > 0) {
-                sts.unstakeToS(outStS);
+                STS.unstakeToS(outStS);
             }
         }
         // Pay back debt with whatever S we have
-        uint256 debt = eggs.debtOf(address(this));
+        uint256 debt = EGGS.debtOf(address(this));
         if (debt > 0) {
-            uint256 bal = IERC20(address(asset)).balanceOf(address(this));
+            uint256 bal = ASSET.balanceOf(address(this));
             uint256 repayAmt = bal > debt ? debt : bal;
             if (repayAmt > 0) {
-                eggs.repayS(repayAmt);
+                EGGS.repayS(repayAmt);
             }
         }
     }
@@ -233,16 +230,16 @@ contract EggsShadowLoopStrategy is BaseStrategy {
         nonReentrant
         returns (uint256 harvested)
     {
-        harvested = shadow.harvestRewards(gauge);
+        harvested = SHADOW.harvestRewards(GAUGE);
     }
 
     /// @notice Calculate total value in S terms. Includes free S, EGGS collateral
     /// (valued 1:1), staked LP value, minus debt. Uses conservative pricing -
     /// stS and LP at face value. Could be improved with price oracles
     function totalAssets() public view override returns (uint256) {
-        uint256 freeS = IERC20(address(asset)).balanceOf(address(this));
-        uint256 eggsColl = eggs.collateralOf(address(this));
-        uint256 debt = eggs.debtOf(address(this));
+        uint256 freeS = ASSET.balanceOf(address(this));
+        uint256 eggsColl = EGGS.collateralOf(address(this));
+        uint256 debt = EGGS.debtOf(address(this));
         // ignore staked LP and stS for conservative estimate
         uint256 total = freeS + eggsColl;
         return total > debt ? total - debt : 0;
@@ -253,10 +250,10 @@ contract EggsShadowLoopStrategy is BaseStrategy {
     /// this uses simple math - Eggs net yield plus Shadow APR. Returns zero
     /// if net is negative
     function apy() external view override returns (uint256) {
-        uint256 supplyApy = eggs.getSupplyAPY();
-        uint256 borrowApy = eggs.getBorrowAPY();
+        uint256 supplyApy = EGGS.getSupplyApy();
+        uint256 borrowApy = EGGS.getBorrowApy();
         uint256 net = supplyApy > borrowApy ? supplyApy - borrowApy : 0;
-        uint256 shadowApr = shadow.getPoolAPR(pool);
+        uint256 shadowApr = SHADOW.getPoolApr(POOL);
         // convert Shadow APR from 1e18 to basis points by dividing by 1e14
         uint256 shadowBp = shadowApr / 1e14;
         return net + shadowBp;

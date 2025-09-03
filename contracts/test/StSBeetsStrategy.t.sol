@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {StSBeetsStrategy} from "src/strategies/StSBeetsStrategy.sol";
 import {IStSAdapter} from "src/interfaces/adapters/IStSAdapter.sol";
 import {IBeetsAdapter} from "src/interfaces/adapters/IBeetsAdapter.sol";
@@ -64,6 +65,7 @@ contract MockERC20 is IERC20 {
 
 /// @notice Test StS adapter that converts S to stS tokens at 1:1 ratio and back
 contract MockStSAdapter is IStSAdapter {
+    using SafeERC20 for IERC20;
     address public override sToken;
     address public override stSToken;
     mapping(address => uint256) public staked;
@@ -75,7 +77,7 @@ contract MockStSAdapter is IStSAdapter {
 
     function stakeS(uint256 amount) external override returns (uint256) {
         // take S tokens from user
-        IERC20(sToken).transferFrom(msg.sender, address(this), amount);
+        IERC20(sToken).safeTransferFrom(msg.sender, address(this), amount);
         // give back stS tokens 1:1
         MockERC20(stSToken).mint(msg.sender, amount);
         staked[msg.sender] += amount;
@@ -84,7 +86,7 @@ contract MockStSAdapter is IStSAdapter {
 
     function unstakeToS(uint256 amount) external override returns (uint256) {
         // take stS from user and give back S tokens 1:1
-        MockERC20(stSToken).transferFrom(msg.sender, address(this), amount);
+        IERC20(stSToken).safeTransferFrom(msg.sender, address(this), amount);
         MockERC20(sToken).mint(msg.sender, amount);
         if (staked[msg.sender] >= amount) {
             staked[msg.sender] -= amount;
@@ -100,6 +102,7 @@ contract MockStSAdapter is IStSAdapter {
 /// @notice Test BEETS adapter that takes S and stS deposits to mint LP tokens.
 ///         Withdrawing burns LP tokens and returns the original amounts. Simple 1:1 pricing
 contract MockBeetsAdapter is IBeetsAdapter {
+    using SafeERC20 for IERC20;
     // LP token that gets created by this adapter
     MockERC20 public lpTokenInternal;
     // reward token (using S to keep things simple)
@@ -126,8 +129,8 @@ contract MockBeetsAdapter is IBeetsAdapter {
         uint256 /*minLPOut*/
     ) external override returns (uint256 lpOut) {
         // take tokens from user
-        IERC20(tokenA).transferFrom(msg.sender, address(this), amtA);
-        IERC20(tokenB).transferFrom(msg.sender, address(this), amtB);
+        IERC20(tokenA).safeTransferFrom(msg.sender, address(this), amtA);
+        IERC20(tokenB).safeTransferFrom(msg.sender, address(this), amtB);
         // remember how much they deposited
         suppliedS[msg.sender] += amtA;
         suppliedStS[msg.sender] += amtB;
@@ -145,7 +148,7 @@ contract MockBeetsAdapter is IBeetsAdapter {
         uint256 /*minAmtB*/
     ) external override returns (uint256 amtA, uint256 amtB) {
         // take back LP tokens from user
-        lpTokenInternal.transferFrom(msg.sender, address(this), lpAmount);
+        IERC20(address(lpTokenInternal)).safeTransferFrom(msg.sender, address(this), lpAmount);
 
         // figure out how much to return based on what they originally put in
         uint256 totalSupplied = suppliedS[msg.sender] + suppliedStS[msg.sender];
@@ -162,15 +165,15 @@ contract MockBeetsAdapter is IBeetsAdapter {
         suppliedStS[msg.sender] -= amtB;
 
         // send the right tokens back to user
-        IERC20(tokenA).transfer(msg.sender, amtA);
-        IERC20(tokenB).transfer(msg.sender, amtB);
+        IERC20(tokenA).safeTransfer(msg.sender, amtA);
+        IERC20(tokenB).safeTransfer(msg.sender, amtB);
     }
 
     function stakeInGauge(
         address /*gauge*/,
         uint256 lpAmount
     ) external override {
-        lpTokenInternal.transferFrom(msg.sender, address(this), lpAmount);
+        IERC20(address(lpTokenInternal)).safeTransferFrom(msg.sender, address(this), lpAmount);
         staked[msg.sender] += lpAmount;
     }
 
@@ -180,7 +183,7 @@ contract MockBeetsAdapter is IBeetsAdapter {
     ) external override {
         require(staked[msg.sender] >= lpAmount, "not staked");
         staked[msg.sender] -= lpAmount;
-        lpTokenInternal.transfer(msg.sender, lpAmount);
+        IERC20(address(lpTokenInternal)).safeTransfer(msg.sender, lpAmount);
     }
 
     function harvestRewards(
@@ -193,7 +196,7 @@ contract MockBeetsAdapter is IBeetsAdapter {
         }
     }
 
-    function getPoolLPToken(
+    function getPoolLpToken(
         address /*pool*/
     ) external view override returns (address) {
         return address(lpTokenInternal);
@@ -205,7 +208,7 @@ contract MockBeetsAdapter is IBeetsAdapter {
         return address(0xBEEF); // fake gauge for testing
     }
 
-    function getPoolAPR(
+    function getPoolApr(
         address /*pool*/
     ) external pure override returns (uint256) {
         return 500; // 5% yield
@@ -236,6 +239,7 @@ contract MockBeetsAdapter is IBeetsAdapter {
 }
 
 contract StSBeetsStrategyTest is Test {
+    using SafeERC20 for IERC20;
     MockERC20 sToken;
     MockERC20 stSToken;
     MockStSAdapter stsAdapter;
@@ -274,11 +278,11 @@ contract StSBeetsStrategyTest is Test {
         // vault puts in 100 S tokens
         uint256 depositAmount = 100 ether;
         vm.startPrank(vault);
-        sToken.transfer(address(strategy), depositAmount);
+        IERC20(address(sToken)).safeTransfer(address(strategy), depositAmount);
         strategy.deposit(depositAmount);
         vm.stopPrank();
         // should have some LP tokens staked
-        assertGt(strategy.stakedLP(), 0);
+        assertGt(strategy.stakedLp(), 0);
         // vault takes out 50 S tokens
         vm.startPrank(vault);
         strategy.withdraw(50 ether);
@@ -291,7 +295,7 @@ contract StSBeetsStrategyTest is Test {
         // first deposit to create an LP position
         uint256 depositAmount = 20 ether;
         vm.startPrank(vault);
-        sToken.transfer(address(strategy), depositAmount);
+        IERC20(address(sToken)).safeTransfer(address(strategy), depositAmount);
         strategy.deposit(depositAmount);
         vm.stopPrank();
         // set up rewards and harvest them

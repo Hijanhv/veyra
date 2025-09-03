@@ -1,35 +1,28 @@
 {
-  "name": "veyra-backend",
+  "name": "veyra-fastify-server",
   "version": "1.0.0",
   "type": "module",
-  "main": "src/server.js",
+  "main": "dist/server.js",
   "scripts": {
-    "dev": "nodemon src/server.js",
+    "dev": "nodemon --watch src --ext ts --exec tsx src/server.ts",
     "build": "tsc",
-    "start": "node src/server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node dist/server.js",
+    "sync:abis": "node ./scripts/sync-abis.mjs",
+    "contracts:build": "sh -c 'cd ../contracts && forge build' && node ./scripts/sync-abis.mjs"
   },
-  "keywords": [
-    "veyra",
-    "ai",
-    "yield",
-    "defi"
-  ],
-  "author": "",
-  "license": "ISC",
-  "description": "Veyra AI-powered yield optimization backend",
   "dependencies": {
+    "@ai-sdk/anthropic": "^2.0.11",
+    "@ai-sdk/openai": "^2.0.23",
     "@fastify/cors": "^9.0.1",
-    "@fastify/env": "^4.2.0",
-    "axios": "^1.6.0",
+    "ai": "^5.0.30",
     "dotenv": "^16.3.1",
     "ethers": "^6.8.1",
     "fastify": "^4.24.3",
-    "node-cron": "^3.0.3"
+    "node-cron": "^3.0.3",
+    "zod": "^4.1.5"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
-    "@types/node-cron": "^3.0.11",
     "nodemon": "^3.0.1",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"

@@ -9,7 +9,6 @@ import {ReentrancyGuard} from "lib/openzeppelin-contracts/contracts/utils/Reentr
 import {Ownable} from "lib/openzeppelin-contracts/contracts/access/Ownable.sol";
 
 import {IYieldStrategy} from "./interfaces/IYieldStrategy.sol";
-import {IProtocolAdapter} from "./interfaces/IProtocolAdapter.sol";
 
 /**
  * @title VeyraVault

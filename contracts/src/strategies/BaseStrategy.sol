@@ -10,27 +10,36 @@ import {IYieldStrategy} from "../interfaces/IYieldStrategy.sol";
 abstract contract BaseStrategy is IYieldStrategy, ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
-    IERC20 public immutable asset; // the token the vault holds
-    address public immutable vault; // the vault contract
+    IERC20 public immutable ASSET; // the token the vault holds
+    address public immutable VAULT; // the vault contract
 
     modifier onlyVault() {
-        require(msg.sender == vault, "Only vault");
+        require(msg.sender == VAULT, "Only vault");
         _;
     }
 
     constructor(address _asset, address _vault) Ownable(msg.sender) {
         require(_asset != address(0) && _vault != address(0), "zero addr");
-        asset = IERC20(_asset);
-        vault = _vault;
+        ASSET = IERC20(_asset);
+        VAULT = _vault;
     }
 
     // helper functions for safe transfers
     function _safePull(address from, uint256 amount) internal {
-        if (amount > 0) asset.safeTransferFrom(from, address(this), amount);
+        if (amount > 0) ASSET.safeTransferFrom(from, address(this), amount);
     }
 
     function _safePush(address to, uint256 amount) internal {
-        if (amount > 0) asset.safeTransfer(to, amount);
+        if (amount > 0) ASSET.safeTransfer(to, amount);
+    }
+
+    // Compatibility getters to preserve previous ABI expectations (optional)
+    function asset() public view returns (IERC20) {
+        return ASSET;
+    }
+
+    function vault() public view returns (address) {
+        return VAULT;
     }
 
     // functions that child strategies must implement:

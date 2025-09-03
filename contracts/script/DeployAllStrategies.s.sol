@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Script.sol";
+import {Script} from "forge-std/Script.sol";
+import {console2} from "forge-std/console2.sol";
 import {StSBeetsStrategy} from "../src/strategies/StSBeetsStrategy.sol";
 import {AaveRingsCarryStrategy} from "../src/strategies/AaveRingsCarryStrategy.sol";
 import {RingsAaveLoopStrategy} from "../src/strategies/RingsAaveLoopStrategy.sol";
@@ -28,7 +29,7 @@ contract DeployAllStrategies is Script {
         // Strategy-specific parameters
         address beetsPool = vm.envAddress("BEETS_POOL");
         uint256 borrowRatio = vm.envUint("BORROW_RATIO"); // Default: 5000 (50%)
-        uint256 targetHF = vm.envUint("TARGET_HF"); // Default: 1.5e18
+        uint256 targetHf = vm.envUint("TARGET_HF"); // Default: 1.5e18
         uint256 maxIterations = vm.envUint("MAX_ITERATIONS"); // Default: 3
 
         vm.startBroadcast(deployerPrivateKey);
@@ -69,7 +70,7 @@ contract DeployAllStrategies is Script {
             vault,
             ringsAdapter,
             lendingAdapter,
-            targetHF,
+            targetHf,
             maxIterations
         );
         console2.log("   RingsAaveLoopStrategy deployed at:", address(loopStrategy));

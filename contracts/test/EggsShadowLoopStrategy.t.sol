@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EggsShadowLoopStrategy} from "src/strategies/EggsShadowLoopStrategy.sol";
 import {IEggsAdapter} from "src/interfaces/adapters/IEggsAdapter.sol";
 import {IShadowAdapter} from "src/interfaces/adapters/IShadowAdapter.sol";
@@ -65,6 +66,7 @@ contract SimpleToken is IERC20 {
 
 /// @notice Test StS adapter that converts S to stS tokens and back at 1:1 ratio
 contract MockStSAdapter is IStSAdapter {
+    using SafeERC20 for IERC20;
     address public override sToken;
     address public override stSToken;
     mapping(address => uint256) public staked;
@@ -76,7 +78,7 @@ contract MockStSAdapter is IStSAdapter {
 
     function stakeS(uint256 amount) external override returns (uint256) {
         // take S tokens from user
-        IERC20(sToken).transferFrom(msg.sender, address(this), amount);
+        IERC20(sToken).safeTransferFrom(msg.sender, address(this), amount);
         // give back stS tokens at 1:1 rate
         SimpleToken(stSToken).mint(msg.sender, amount);
         staked[msg.sender] += amount;
@@ -85,7 +87,7 @@ contract MockStSAdapter is IStSAdapter {
 
     function unstakeToS(uint256 amount) external override returns (uint256) {
         // take back the stS tokens
-        IERC20(stSToken).transferFrom(msg.sender, address(this), amount);
+        IERC20(stSToken).safeTransferFrom(msg.sender, address(this), amount);
         // return S tokens at 1:1 rate
         SimpleToken(sToken).mint(msg.sender, amount);
         if (staked[msg.sender] >= amount) staked[msg.sender] -= amount;
@@ -99,6 +101,7 @@ contract MockStSAdapter is IStSAdapter {
 
 /// @notice Test Eggs adapter that handles minting, borrowing, redeeming and repaying
 contract MockEggsAdapter is IEggsAdapter {
+    using SafeERC20 for IERC20;
     SimpleToken public sToken;
     SimpleToken public eggs;
     mapping(address => uint256) public collateral;
@@ -113,21 +116,21 @@ contract MockEggsAdapter is IEggsAdapter {
         return address(eggs);
     }
 
-    function mintEGGS(
+    function mintEggs(
         uint256 sAmount
     ) external override returns (uint256 eggsMinted) {
         // take S tokens from user
-        sToken.transferFrom(msg.sender, address(this), sAmount);
+        IERC20(address(sToken)).safeTransferFrom(msg.sender, address(this), sAmount);
         // charge 2.5% minting fee
         eggsMinted = (sAmount * 975) / 1000;
         eggs.mint(msg.sender, eggsMinted);
         collateral[msg.sender] += eggsMinted;
     }
 
-    function redeemEGGS(
+    function redeemEggs(
         uint256 eggsAmount
     ) external override returns (uint256 sAmount) {
-        eggs.transferFrom(msg.sender, address(this), eggsAmount);
+        IERC20(address(eggs)).safeTransferFrom(msg.sender, address(this), eggsAmount);
         if (collateral[msg.sender] >= eggsAmount) {
             collateral[msg.sender] -= eggsAmount;
         }
@@ -147,7 +150,7 @@ contract MockEggsAdapter is IEggsAdapter {
         uint256 owed = debt[msg.sender];
         repaid = sAmount > owed ? owed : sAmount;
         debt[msg.sender] = owed - repaid;
-        sToken.transferFrom(msg.sender, address(this), repaid);
+        IERC20(address(sToken)).safeTransferFrom(msg.sender, address(this), repaid);
         return repaid;
     }
 
@@ -169,17 +172,18 @@ contract MockEggsAdapter is IEggsAdapter {
         return 2e18;
     }
 
-    function getSupplyAPY() external pure override returns (uint256 apy) {
+    function getSupplyApy() external pure override returns (uint256 apy) {
         return 250; // 2.5%
     }
 
-    function getBorrowAPY() external pure override returns (uint256 apy) {
+    function getBorrowApy() external pure override returns (uint256 apy) {
         return 500; // 5%
     }
 }
 
 /// @notice Test Shadow adapter that mimics Shadow's concentrated liquidity AMM
 contract MockShadowAdapter is IShadowAdapter {
+    using SafeERC20 for IERC20;
     // LP token that gets minted by this adapter
     SimpleToken public lpToken;
     // keep track of staked LP tokens for each user
@@ -206,8 +210,8 @@ contract MockShadowAdapter is IShadowAdapter {
         uint256 /*minLPOut*/
     ) external override returns (uint256 lpOut) {
         // take tokens from user
-        IERC20(tokenA).transferFrom(msg.sender, address(this), amtA);
-        IERC20(tokenB).transferFrom(msg.sender, address(this), amtB);
+        IERC20(tokenA).safeTransferFrom(msg.sender, address(this), amtA);
+        IERC20(tokenB).safeTransferFrom(msg.sender, address(this), amtB);
         suppliedA[msg.sender] += amtA;
         suppliedB[msg.sender] += amtB;
         lpOut = amtA + amtB;
@@ -222,7 +226,7 @@ contract MockShadowAdapter is IShadowAdapter {
         uint256 /*minAmtA*/,
         uint256 /*minAmtB*/
     ) external override returns (uint256 amtA, uint256 amtB) {
-        lpToken.transferFrom(msg.sender, address(this), lpTokens);
+        IERC20(address(lpToken)).safeTransferFrom(msg.sender, address(this), lpTokens);
         // calculate how much to return proportionally
         uint256 totalSupplied = suppliedA[msg.sender] + suppliedB[msg.sender];
         if (totalSupplied == 0) return (0, 0);
@@ -233,15 +237,15 @@ contract MockShadowAdapter is IShadowAdapter {
         suppliedA[msg.sender] -= amtA;
         suppliedB[msg.sender] -= amtB;
         // send tokens back to user
-        IERC20(tokenA).transfer(msg.sender, amtA);
-        IERC20(tokenB).transfer(msg.sender, amtB);
+        IERC20(tokenA).safeTransfer(msg.sender, amtA);
+        IERC20(tokenB).safeTransfer(msg.sender, amtB);
     }
 
     function stakeInGauge(
         address /*gauge*/,
         uint256 lpTokens
     ) external override {
-        lpToken.transferFrom(msg.sender, address(this), lpTokens);
+        IERC20(address(lpToken)).safeTransferFrom(msg.sender, address(this), lpTokens);
         staked[msg.sender] += lpTokens;
     }
 
@@ -251,7 +255,7 @@ contract MockShadowAdapter is IShadowAdapter {
     ) external override {
         require(staked[msg.sender] >= lpTokens, "not staked");
         staked[msg.sender] -= lpTokens;
-        lpToken.transfer(msg.sender, lpTokens);
+        IERC20(address(lpToken)).safeTransfer(msg.sender, lpTokens);
     }
 
     function harvestRewards(
@@ -264,13 +268,13 @@ contract MockShadowAdapter is IShadowAdapter {
         }
     }
 
-    function getPoolAPR(
+    function getPoolApr(
         address /*pool*/
     ) external pure override returns (uint256 apr) {
         return 500 * 1e14; // 5% yield: 500 basis points * 1e14 = 5e16. Since 1e18 = 100%, this gives us 5%
     }
 
-    function getPoolLPToken(
+    function getPoolLpToken(
         address /*pool*/
     ) external view override returns (address lpTokenAddr) {
         return address(lpToken);
@@ -296,6 +300,7 @@ contract MockShadowAdapter is IShadowAdapter {
 }
 
 contract EggsShadowLoopStrategyTest is Test {
+    using SafeERC20 for IERC20;
     SimpleToken sToken;
     SimpleToken stSToken;
     MockEggsAdapter eggs;
@@ -340,7 +345,7 @@ contract EggsShadowLoopStrategyTest is Test {
         uint256 amount = 100 ether;
         // send S tokens to strategy and deposit them
         vm.startPrank(vault);
-        sToken.transfer(address(strategy), amount);
+        IERC20(address(sToken)).safeTransfer(address(strategy), amount);
         strategy.deposit(amount);
         vm.stopPrank();
         // Should have about 97.5 S worth of EGGS collateral
@@ -351,14 +356,14 @@ contract EggsShadowLoopStrategyTest is Test {
         uint256 debt = eggs.debtOf(address(strategy));
         assertEq(debt, 48.75 ether, "incorrect debt");
         // should have some LP tokens staked
-        assertGt(strategy.stakedLP(), 0, "no LP staked");
+        assertGt(strategy.stakedLp(), 0, "no LP staked");
     }
 
     function testWithdraw() public {
         uint256 amount = 100 ether;
         // first deposit some tokens
         vm.startPrank(vault);
-        sToken.transfer(address(strategy), amount);
+        IERC20(address(sToken)).safeTransfer(address(strategy), amount);
         strategy.deposit(amount);
         // then withdraw half of it
         strategy.withdraw(50 ether);
@@ -368,13 +373,13 @@ contract EggsShadowLoopStrategyTest is Test {
         // all debt should be cleared after unwinding
         assertEq(eggs.debtOf(address(strategy)), 0);
         // no LP tokens should be staked anymore
-        assertEq(strategy.stakedLP(), 0);
+        assertEq(strategy.stakedLp(), 0);
     }
 
     function testHarvestRewards() public {
         uint256 amount = 20 ether;
         vm.startPrank(vault);
-        sToken.transfer(address(strategy), amount);
+        IERC20(address(sToken)).safeTransfer(address(strategy), amount);
         strategy.deposit(amount);
         // set up some rewards and harvest them
         shadow.setReward(5 ether);

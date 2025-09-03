@@ -25,15 +25,15 @@ contract PendleFixedYieldStSStrategy is BaseStrategy {
 
     /// @notice Pendle adapter for splitting stS into principal/yield tokens,
     ///         selling yield tokens, and converting between stable coins and stS
-    IPendleAdapter public immutable pendle;
+    IPendleAdapter public immutable PENDLE;
 
     /// @notice Lending adapter to deposit stable coins and earn extra yield
     ///         on the money from selling yield tokens
-    ILendingAdapter public immutable lending;
+    ILendingAdapter public immutable LENDING;
 
     /// @notice Stable coin address (like scUSD) we get from selling yield tokens.
     ///         The adapter tells us what stable coin to use
-    address public immutable stable;
+    address public immutable STABLE;
 
     /// @notice How many principal tokens we're holding. These tokens can be
     ///         redeemed for stS at maturity. We redeem them proportionally on withdrawals
@@ -53,9 +53,9 @@ contract PendleFixedYieldStSStrategy is BaseStrategy {
             _pendleAdapter != address(0) && _lendingAdapter != address(0),
             "bad adapters"
         );
-        pendle = IPendleAdapter(_pendleAdapter);
-        lending = ILendingAdapter(_lendingAdapter);
-        stable = IPendleAdapter(_pendleAdapter).stableToken();
+        PENDLE = IPendleAdapter(_pendleAdapter);
+        LENDING = ILendingAdapter(_lendingAdapter);
+        STABLE = IPendleAdapter(_pendleAdapter).stableToken();
         // Let adapters spend our tokens
         IERC20(_stS).approve(_pendleAdapter, type(uint256).max);
         // Let Pendle adapter spend principal and yield tokens when needed
@@ -68,9 +68,9 @@ contract PendleFixedYieldStSStrategy is BaseStrategy {
             IERC20(ytAddr).approve(_pendleAdapter, type(uint256).max);
         }
         // Let Pendle adapter spend stable coins when converting
-        IERC20(stable).approve(_pendleAdapter, type(uint256).max);
+        IERC20(STABLE).approve(_pendleAdapter, type(uint256).max);
         // Let lending adapter spend stable coins for deposits
-        IERC20(stable).approve(_lendingAdapter, type(uint256).max);
+        IERC20(STABLE).approve(_lendingAdapter, type(uint256).max);
     }
 
     /// @notice Deposit stS tokens into the strategy. Splits into principal/yield tokens,
@@ -78,16 +78,16 @@ contract PendleFixedYieldStSStrategy is BaseStrategy {
     /// @param amount How much stS to deposit
     function deposit(uint256 amount) external override onlyVault nonReentrant {
         require(amount > 0, "zero deposit");
-        uint256 stSBal = IERC20(address(asset)).balanceOf(address(this));
+        uint256 stSBal = ASSET.balanceOf(address(this));
         require(stSBal >= amount, "insufficient funds");
         // Split stS into principal tokens (PT) and yield tokens (YT)
-        (uint256 ptMinted, uint256 ytMinted) = pendle.splitAsset(amount);
+        (uint256 ptMinted, uint256 ytMinted) = PENDLE.splitAsset(amount);
         ptBalance += ptMinted;
         // Sell all yield tokens for stable coins
-        uint256 stableReceived = pendle.sellYTForStable(ytMinted);
+        uint256 stableReceived = PENDLE.sellYtForStable(ytMinted);
         // Put the stable coins into lending protocol to earn more yield
         if (stableReceived > 0) {
-            lending.deposit(stable, stableReceived);
+            LENDING.deposit(STABLE, stableReceived);
         }
     }
 
@@ -97,29 +97,29 @@ contract PendleFixedYieldStSStrategy is BaseStrategy {
     /// @param amount How much stS to withdraw
     function withdraw(uint256 amount) external override onlyVault nonReentrant {
         require(amount > 0, "zero withdraw");
-        uint256 free = IERC20(address(asset)).balanceOf(address(this));
+        uint256 free = ASSET.balanceOf(address(this));
         uint256 remaining = amount;
         // Use any free stS we have first
         if (free >= remaining) {
             // we have enough free stS
-            IERC20(address(asset)).safeTransfer(vault, remaining);
+            ASSET.safeTransfer(VAULT, remaining);
             return;
         }
         // send all the free stS we have
         if (free > 0) {
-            IERC20(address(asset)).safeTransfer(vault, free);
+            ASSET.safeTransfer(VAULT, free);
             remaining -= free;
         }
         // Figure out how much stable coins to convert. For simplicity,
         // we assume 1:1 exchange rate between stable coins and stS.
         // Real implementation would use price oracles
-        uint256 stableBal = lending.collateralOf(address(this), stable);
+        uint256 stableBal = LENDING.collateralOf(address(this), STABLE);
         if (stableBal > 0 && remaining > 0) {
             uint256 stableToUse = stableBal > remaining ? remaining : stableBal;
             // take stable coins out of lending protocol
-            lending.withdraw(stable, stableToUse);
+            LENDING.withdraw(STABLE, stableToUse);
             // convert stable coins back to stS
-            uint256 underlyingOut = pendle.stableToUnderlying(stableToUse);
+            uint256 underlyingOut = PENDLE.stableToUnderlying(stableToUse);
             remaining = remaining > underlyingOut
                 ? remaining - underlyingOut
                 : 0;
@@ -127,15 +127,15 @@ contract PendleFixedYieldStSStrategy is BaseStrategy {
         // redeem principal tokens if we still need more stS
         if (ptBalance > 0 && remaining > 0) {
             uint256 ptToRedeem = ptBalance > remaining ? remaining : ptBalance;
-            uint256 redeemed = pendle.redeemPrincipal(ptToRedeem);
+            uint256 redeemed = PENDLE.redeemPrincipal(ptToRedeem);
             ptBalance -= ptToRedeem;
             remaining = remaining > redeemed ? remaining - redeemed : 0;
         }
         require(remaining == 0, "insufficient liquidity");
         // send all the stS we gathered back to vault
-        uint256 finalBal = IERC20(address(asset)).balanceOf(address(this));
+        uint256 finalBal = ASSET.balanceOf(address(this));
         if (finalBal > 0) {
-            IERC20(address(asset)).safeTransfer(vault, finalBal);
+            ASSET.safeTransfer(VAULT, finalBal);
         }
     }
 
@@ -150,15 +150,15 @@ contract PendleFixedYieldStSStrategy is BaseStrategy {
         returns (uint256 harvested)
     {
         // check how much stable coins we have in lending protocol
-        uint256 stableBal = lending.collateralOf(address(this), stable);
+        uint256 stableBal = LENDING.collateralOf(address(this), STABLE);
         // for simplicity, treat all stable balance as harvestable.
         // withdraw everything and convert to stS
         if (stableBal > 0) {
-            lending.withdraw(stable, stableBal);
-            harvested = pendle.stableToUnderlying(stableBal);
+            LENDING.withdraw(STABLE, stableBal);
+            harvested = PENDLE.stableToUnderlying(stableBal);
             // send harvested stS back to vault
             if (harvested > 0) {
-                IERC20(address(asset)).safeTransfer(vault, harvested);
+                ASSET.safeTransfer(VAULT, harvested);
             }
         }
     }
@@ -167,14 +167,14 @@ contract PendleFixedYieldStSStrategy is BaseStrategy {
     ///         stable coin deposits (assuming 1:1 conversion), and principal tokens.
     ///         Real implementation would use price oracles for accurate pricing
     function totalAssets() public view override returns (uint256) {
-        uint256 free = IERC20(address(asset)).balanceOf(address(this));
-        uint256 stableBal = lending.collateralOf(address(this), stable);
+        uint256 free = ASSET.balanceOf(address(this));
+        uint256 stableBal = LENDING.collateralOf(address(this), STABLE);
         return free + stableBal + ptBalance;
     }
 
     /// @notice Get current yield percentage. Returns the lending yield on stable coins.
     ///         The fixed yield from Pendle is locked in at deposit time so not shown here
     function apy() external view override returns (uint256) {
-        return lending.getSupplyAPY(stable);
+        return LENDING.getSupplyApy(STABLE);
     }
 }

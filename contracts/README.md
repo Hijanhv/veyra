@@ -34,6 +34,7 @@ The contracts use adapter interfaces to interact with external DeFi protocols:
 - **IBeetsAdapter**: Interface for BEETS liquidity pools and staking
 - **ISwapXAdapter**: Interface for SwapX DEX and gauge rewards
 - **IPendleAdapter**: Interface for Pendle yield tokenization
+- **IStSAdapter**: Interface for liquid staking token (stS) operations
 
 ## Architecture
 

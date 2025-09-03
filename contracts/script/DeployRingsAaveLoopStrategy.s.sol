@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Script.sol";
+import {Script} from "forge-std/Script.sol";
+import {console2} from "forge-std/console2.sol";
 import {RingsAaveLoopStrategy} from "../src/strategies/RingsAaveLoopStrategy.sol";
 
 /// @title Deploy RingsAaveLoopStrategy
@@ -14,7 +15,7 @@ contract DeployRingsAaveLoopStrategy is Script {
         address vault = vm.envAddress("VAULT");
         address ringsAdapter = vm.envAddress("RINGS_ADAPTER");
         address lendingAdapter = vm.envAddress("LENDING_ADAPTER");
-        uint256 targetHF = vm.envUint("TARGET_HF"); // e.g., 1.5e18
+        uint256 targetHf = vm.envUint("TARGET_HF"); // e.g., 1.5e18
         uint256 maxIterations = vm.envUint("MAX_ITERATIONS"); // e.g., 3
 
         vm.startBroadcast(deployerPrivateKey);
@@ -24,7 +25,7 @@ contract DeployRingsAaveLoopStrategy is Script {
             vault,
             ringsAdapter,
             lendingAdapter,
-            targetHF,
+            targetHf,
             maxIterations
         );
         
@@ -35,7 +36,7 @@ contract DeployRingsAaveLoopStrategy is Script {
         console2.log("Vault:", vault);
         console2.log("Rings Adapter:", ringsAdapter);
         console2.log("Lending Adapter:", lendingAdapter);
-        console2.log("Target Health Factor:", targetHF);
+        console2.log("Target Health Factor:", targetHf);
         console2.log("Max Iterations:", maxIterations);
     }
 }

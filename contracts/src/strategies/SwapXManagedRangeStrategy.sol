@@ -23,18 +23,18 @@ contract SwapXManagedRangeStrategy is BaseStrategy {
     using SafeERC20 for IERC20;
 
     /// @notice Adapter for working with SwapX pools and gauges
-    ISwapXAdapter public immutable swapx;
+    ISwapXAdapter public immutable SWAPX;
     /// @notice Adapter for converting S to stS tokens and back
-    IStSAdapter public immutable sts;
+    IStSAdapter public immutable STS;
     /// @notice SwapX pool where we provide S/stS liquidity
-    address public immutable pool;
+    address public immutable POOL;
     /// @notice Gauge where we stake LP tokens to earn rewards
-    address public immutable gauge;
+    address public immutable GAUGE;
     /// @notice stS token contract address
-    address public immutable stSToken;
+    address public immutable STS_TOKEN;
 
     /// @notice How many LP tokens we have staked in the gauge
-    uint256 public stakedLP;
+    uint256 public stakedLp;
 
     /// @param _sToken S token address (what the vault holds)
     /// @param _vault The vault contract address
@@ -55,16 +55,16 @@ contract SwapXManagedRangeStrategy is BaseStrategy {
             "bad adapters"
         );
         require(_pool != address(0) && _gauge != address(0), "bad pool");
-        swapx = ISwapXAdapter(_swapXAdapter);
-        sts = IStSAdapter(_stsAdapter);
-        pool = _pool;
-        gauge = _gauge;
-        stSToken = sts.stSToken();
+        SWAPX = ISwapXAdapter(_swapXAdapter);
+        STS = IStSAdapter(_stsAdapter);
+        POOL = _pool;
+        GAUGE = _gauge;
+        STS_TOKEN = STS.stSToken();
         // Let adapters spend our tokens
         IERC20(_sToken).approve(_stsAdapter, type(uint256).max);
-        IERC20(stSToken).approve(_stsAdapter, type(uint256).max);
+        IERC20(STS_TOKEN).approve(_stsAdapter, type(uint256).max);
         IERC20(_sToken).approve(_swapXAdapter, type(uint256).max);
-        IERC20(stSToken).approve(_swapXAdapter, type(uint256).max);
+        IERC20(STS_TOKEN).approve(_swapXAdapter, type(uint256).max);
     }
 
     /// @notice Deposit S tokens into strategy. Converts half to stS,
@@ -72,30 +72,30 @@ contract SwapXManagedRangeStrategy is BaseStrategy {
     /// @param amount How much S to deposit
     function deposit(uint256 amount) external override onlyVault nonReentrant {
         require(amount > 0, "zero deposit");
-        uint256 sBal = IERC20(address(asset)).balanceOf(address(this));
+        uint256 sBal = ASSET.balanceOf(address(this));
         require(sBal >= amount, "insufficient funds");
         // Convert half to stS, keep half as S
         uint256 half = amount / 2;
-        uint256 stSAmount = sts.stakeS(half);
+        uint256 stSAmount = STS.stakeS(half);
         uint256 sAmount = amount - half;
         // Add liquidity to SwapX pool with 5% slippage protection
-        uint256 minLPOut = ((sAmount + stSAmount) * 95) / 100;
-        uint256 lpOut = swapx.joinPool(
-            pool,
-            address(asset),
-            stSToken,
+        uint256 minLpOut = ((sAmount + stSAmount) * 95) / 100;
+        uint256 lpOut = SWAPX.joinPool(
+            POOL,
+            address(ASSET),
+            STS_TOKEN,
             sAmount,
             stSAmount,
-            minLPOut
+            minLpOut
         );
         // Let SwapX adapter stake our LP tokens if not approved yet
-        address lpToken = swapx.getPoolLPToken(pool);
-        if (IERC20(lpToken).allowance(address(this), address(swapx)) == 0) {
-            IERC20(lpToken).approve(address(swapx), type(uint256).max);
+        address lpToken = SWAPX.getPoolLpToken(POOL);
+        if (IERC20(lpToken).allowance(address(this), address(SWAPX)) == 0) {
+            IERC20(lpToken).approve(address(SWAPX), type(uint256).max);
         }
         // Stake the LP tokens to earn rewards
-        swapx.stakeInGauge(gauge, lpOut);
-        stakedLP += lpOut;
+        SWAPX.stakeInGauge(GAUGE, lpOut);
+        stakedLp += lpOut;
     }
 
     /// @notice Withdraw S back to vault. If we don't have enough free S,
@@ -104,33 +104,30 @@ contract SwapXManagedRangeStrategy is BaseStrategy {
     /// @param amount How much S to withdraw
     function withdraw(uint256 amount) external override onlyVault nonReentrant {
         require(amount > 0, "zero withdraw");
-        uint256 freeS = IERC20(address(asset)).balanceOf(address(this));
+        uint256 freeS = ASSET.balanceOf(address(this));
         if (freeS < amount) {
             // Remove all LP tokens from staking if needed
-            uint256 lpBal = stakedLP;
+            uint256 lpBal = stakedLp;
             if (lpBal > 0) {
-                swapx.unstakeFromGauge(gauge, lpBal);
-                stakedLP = 0;
+                SWAPX.unstakeFromGauge(GAUGE, lpBal);
+                stakedLp = 0;
                 // Remove liquidity from pool (no slippage protection)
-                (, uint256 outStS) = swapx.exitPool(
-                    pool,
+                (, uint256 outStS) = SWAPX.exitPool(
+                    POOL,
                     lpBal,
-                    address(asset),
-                    stSToken,
+                    address(ASSET),
+                    STS_TOKEN,
                     0,
                     0
                 );
                 // Convert any stS we got back to S
                 if (outStS > 0) {
-                    sts.unstakeToS(outStS);
+                    STS.unstakeToS(outStS);
                 }
             }
         }
-        require(
-            IERC20(address(asset)).balanceOf(address(this)) >= amount,
-            "insufficient after exit"
-        );
-        IERC20(address(asset)).safeTransfer(vault, amount);
+        require(ASSET.balanceOf(address(this)) >= amount, "insufficient after exit");
+        ASSET.safeTransfer(VAULT, amount);
     }
 
     /// @notice Collect rewards from SwapX gauge and keep them as free S.
@@ -144,7 +141,7 @@ contract SwapXManagedRangeStrategy is BaseStrategy {
         nonReentrant
         returns (uint256 harvested)
     {
-        harvested = swapx.harvestRewards(gauge);
+        harvested = SWAPX.harvestRewards(GAUGE);
         // adapter transfers rewards to us automatically
     }
 
@@ -152,13 +149,13 @@ contract SwapXManagedRangeStrategy is BaseStrategy {
     ///         only counts free S balance. Doesn't include LP or stS value since
     ///         that needs price oracles. Could be improved to include LP/stS valuation
     function totalAssets() public view override returns (uint256) {
-        return IERC20(address(asset)).balanceOf(address(this));
+        return ASSET.balanceOf(address(this));
     }
 
     /// @notice Get current yield percentage. Just returns SwapX pool APR
     ///         which includes fees and rewards (scaled by 1e18). External services
     ///         can calculate more accurate yield from harvested rewards
     function apy() external view override returns (uint256) {
-        return swapx.getPoolAPR(pool);
+        return SWAPX.getPoolApr(POOL);
     }
 }

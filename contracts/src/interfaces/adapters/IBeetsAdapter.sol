@@ -13,7 +13,7 @@ interface IBeetsAdapter {
     /// @param tokenB Second token in the pair.
     /// @param amtA Amount of tokenA to deposit.
     /// @param amtB Amount of tokenB to deposit.
-    /// @param minLPOut Minimum LP tokens expected to prevent slippage.
+    /// @param minLpOut Minimum LP tokens expected to prevent slippage.
     /// @return lpTokensReceived Actual LP tokens received from the pool join.
     function joinPool(
         address pool,
@@ -21,7 +21,7 @@ interface IBeetsAdapter {
         address tokenB,
         uint256 amtA,
         uint256 amtB,
-        uint256 minLPOut
+        uint256 minLpOut
     ) external returns (uint256 lpTokensReceived);
 
     /// @notice Remove liquidity from a BEETS pool by burning LP tokens
@@ -64,7 +64,7 @@ interface IBeetsAdapter {
     /// @notice Get the LP token contract for a pool
     /// @param pool The BEETS pool address.
     /// @return lpToken The LP token contract address.
-    function getPoolLPToken(
+    function getPoolLpToken(
         address pool
     ) external view returns (address lpToken);
 
@@ -76,7 +76,7 @@ interface IBeetsAdapter {
     /// @notice Get the total yield percentage for a pool (base yield + rewards)
     /// @param pool The BEETS pool address.
     /// @return apr The current APR (scaled by 1e18, e.g., 5% = 0.05e18).
-    function getPoolAPR(address pool) external view returns (uint256 apr);
+    function getPoolApr(address pool) external view returns (uint256 apr);
 
     /// @notice Check how many LP tokens an account has staked
     /// @param gauge The gauge contract address.

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {RingsAaveLoopStrategy} from "src/strategies/RingsAaveLoopStrategy.sol";
 import {IRingsAdapter} from "src/interfaces/adapters/IRingsAdapter.sol";
 import {ILendingAdapter} from "src/interfaces/adapters/ILendingAdapter.sol";
@@ -64,6 +65,7 @@ contract SimpleToken is IERC20 {
 
 /// @notice Test Rings adapter for minting and redeeming scUSD
 contract MockRingsAdapter is IRingsAdapter {
+    using SafeERC20 for IERC20;
     SimpleToken public scToken;
     address public usdc;
 
@@ -72,31 +74,31 @@ contract MockRingsAdapter is IRingsAdapter {
         scToken = new SimpleToken("scUSD", "scUSD");
     }
 
-    function scUSD() external view override returns (address) {
+    function scUsd() external view override returns (address) {
         return address(scToken);
     }
 
-    function mint_scUSD(
+    function mintScUsd(
         uint256 usdcIn
     ) external override returns (uint256 scMinted) {
         // take USDC from user
-        IERC20(usdc).transferFrom(msg.sender, address(this), usdcIn);
+        IERC20(usdc).safeTransferFrom(msg.sender, address(this), usdcIn);
         // give back scUSD tokens 1:1
         scToken.mint(msg.sender, usdcIn);
         return usdcIn;
     }
 
-    function redeem_scUSD(
+    function redeemScUsd(
         uint256 scAmount
     ) external override returns (uint256 usdcOut) {
         // take back scUSD from user
-        scToken.transferFrom(msg.sender, address(this), scAmount);
+        IERC20(address(scToken)).safeTransferFrom(msg.sender, address(this), scAmount);
         // return USDC tokens 1:1
         SimpleToken(usdc).mint(msg.sender, scAmount);
         return scAmount;
     }
 
-    function getAPY() external pure override returns (uint256) {
+    function getApy() external pure override returns (uint256) {
         return 1300; // 13% APY
     }
 }
@@ -104,13 +106,14 @@ contract MockRingsAdapter is IRingsAdapter {
 /// @notice Test lending adapter that mimics Aave. Tracks collateral and debt
 ///         and handles deposits, withdrawals, borrowing and repaying
 contract MockLendingAdapter is ILendingAdapter {
+    using SafeERC20 for IERC20;
     mapping(address => mapping(address => uint256)) public collateral;
     mapping(address => mapping(address => uint256)) public debt;
     // Start with high health factor - can be changed for testing
     uint256 public hf = 2e18;
 
     function deposit(address token, uint256 amount) external override {
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         collateral[msg.sender][token] += amount;
     }
 
@@ -120,7 +123,7 @@ contract MockLendingAdapter is ILendingAdapter {
     ) external override returns (uint256) {
         require(collateral[msg.sender][token] >= amount, "no collateral");
         collateral[msg.sender][token] -= amount;
-        IERC20(token).transfer(msg.sender, amount);
+        IERC20(token).safeTransfer(msg.sender, amount);
         return amount;
     }
 
@@ -137,7 +140,7 @@ contract MockLendingAdapter is ILendingAdapter {
         uint256 owed = debt[msg.sender][token];
         uint256 repaid = amount > owed ? owed : amount;
         debt[msg.sender][token] -= repaid;
-        IERC20(token).transferFrom(msg.sender, address(this), repaid);
+        IERC20(token).safeTransferFrom(msg.sender, address(this), repaid);
         return repaid;
     }
 
@@ -161,11 +164,11 @@ contract MockLendingAdapter is ILendingAdapter {
         return hf;
     }
 
-    function getSupplyAPY(address) external pure override returns (uint256) {
+    function getSupplyApy(address) external pure override returns (uint256) {
         return 250; // 2.5% APY
     }
 
-    function getBorrowAPY(address) external pure override returns (uint256) {
+    function getBorrowApy(address) external pure override returns (uint256) {
         return 450; // 4.5% APY
     }
 
@@ -176,6 +179,7 @@ contract MockLendingAdapter is ILendingAdapter {
 }
 
 contract RingsAaveLoopStrategyTest is Test {
+    using SafeERC20 for IERC20;
     SimpleToken usdc;
     MockRingsAdapter rings;
     MockLendingAdapter lending;
@@ -209,11 +213,11 @@ contract RingsAaveLoopStrategyTest is Test {
     function testDepositAndWithdraw() public {
         uint256 amount = 100 ether;
         vm.startPrank(vault);
-        usdc.transfer(address(strategy), amount);
+        IERC20(address(usdc)).safeTransfer(address(strategy), amount);
         strategy.deposit(amount);
         vm.stopPrank();
         // Should have some collateral and debt after depositing
-        assertGt(lending.collateralOf(address(strategy), rings.scUSD()), 0);
+        assertGt(lending.collateralOf(address(strategy), rings.scUsd()), 0);
         assertGt(lending.debtOf(address(strategy), address(usdc)), 0);
         // Now withdraw half the amount
         vm.startPrank(vault);

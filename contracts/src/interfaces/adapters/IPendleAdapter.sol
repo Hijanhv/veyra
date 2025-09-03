@@ -31,7 +31,7 @@ interface IPendleAdapter {
     ///         yield is worth today
     /// @param ytAmount Amount of yield tokens to sell.
     /// @return stableAmount Amount of stable asset received.
-    function sellYTForStable(
+    function sellYtForStable(
         uint256 ytAmount
     ) external returns (uint256 stableAmount);
 

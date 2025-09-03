@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {PendleFixedYieldStSStrategy} from "../src/strategies/PendleFixedYieldStSStrategy.sol";
 import {IPendleAdapter} from "../src/interfaces/adapters/IPendleAdapter.sol";
 import {ILendingAdapter} from "../src/interfaces/adapters/ILendingAdapter.sol";
@@ -66,20 +67,21 @@ contract MockERC20 is IERC20 {
 /// @notice Test Pendle adapter that mimics splitting stS into principal and yield tokens,
 ///         selling the yield tokens for stable assets and converting between them
 contract MockPendleAdapter is IPendleAdapter {
-    MockERC20 public immutable underlying;
-    MockERC20 public immutable stable;
+    using SafeERC20 for IERC20;
+    MockERC20 public immutable UNDERLYING;
+    MockERC20 public immutable STABLE;
     MockERC20 public pt;
     MockERC20 public yt;
 
     constructor(address _underlying, address _stable) {
-        underlying = MockERC20(_underlying);
-        stable = MockERC20(_stable);
+        UNDERLYING = MockERC20(_underlying);
+        STABLE = MockERC20(_stable);
         pt = new MockERC20("PT", "PT", 18);
         yt = new MockERC20("YT", "YT", 18);
     }
 
     function stableToken() external view override returns (address) {
-        return address(stable);
+        return address(STABLE);
     }
 
     function ytToken() external view override returns (address) {
@@ -94,7 +96,7 @@ contract MockPendleAdapter is IPendleAdapter {
         uint256 amount
     ) external override returns (uint256 ptAmount, uint256 ytAmount) {
         // take the underlying tokens from user
-        underlying.transferFrom(msg.sender, address(this), amount);
+        IERC20(address(UNDERLYING)).safeTransferFrom(msg.sender, address(this), amount);
         // give back PT and YT tokens 1:1
         pt.mint(msg.sender, amount);
         yt.mint(msg.sender, amount);
@@ -105,19 +107,19 @@ contract MockPendleAdapter is IPendleAdapter {
         uint256 ptAmount
     ) external override returns (uint256 underlyingAmount) {
         // take PT tokens from user
-        pt.transferFrom(msg.sender, address(this), ptAmount);
+        IERC20(address(pt)).safeTransferFrom(msg.sender, address(this), ptAmount);
         // return underlying tokens 1:1
-        underlying.mint(msg.sender, ptAmount);
+        UNDERLYING.mint(msg.sender, ptAmount);
         return ptAmount;
     }
 
-    function sellYTForStable(
+    function sellYtForStable(
         uint256 ytAmount
     ) external override returns (uint256 stableAmount) {
         // take YT tokens from user
-        yt.transferFrom(msg.sender, address(this), ytAmount);
+        IERC20(address(yt)).safeTransferFrom(msg.sender, address(this), ytAmount);
         // give back stable tokens 1:1
-        stable.mint(msg.sender, ytAmount);
+        STABLE.mint(msg.sender, ytAmount);
         return ytAmount;
     }
 
@@ -125,9 +127,9 @@ contract MockPendleAdapter is IPendleAdapter {
         uint256 stableAmount
     ) external override returns (uint256 underlyingAmount) {
         // take stable tokens from user
-        stable.transferFrom(msg.sender, address(this), stableAmount);
+        IERC20(address(STABLE)).safeTransferFrom(msg.sender, address(this), stableAmount);
         // return underlying tokens 1:1
-        underlying.mint(msg.sender, stableAmount);
+        UNDERLYING.mint(msg.sender, stableAmount);
         return stableAmount;
     }
 }
@@ -135,10 +137,11 @@ contract MockPendleAdapter is IPendleAdapter {
 /// @notice Test lending adapter that handles deposits and withdrawals.
 ///         Only tracks collateral balances - no borrowing needed for this test
 contract MockLendingAdapter is ILendingAdapter {
+    using SafeERC20 for IERC20;
     mapping(address => mapping(address => uint256)) public collateral;
 
     function deposit(address token, uint256 amount) external override {
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         collateral[msg.sender][token] += amount;
     }
 
@@ -177,16 +180,17 @@ contract MockLendingAdapter is ILendingAdapter {
         return 2e18;
     }
 
-    function getSupplyAPY(address) external pure override returns (uint256) {
+    function getSupplyApy(address) external pure override returns (uint256) {
         return 300; // 3% APY
     }
 
-    function getBorrowAPY(address) external pure override returns (uint256) {
+    function getBorrowApy(address) external pure override returns (uint256) {
         return 0;
     }
 }
 
 contract PendleFixedYieldStSStrategyTest is Test {
+    using SafeERC20 for IERC20;
     MockERC20 stS;
     MockERC20 stable;
     MockPendleAdapter pendle;
@@ -221,7 +225,7 @@ contract PendleFixedYieldStSStrategyTest is Test {
         uint256 amount = 100 ether;
         vm.startPrank(vault);
         // Send stS to strategy and deposit it
-        stS.transfer(address(strategy), amount);
+        IERC20(address(stS)).safeTransfer(address(strategy), amount);
         strategy.deposit(amount);
         vm.stopPrank();
         // Strategy should have PT tokens equal to what we deposited
@@ -236,7 +240,7 @@ contract PendleFixedYieldStSStrategyTest is Test {
     function testWithdrawPartial() public {
         uint256 amount = 100 ether;
         vm.startPrank(vault);
-        stS.transfer(address(strategy), amount);
+        IERC20(address(stS)).safeTransfer(address(strategy), amount);
         strategy.deposit(amount);
         vm.stopPrank();
         // Try withdrawing 40 stS

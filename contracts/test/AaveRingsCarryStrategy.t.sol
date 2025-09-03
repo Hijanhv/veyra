@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
 import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {AaveRingsCarryStrategy} from "src/strategies/AaveRingsCarryStrategy.sol";
 import {IRingsAdapter} from "src/interfaces/adapters/IRingsAdapter.sol";
 import {ILendingAdapter} from "src/interfaces/adapters/ILendingAdapter.sol";
@@ -64,6 +65,7 @@ contract DummyToken is IERC20 {
 
 /// @notice Test implementation of Rings adapter that handles scUSD minting and redemption
 contract MockRings is IRingsAdapter {
+    using SafeERC20 for IERC20;
     DummyToken public scToken;
     address public usdc;
 
@@ -72,36 +74,37 @@ contract MockRings is IRingsAdapter {
         scToken = new DummyToken("scUSD", "scUSD");
     }
 
-    function scUSD() external view override returns (address) {
+    function scUsd() external view override returns (address) {
         return address(scToken);
     }
 
-    function mint_scUSD(uint256 usdcIn) external override returns (uint256) {
-        IERC20(usdc).transferFrom(msg.sender, address(this), usdcIn);
+    function mintScUsd(uint256 usdcIn) external override returns (uint256) {
+        IERC20(usdc).safeTransferFrom(msg.sender, address(this), usdcIn);
         scToken.mint(msg.sender, usdcIn);
         return usdcIn;
     }
 
-    function redeem_scUSD(
+    function redeemScUsd(
         uint256 scAmount
     ) external override returns (uint256) {
-        scToken.transferFrom(msg.sender, address(this), scAmount);
+        IERC20(address(scToken)).safeTransferFrom(msg.sender, address(this), scAmount);
         DummyToken(usdc).mint(msg.sender, scAmount);
         return scAmount;
     }
 
-    function getAPY() external pure override returns (uint256) {
+    function getApy() external pure override returns (uint256) {
         return 1300; // 13% APY
     }
 }
 
 /// @notice Test lending adapter that simulates Aave protocol behavior
 contract MockLending is ILendingAdapter {
+    using SafeERC20 for IERC20;
     mapping(address => mapping(address => uint256)) public coll;
     mapping(address => mapping(address => uint256)) public deb;
 
     function deposit(address token, uint256 amount) external override {
-        IERC20(token).transferFrom(msg.sender, address(this), amount);
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         coll[msg.sender][token] += amount;
     }
 
@@ -128,7 +131,7 @@ contract MockLending is ILendingAdapter {
         uint256 owed = deb[msg.sender][token];
         uint256 repaid = amount > owed ? owed : amount;
         deb[msg.sender][token] = owed - repaid;
-        IERC20(token).transferFrom(msg.sender, address(this), repaid);
+        IERC20(token).safeTransferFrom(msg.sender, address(this), repaid);
         return repaid;
     }
 
@@ -150,16 +153,17 @@ contract MockLending is ILendingAdapter {
         return 2e18;
     }
 
-    function getSupplyAPY(address) external pure override returns (uint256) {
+    function getSupplyApy(address) external pure override returns (uint256) {
         return 250; // 2.5% APY
     }
 
-    function getBorrowAPY(address) external pure override returns (uint256) {
+    function getBorrowApy(address) external pure override returns (uint256) {
         return 450; // 4.5% APY
     }
 }
 
 contract AaveRingsCarryStrategyTest is Test {
+    using SafeERC20 for IERC20;
     DummyToken wS;
     DummyToken usdc;
     MockRings rings;
@@ -195,7 +199,7 @@ contract AaveRingsCarryStrategyTest is Test {
         uint256 amount = 100 ether;
         vm.startPrank(vault);
         // Send wS tokens to the strategy
-        wS.transfer(address(strategy), amount);
+        IERC20(address(wS)).safeTransfer(address(strategy), amount);
         strategy.deposit(amount);
         vm.stopPrank();
         // Verify the strategy deposited collateral and borrowed correctly
@@ -204,7 +208,7 @@ contract AaveRingsCarryStrategyTest is Test {
         assertEq(lend.debtOf(address(strategy), address(usdc)), amount / 2);
         // scUSD balance should match the amount we borrowed
         assertEq(
-            IERC20(rings.scUSD()).balanceOf(address(strategy)),
+            IERC20(rings.scUsd()).balanceOf(address(strategy)),
             amount / 2
         );
     }
@@ -212,7 +216,7 @@ contract AaveRingsCarryStrategyTest is Test {
     function testWithdraw() public {
         uint256 amount = 100 ether;
         vm.startPrank(vault);
-        wS.transfer(address(strategy), amount);
+        IERC20(address(wS)).safeTransfer(address(strategy), amount);
         strategy.deposit(amount);
         // Try withdrawing half the amount
         strategy.withdraw(50 ether);

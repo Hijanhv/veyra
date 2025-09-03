@@ -25,10 +25,10 @@ interface ILendingAdapter {
     /// @notice Get yield percentage for supplying a token
     /// @param token The token address
     /// @return APY in basis points (e.g., 250 = 2.5%)
-    function getSupplyAPY(address token) external view returns (uint256);
+    function getSupplyApy(address token) external view returns (uint256);
 
     /// @notice Get interest rate for borrowing a token
     /// @param token The token address
     /// @return APY in basis points (e.g., 450 = 4.5%)
-    function getBorrowAPY(address token) external view returns (uint256);
+    function getBorrowApy(address token) external view returns (uint256);
 }

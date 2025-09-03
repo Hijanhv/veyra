@@ -16,7 +16,7 @@ interface IShadowAdapter {
     /// @param tokenB Address of the second token.
     /// @param amtA Amount of tokenA to deposit.
     /// @param amtB Amount of tokenB to deposit.
-    /// @param minLPOut Minimum LP tokens expected to prevent slippage.
+    /// @param minLpOut Minimum LP tokens expected to prevent slippage.
     /// @return lpTokensReceived Amount of LP tokens minted.
     function joinPool(
         address pool,
@@ -24,7 +24,7 @@ interface IShadowAdapter {
         address tokenB,
         uint256 amtA,
         uint256 amtB,
-        uint256 minLPOut
+        uint256 minLpOut
     ) external returns (uint256 lpTokensReceived);
 
     /// @notice Remove liquidity from a Shadow pool by burning LP tokens.
@@ -69,12 +69,12 @@ interface IShadowAdapter {
     /// This lets strategies tell vaults what kind of returns to expect
     /// @param pool Identifier of the pool.
     /// @return apr The current APR scaled by 1e18 (e.g., 5% = 0.05e18).
-    function getPoolAPR(address pool) external view returns (uint256 apr);
+    function getPoolApr(address pool) external view returns (uint256 apr);
 
     /// @notice Get the LP token contract for a pool. Useful for checking approvals
     /// @param pool Identifier of the pool.
     /// @return lpToken Address of the LP token contract.
-    function getPoolLPToken(
+    function getPoolLpToken(
         address pool
     ) external view returns (address lpToken);
 
