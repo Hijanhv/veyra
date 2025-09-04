@@ -69,6 +69,8 @@ ANTHROPIC_API_KEY=your_anthropic_api_key_here
 STRATEGY_MANAGER_PRIVATE_KEY=your_private_key_here  # Optional, for automated rebalancing
 VAULT_ADDRESSES=0x1234...,0x5678...  # Comma-separated vault addresses
 ENABLE_AUTO_REBALANCING=true  # Enable automated rebalancing
+# Used by analytics routes when no ?vaultId= is provided
+DEFAULT_VAULT_ID=0xYourVaultAddress
 ```
 
 ### Development

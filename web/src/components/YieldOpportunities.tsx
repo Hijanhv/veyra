@@ -65,11 +65,11 @@ export function YieldOpportunities() {
   }
 
   return (
-    <Card className="bg-white/5 backdrop-blur border-white/10">
+    <Card className="backdrop-blur">
       <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
+        <CardTitle className="text-[var(--foreground)] flex items-center gap-2">
           AI-Detected Yield Opportunities
-          <span className="bg-purple-500/20 text-purple-300 px-2 py-1 rounded-md text-xs">
+          <span className="bg-white/10 text-[var(--foreground)]/80 px-2 py-1 rounded-md text-xs">
             Live
           </span>
         </CardTitle>
@@ -79,7 +79,7 @@ export function YieldOpportunities() {
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
               <div key={i} className="animate-pulse">
-                <div className="h-20 bg-white/10 rounded-lg"></div>
+                <div className="h-20 bg-white/5 rounded-lg"></div>
               </div>
             ))}
           </div>
@@ -88,40 +88,40 @@ export function YieldOpportunities() {
             {opportunities.map((opp, index) => (
               <div 
                 key={index}
-                className="p-4 rounded-lg bg-white/5 border border-white/10 hover:border-purple-500/50 transition-all"
+                className="p-4 rounded-lg bg-[var(--card)] shadow-sm hover:shadow-md transition-all"
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white font-bold text-sm">
                       {opp.protocol[0]}
                     </div>
                     <div>
-                      <h4 className="text-white font-medium">{opp.protocol}</h4>
-                      <p className="text-gray-400 text-sm">{opp.asset}</p>
+                      <h4 className="text-[var(--foreground)] font-medium">{opp.protocol}</h4>
+                      <p className="text-[var(--muted)] text-sm">{opp.asset}</p>
                     </div>
                   </div>
-                  <ExternalLink className="h-4 w-4 text-gray-400" />
+                  <ExternalLink className="h-4 w-4 text-[var(--muted)]" />
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                   <div>
-                    <p className="text-gray-400 text-xs">APY</p>
-                    <p className="text-white font-bold">{opp.apy}%</p>
+                    <p className="text-[var(--muted)] text-xs">APY</p>
+                    <p className="text-[var(--foreground)] font-bold">{opp.apy}%</p>
                   </div>
                   <div>
-                    <p className="text-gray-400 text-xs">TVL</p>
-                    <p className="text-white font-medium">
+                    <p className="text-[var(--muted)] text-xs">TVL</p>
+                    <p className="text-[var(--foreground)] font-medium">
                       ${(opp.tvl / 1000000).toFixed(1)}M
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-400 text-xs">Strategy</p>
-                    <p className="text-white font-medium capitalize">
+                    <p className="text-[var(--muted)] text-xs">Strategy</p>
+                    <p className="text-[var(--foreground)] font-medium capitalize">
                       {opp.strategy.replace('-', ' ')}
                     </p>
                   </div>
                   <div>
-                    <p className="text-gray-400 text-xs">Risk</p>
+                    <p className="text-[var(--muted)] text-xs">Risk</p>
                     <div className="flex items-center gap-2">
                       <AlertCircle className={`h-3 w-3 ${getRiskColor(opp.riskScore)}`} />
                       <p className={`font-medium ${getRiskColor(opp.riskScore)}`}>
@@ -133,14 +133,14 @@ export function YieldOpportunities() {
 
                 {opp.maturity && (
                   <div className="mb-3">
-                    <p className="text-gray-400 text-xs">Maturity</p>
-                    <p className="text-white text-sm">{opp.maturity}</p>
+                    <p className="text-[var(--muted)] text-xs">Maturity</p>
+                    <p className="text-[var(--foreground)] text-sm">{opp.maturity}</p>
                   </div>
                 )}
 
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full" 
+                <div className="w-full bg-white/10 rounded-full h-2">
+                  <div
+                    className="bg-white/50 h-2 rounded-full"
                     style={{ width: `${Math.min(opp.apy * 5, 100)}%` }}
                   />
                 </div>
