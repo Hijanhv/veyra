@@ -20,8 +20,10 @@ Generate TypeScript types (simple)
   - Supabase client is already wired to use these types
 
 Migrations
-- 0001_init.sql: creates tables for the Veyra indexer:
-  - rebalances, strategy_flows, harvests, erc4626_flows, agent_decisions, indexer_state (plus optional vaults/strategies)
+- 0001_init.sql: creates initial schema. As of 0003, Supabase stores only off-chain tables:
+  - agent_decisions (plus optional vaults/strategies)
+- 0002_ponder_rls.sql: enables public read policies (no custom roles created)
+- 0003_drop_analytics_tables.sql: drops on-chain analytics tables in Supabase; Ponder is the source of truth for events/metrics
 
 Notes
 - This folder is the canonical source of truth for database schema. Use the Supabase CLI migrations here.

@@ -90,68 +90,21 @@ export async function vaultRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Aggregated vault overview combining on-chain metrics with last known allocations
+  // Aggregated vault overview combining on-chain metrics
   fastify.get<{ Params: { vaultId: Address } }>(
     '/:vaultId/overview',
     async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
       try {
         const { vaultId } = request.params;
         const metrics = await vaultService.getVaultMetrics(vaultId);
-        const rebalances = await Repository.getRecentRebalances(vaultId, 1);
-        const latestAlloc = (rebalances.data?.[0]?.after_alloc_json) || metrics.strategyAllocation;
-        return { success: true, data: { ...metrics, latestAllocations: latestAlloc } };
+        // Latest allocations are derived from on-chain state directly
+        return { success: true, data: { ...metrics, latestAllocations: metrics.strategyAllocation } };
       } catch (error) {
         fastify.log.error(error);
         reply.status(500).send({ success: false, error: 'Failed to fetch overview' });
       }
     }
   );
-
-  // Recent on-chain flows (strategy deploy/withdraw/harvest)
-  fastify.get<{ Params: { vaultId: Address } }>(
-    '/:vaultId/flows',
-    async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
-      try {
-        const { vaultId } = request.params;
-        const flows = await Repository.getRecentFlows(vaultId, 100);
-        return { success: true, data: flows.data };
-      } catch (error) {
-        fastify.log.error(error);
-        reply.status(500).send({ success: false, error: 'Failed to fetch flows' });
-      }
-    }
-  );
-
-  // Allocation history (rebalances)
-  fastify.get<{ Params: { vaultId: Address } }>(
-    '/:vaultId/allocations/history',
-    async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
-      try {
-        const { vaultId } = request.params;
-        const items = await Repository.getRecentRebalances(vaultId, 50);
-        return { success: true, data: items.data };
-      } catch (error) {
-        fastify.log.error(error);
-        reply.status(500).send({ success: false, error: 'Failed to fetch allocation history' });
-      }
-    }
-  );
-
-  // Harvest history
-  fastify.get<{ Params: { vaultId: Address } }>(
-    '/:vaultId/harvests',
-    async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
-      try {
-        const { vaultId } = request.params;
-        const items = await Repository.getRecentHarvests(vaultId, 50);
-        return { success: true, data: items.data };
-      } catch (error) {
-        fastify.log.error(error);
-        reply.status(500).send({ success: false, error: 'Failed to fetch harvests' });
-      }
-    }
-  );
-
   // AI agent decisions (off-chain)
   fastify.get<{ Params: { vaultId: Address } }>(
     '/:vaultId/agent/decisions',
@@ -163,29 +116,6 @@ export async function vaultRoutes(fastify: FastifyInstance) {
       } catch (error) {
         fastify.log.error(error);
         reply.status(500).send({ success: false, error: 'Failed to fetch agent decisions' });
-      }
-    }
-  );
-
-  // Derived current positions per strategy from flows
-  fastify.get<{ Params: { vaultId: Address } }>(
-    '/:vaultId/positions',
-    async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
-      try {
-        const { vaultId } = request.params;
-        const flows = await Repository.getRecentFlows(vaultId, 1000);
-        const map: Record<string, number> = {};
-        for (const f of flows.data as any[]) {
-          if (!f.strategy_address) continue;
-          const amt = Number(f.amount_wei || 0);
-          if (!map[f.strategy_address]) map[f.strategy_address] = 0;
-          if (f.action === 'deploy') map[f.strategy_address] += amt;
-          if (f.action === 'withdraw') map[f.strategy_address] -= amt;
-        }
-        return { success: true, data: map };
-      } catch (error) {
-        fastify.log.error(error);
-        reply.status(500).send({ success: false, error: 'Failed to compute positions' });
       }
     }
   );

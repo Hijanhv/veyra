@@ -237,3 +237,6 @@ coverage/
 # Backup files
 *.bak
 *.backup
+
+# Ponder
+.ponder/

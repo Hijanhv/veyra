@@ -53,6 +53,9 @@ ponder.on("VeyraVault:Deposit", async ({ event, context }) => {
       updatedAt: event.block.timestamp,
       blockNumber: event.block.number,
     }));
+
+  // Update metrics after deposit
+  await updateVaultMetrics(event, context);
 });
 
 // Track withdrawals
@@ -89,6 +92,9 @@ ponder.on("VeyraVault:Withdraw", async ({ event, context }) => {
       updatedAt: event.block.timestamp,
       blockNumber: event.block.number,
     }));
+
+  // Update metrics after withdrawal
+  await updateVaultMetrics(event, context);
 });
 
 // Track strategy deposits
@@ -151,6 +157,9 @@ ponder.on("VeyraVault:RebalanceExecuted", async ({ event, context }) => {
     timestamp: event.block.timestamp,
     transactionHash: event.transaction.hash,
   });
+
+  // Update metrics after rebalance
+  await updateVaultMetrics(event, context);
 });
 
 // Track yield harvesting
@@ -164,6 +173,9 @@ ponder.on("VeyraVault:YieldHarvested", async ({ event, context }) => {
     timestamp: event.block.timestamp,
     transactionHash: event.transaction.hash,
   });
+
+  // Update metrics after yield harvest
+  await updateVaultMetrics(event, context);
 });
 
 // Update vault metrics on every significant event
@@ -200,23 +212,3 @@ async function updateVaultMetrics(event: any, context: any) {
       blockNumber: event.block.number,
     }));
 }
-
-// Update metrics after deposits
-ponder.on("VeyraVault:Deposit", async ({ event, context }) => {
-  await updateVaultMetrics(event, context);
-});
-
-// Update metrics after withdrawals
-ponder.on("VeyraVault:Withdraw", async ({ event, context }) => {
-  await updateVaultMetrics(event, context);
-});
-
-// Update metrics after rebalances
-ponder.on("VeyraVault:RebalanceExecuted", async ({ event, context }) => {
-  await updateVaultMetrics(event, context);
-});
-
-// Update metrics after yield harvest
-ponder.on("VeyraVault:YieldHarvested", async ({ event, context }) => {
-  await updateVaultMetrics(event, context);
-});

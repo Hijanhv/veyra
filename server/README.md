@@ -13,6 +13,7 @@ Build/sync contracts
 Notes
 - Strategies expose `IStrategyIntrospection.components()` (components-based introspection).
 - The server reads the component list and queries each adapter for live metrics (APY/APR, health, etc.).
+- Ponder is the source of truth for on-chain events/metrics. Supabase stores only off-chain AI decisions.
 
 Run
 - Dev: `npm run dev`
@@ -24,4 +25,10 @@ Endpoints (examples)
 
 Config notes
 - Vaults: keep `VAULT_ADDRESSES` and `DEFAULT_VAULT_ID` in `.env` synced with `contracts/DEPLOYED_ADDRESSES.md`.
-- Supabase (optional): set `SUPABASE_PROJECT_REF`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `DATABASE_URL` if you run the indexer or persist analytics.
+- Ponder: set `DATABASE_URL` (Postgres for Ponder). Prefer a separate DB from Supabase to avoid table name collisions.
+- Supabase (optional): set `SUPABASE_PROJECT_REF`, `SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY` to persist AI decisions only.
+
+Architecture
+- Indexer (Ponder): writes to its own Postgres tables defined in `ponder.schema.ts`.
+- API (this server): reads on-chain state directly for metrics and serves AI endpoints. It no longer reads/writes on-chain event tables in Supabase.
+- Supabase: retains `agent_decisions` and optional `vaults/strategies` metadata only.

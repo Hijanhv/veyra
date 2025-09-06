@@ -1,0 +1,599 @@
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+scalar BigInt
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type Meta {
+  status: JSON
+}
+
+type Query {
+  vaultMetrics(id: String!): vaultMetrics
+  vaultMetricss(where: vaultMetricsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): vaultMetricsPage!
+  deposits(id: String!): deposits
+  depositss(where: depositsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): depositsPage!
+  withdrawals(id: String!): withdrawals
+  withdrawalss(where: withdrawalsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): withdrawalsPage!
+  strategyEvents(id: String!): strategyEvents
+  strategyEventss(where: strategyEventsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): strategyEventsPage!
+  rebalances(id: String!): rebalances
+  rebalancess(where: rebalancesFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): rebalancesPage!
+  userBalances(id: String!): userBalances
+  userBalancess(where: userBalancesFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): userBalancesPage!
+  yieldHarvests(id: String!): yieldHarvests
+  yieldHarvestss(where: yieldHarvestsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): yieldHarvestsPage!
+  _meta: Meta
+}
+
+type vaultMetrics {
+  id: String!
+  totalAssets: BigInt!
+  totalSupply: BigInt!
+  sharePrice: BigInt!
+  updatedAt: BigInt!
+  blockNumber: BigInt!
+}
+
+type vaultMetricsPage {
+  items: [vaultMetrics!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input vaultMetricsFilter {
+  AND: [vaultMetricsFilter]
+  OR: [vaultMetricsFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  totalAssets: BigInt
+  totalAssets_not: BigInt
+  totalAssets_in: [BigInt]
+  totalAssets_not_in: [BigInt]
+  totalAssets_gt: BigInt
+  totalAssets_lt: BigInt
+  totalAssets_gte: BigInt
+  totalAssets_lte: BigInt
+  totalSupply: BigInt
+  totalSupply_not: BigInt
+  totalSupply_in: [BigInt]
+  totalSupply_not_in: [BigInt]
+  totalSupply_gt: BigInt
+  totalSupply_lt: BigInt
+  totalSupply_gte: BigInt
+  totalSupply_lte: BigInt
+  sharePrice: BigInt
+  sharePrice_not: BigInt
+  sharePrice_in: [BigInt]
+  sharePrice_not_in: [BigInt]
+  sharePrice_gt: BigInt
+  sharePrice_lt: BigInt
+  sharePrice_gte: BigInt
+  sharePrice_lte: BigInt
+  updatedAt: BigInt
+  updatedAt_not: BigInt
+  updatedAt_in: [BigInt]
+  updatedAt_not_in: [BigInt]
+  updatedAt_gt: BigInt
+  updatedAt_lt: BigInt
+  updatedAt_gte: BigInt
+  updatedAt_lte: BigInt
+  blockNumber: BigInt
+  blockNumber_not: BigInt
+  blockNumber_in: [BigInt]
+  blockNumber_not_in: [BigInt]
+  blockNumber_gt: BigInt
+  blockNumber_lt: BigInt
+  blockNumber_gte: BigInt
+  blockNumber_lte: BigInt
+}
+
+type deposits {
+  id: String!
+  sender: String!
+  owner: String!
+  assets: BigInt!
+  shares: BigInt!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  transactionHash: String!
+}
+
+type depositsPage {
+  items: [deposits!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input depositsFilter {
+  AND: [depositsFilter]
+  OR: [depositsFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  sender: String
+  sender_not: String
+  sender_in: [String]
+  sender_not_in: [String]
+  sender_contains: String
+  sender_not_contains: String
+  sender_starts_with: String
+  sender_ends_with: String
+  sender_not_starts_with: String
+  sender_not_ends_with: String
+  owner: String
+  owner_not: String
+  owner_in: [String]
+  owner_not_in: [String]
+  owner_contains: String
+  owner_not_contains: String
+  owner_starts_with: String
+  owner_ends_with: String
+  owner_not_starts_with: String
+  owner_not_ends_with: String
+  assets: BigInt
+  assets_not: BigInt
+  assets_in: [BigInt]
+  assets_not_in: [BigInt]
+  assets_gt: BigInt
+  assets_lt: BigInt
+  assets_gte: BigInt
+  assets_lte: BigInt
+  shares: BigInt
+  shares_not: BigInt
+  shares_in: [BigInt]
+  shares_not_in: [BigInt]
+  shares_gt: BigInt
+  shares_lt: BigInt
+  shares_gte: BigInt
+  shares_lte: BigInt
+  blockNumber: BigInt
+  blockNumber_not: BigInt
+  blockNumber_in: [BigInt]
+  blockNumber_not_in: [BigInt]
+  blockNumber_gt: BigInt
+  blockNumber_lt: BigInt
+  blockNumber_gte: BigInt
+  blockNumber_lte: BigInt
+  timestamp: BigInt
+  timestamp_not: BigInt
+  timestamp_in: [BigInt]
+  timestamp_not_in: [BigInt]
+  timestamp_gt: BigInt
+  timestamp_lt: BigInt
+  timestamp_gte: BigInt
+  timestamp_lte: BigInt
+  transactionHash: String
+  transactionHash_not: String
+  transactionHash_in: [String]
+  transactionHash_not_in: [String]
+  transactionHash_contains: String
+  transactionHash_not_contains: String
+  transactionHash_starts_with: String
+  transactionHash_ends_with: String
+  transactionHash_not_starts_with: String
+  transactionHash_not_ends_with: String
+}
+
+type withdrawals {
+  id: String!
+  sender: String!
+  receiver: String!
+  owner: String!
+  assets: BigInt!
+  shares: BigInt!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  transactionHash: String!
+}
+
+type withdrawalsPage {
+  items: [withdrawals!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input withdrawalsFilter {
+  AND: [withdrawalsFilter]
+  OR: [withdrawalsFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  sender: String
+  sender_not: String
+  sender_in: [String]
+  sender_not_in: [String]
+  sender_contains: String
+  sender_not_contains: String
+  sender_starts_with: String
+  sender_ends_with: String
+  sender_not_starts_with: String
+  sender_not_ends_with: String
+  receiver: String
+  receiver_not: String
+  receiver_in: [String]
+  receiver_not_in: [String]
+  receiver_contains: String
+  receiver_not_contains: String
+  receiver_starts_with: String
+  receiver_ends_with: String
+  receiver_not_starts_with: String
+  receiver_not_ends_with: String
+  owner: String
+  owner_not: String
+  owner_in: [String]
+  owner_not_in: [String]
+  owner_contains: String
+  owner_not_contains: String
+  owner_starts_with: String
+  owner_ends_with: String
+  owner_not_starts_with: String
+  owner_not_ends_with: String
+  assets: BigInt
+  assets_not: BigInt
+  assets_in: [BigInt]
+  assets_not_in: [BigInt]
+  assets_gt: BigInt
+  assets_lt: BigInt
+  assets_gte: BigInt
+  assets_lte: BigInt
+  shares: BigInt
+  shares_not: BigInt
+  shares_in: [BigInt]
+  shares_not_in: [BigInt]
+  shares_gt: BigInt
+  shares_lt: BigInt
+  shares_gte: BigInt
+  shares_lte: BigInt
+  blockNumber: BigInt
+  blockNumber_not: BigInt
+  blockNumber_in: [BigInt]
+  blockNumber_not_in: [BigInt]
+  blockNumber_gt: BigInt
+  blockNumber_lt: BigInt
+  blockNumber_gte: BigInt
+  blockNumber_lte: BigInt
+  timestamp: BigInt
+  timestamp_not: BigInt
+  timestamp_in: [BigInt]
+  timestamp_not_in: [BigInt]
+  timestamp_gt: BigInt
+  timestamp_lt: BigInt
+  timestamp_gte: BigInt
+  timestamp_lte: BigInt
+  transactionHash: String
+  transactionHash_not: String
+  transactionHash_in: [String]
+  transactionHash_not_in: [String]
+  transactionHash_contains: String
+  transactionHash_not_contains: String
+  transactionHash_starts_with: String
+  transactionHash_ends_with: String
+  transactionHash_not_starts_with: String
+  transactionHash_not_ends_with: String
+}
+
+type strategyEvents {
+  id: String!
+  strategy: String!
+  eventType: String!
+  amount: BigInt
+  allocation: BigInt
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  transactionHash: String!
+}
+
+type strategyEventsPage {
+  items: [strategyEvents!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input strategyEventsFilter {
+  AND: [strategyEventsFilter]
+  OR: [strategyEventsFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  strategy: String
+  strategy_not: String
+  strategy_in: [String]
+  strategy_not_in: [String]
+  strategy_contains: String
+  strategy_not_contains: String
+  strategy_starts_with: String
+  strategy_ends_with: String
+  strategy_not_starts_with: String
+  strategy_not_ends_with: String
+  eventType: String
+  eventType_not: String
+  eventType_in: [String]
+  eventType_not_in: [String]
+  eventType_contains: String
+  eventType_not_contains: String
+  eventType_starts_with: String
+  eventType_ends_with: String
+  eventType_not_starts_with: String
+  eventType_not_ends_with: String
+  amount: BigInt
+  amount_not: BigInt
+  amount_in: [BigInt]
+  amount_not_in: [BigInt]
+  amount_gt: BigInt
+  amount_lt: BigInt
+  amount_gte: BigInt
+  amount_lte: BigInt
+  allocation: BigInt
+  allocation_not: BigInt
+  allocation_in: [BigInt]
+  allocation_not_in: [BigInt]
+  allocation_gt: BigInt
+  allocation_lt: BigInt
+  allocation_gte: BigInt
+  allocation_lte: BigInt
+  blockNumber: BigInt
+  blockNumber_not: BigInt
+  blockNumber_in: [BigInt]
+  blockNumber_not_in: [BigInt]
+  blockNumber_gt: BigInt
+  blockNumber_lt: BigInt
+  blockNumber_gte: BigInt
+  blockNumber_lte: BigInt
+  timestamp: BigInt
+  timestamp_not: BigInt
+  timestamp_in: [BigInt]
+  timestamp_not_in: [BigInt]
+  timestamp_gt: BigInt
+  timestamp_lt: BigInt
+  timestamp_gte: BigInt
+  timestamp_lte: BigInt
+  transactionHash: String
+  transactionHash_not: String
+  transactionHash_in: [String]
+  transactionHash_not_in: [String]
+  transactionHash_contains: String
+  transactionHash_not_contains: String
+  transactionHash_starts_with: String
+  transactionHash_ends_with: String
+  transactionHash_not_starts_with: String
+  transactionHash_not_ends_with: String
+}
+
+type rebalances {
+  id: String!
+  strategies: [String!]!
+  allocations: [BigInt!]!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  transactionHash: String!
+}
+
+type rebalancesPage {
+  items: [rebalances!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input rebalancesFilter {
+  AND: [rebalancesFilter]
+  OR: [rebalancesFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  strategies: [String]
+  strategies_not: [String]
+  strategies_has: String
+  strategies_not_has: String
+  allocations: [BigInt]
+  allocations_not: [BigInt]
+  allocations_has: BigInt
+  allocations_not_has: BigInt
+  blockNumber: BigInt
+  blockNumber_not: BigInt
+  blockNumber_in: [BigInt]
+  blockNumber_not_in: [BigInt]
+  blockNumber_gt: BigInt
+  blockNumber_lt: BigInt
+  blockNumber_gte: BigInt
+  blockNumber_lte: BigInt
+  timestamp: BigInt
+  timestamp_not: BigInt
+  timestamp_in: [BigInt]
+  timestamp_not_in: [BigInt]
+  timestamp_gt: BigInt
+  timestamp_lt: BigInt
+  timestamp_gte: BigInt
+  timestamp_lte: BigInt
+  transactionHash: String
+  transactionHash_not: String
+  transactionHash_in: [String]
+  transactionHash_not_in: [String]
+  transactionHash_contains: String
+  transactionHash_not_contains: String
+  transactionHash_starts_with: String
+  transactionHash_ends_with: String
+  transactionHash_not_starts_with: String
+  transactionHash_not_ends_with: String
+}
+
+type userBalances {
+  id: String!
+  user: String!
+  vault: String!
+  shares: BigInt!
+  updatedAt: BigInt!
+  blockNumber: BigInt!
+}
+
+type userBalancesPage {
+  items: [userBalances!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input userBalancesFilter {
+  AND: [userBalancesFilter]
+  OR: [userBalancesFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  user: String
+  user_not: String
+  user_in: [String]
+  user_not_in: [String]
+  user_contains: String
+  user_not_contains: String
+  user_starts_with: String
+  user_ends_with: String
+  user_not_starts_with: String
+  user_not_ends_with: String
+  vault: String
+  vault_not: String
+  vault_in: [String]
+  vault_not_in: [String]
+  vault_contains: String
+  vault_not_contains: String
+  vault_starts_with: String
+  vault_ends_with: String
+  vault_not_starts_with: String
+  vault_not_ends_with: String
+  shares: BigInt
+  shares_not: BigInt
+  shares_in: [BigInt]
+  shares_not_in: [BigInt]
+  shares_gt: BigInt
+  shares_lt: BigInt
+  shares_gte: BigInt
+  shares_lte: BigInt
+  updatedAt: BigInt
+  updatedAt_not: BigInt
+  updatedAt_in: [BigInt]
+  updatedAt_not_in: [BigInt]
+  updatedAt_gt: BigInt
+  updatedAt_lt: BigInt
+  updatedAt_gte: BigInt
+  updatedAt_lte: BigInt
+  blockNumber: BigInt
+  blockNumber_not: BigInt
+  blockNumber_in: [BigInt]
+  blockNumber_not_in: [BigInt]
+  blockNumber_gt: BigInt
+  blockNumber_lt: BigInt
+  blockNumber_gte: BigInt
+  blockNumber_lte: BigInt
+}
+
+type yieldHarvests {
+  id: String!
+  totalYield: BigInt!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  transactionHash: String!
+}
+
+type yieldHarvestsPage {
+  items: [yieldHarvests!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input yieldHarvestsFilter {
+  AND: [yieldHarvestsFilter]
+  OR: [yieldHarvestsFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  totalYield: BigInt
+  totalYield_not: BigInt
+  totalYield_in: [BigInt]
+  totalYield_not_in: [BigInt]
+  totalYield_gt: BigInt
+  totalYield_lt: BigInt
+  totalYield_gte: BigInt
+  totalYield_lte: BigInt
+  blockNumber: BigInt
+  blockNumber_not: BigInt
+  blockNumber_in: [BigInt]
+  blockNumber_not_in: [BigInt]
+  blockNumber_gt: BigInt
+  blockNumber_lt: BigInt
+  blockNumber_gte: BigInt
+  blockNumber_lte: BigInt
+  timestamp: BigInt
+  timestamp_not: BigInt
+  timestamp_in: [BigInt]
+  timestamp_not_in: [BigInt]
+  timestamp_gt: BigInt
+  timestamp_lt: BigInt
+  timestamp_gte: BigInt
+  timestamp_lte: BigInt
+  transactionHash: String
+  transactionHash_not: String
+  transactionHash_in: [String]
+  transactionHash_not_in: [String]
+  transactionHash_contains: String
+  transactionHash_not_contains: String
+  transactionHash_starts_with: String
+  transactionHash_ends_with: String
+  transactionHash_not_starts_with: String
+  transactionHash_not_ends_with: String
+}

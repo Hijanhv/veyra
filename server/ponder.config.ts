@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { createConfig } from "ponder";
 import { VeyraVaultAbi } from "./src/abis/VeyraVault.js";
 
@@ -7,7 +8,13 @@ const parseAddresses = (v?: string): `0x${string}`[] | undefined =>
     .map((s) => s.trim())
     .filter(Boolean) as `0x${string}`[] | undefined;
 
+const database = process.env.DATABASE_URL
+  ? { kind: "postgres" as const, connectionString: process.env.DATABASE_URL }
+  : undefined;
+
 export default createConfig({
+  // Use Postgres if DATABASE_URL is provided, else default to embedded
+  ...(database ? { database } : {}),
   chains: {
     sonic: {
       id: Number(process.env.CHAIN_ID ?? 146),

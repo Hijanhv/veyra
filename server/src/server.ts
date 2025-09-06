@@ -12,14 +12,12 @@ dotenv.config();
  * Veyra API server - AI-powered yield optimization with automated rebalancing
  */
 async function start() {
-  const fastify = Fastify({
-    logger: {
-      level: 'info',
-      transport: {
-        target: 'pino-pretty'
-      }
-    }
-  });
+  const loggerOptions: any = { level: 'info' };
+  // Enable pretty logs only if explicitly requested and module is installed
+  if (process.env.PRETTY_LOGS === 'true') {
+    loggerOptions.transport = { target: 'pino-pretty' };
+  }
+  const fastify = Fastify({ logger: loggerOptions });
 
   // Initialize AI-powered scheduler if enabled
   let scheduler: SchedulerService | null = null;
@@ -42,9 +40,9 @@ async function start() {
   fastify.get('/health', async () => {
     const aiStatus = process.env.ANTHROPIC_API_KEY ? 'enabled' : 'disabled';
     const schedulerStatus = scheduler ? scheduler.getStatus() : { isRunning: false };
-    
-    return { 
-      status: 'operational', 
+
+    return {
+      status: 'operational',
       timestamp: new Date().toISOString(),
       ai: aiStatus,
       scheduler: schedulerStatus,
