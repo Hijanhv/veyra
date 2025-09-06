@@ -84,10 +84,12 @@ contract MockRings is IRingsAdapter {
         return usdcIn;
     }
 
-    function redeemScUsd(
-        uint256 scAmount
-    ) external override returns (uint256) {
-        IERC20(address(scToken)).safeTransferFrom(msg.sender, address(this), scAmount);
+    function redeemScUsd(uint256 scAmount) external override returns (uint256) {
+        IERC20(address(scToken)).safeTransferFrom(
+            msg.sender,
+            address(this),
+            scAmount
+        );
         DummyToken(usdc).mint(msg.sender, scAmount);
         return scAmount;
     }

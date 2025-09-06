@@ -19,21 +19,21 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
   fastify.get<{ Querystring: { vaultId?: Address } }>(
     '/insights',
     async (request: FastifyRequest<{ Querystring: { vaultId?: Address } }>, reply: FastifyReply) => {
-    try {
-      // Figure out which vault to analyze - use the vaultId parameter or fall back to default
-      const { vaultId } = request.query;
-      const targetVault = vaultId || process.env.DEFAULT_VAULT_ID;
-      if (!targetVault) {
-        reply.status(400).send({ success: false, error: 'Missing vaultId parameter' });
-        return;
+      try {
+        // Figure out which vault to analyze - use the vaultId parameter or fall back to default
+        const { vaultId } = request.query;
+        const targetVault = vaultId || process.env.DEFAULT_VAULT_ID;
+        if (!targetVault) {
+          reply.status(400).send({ success: false, error: 'Missing vaultId parameter' });
+          return;
+        }
+        const insights = await analytics.generateMarketInsights(targetVault);
+        return { success: true, data: insights };
+      } catch (error) {
+        fastify.log.error(error);
+        reply.status(500).send({ success: false, error: 'Failed to generate insights' });
       }
-      const insights = await analytics.generateMarketInsights(targetVault);
-      return { success: true, data: insights };
-    } catch (error) {
-      fastify.log.error(error);
-      reply.status(500).send({ success: false, error: 'Failed to generate insights' });
-    }
-  });
+    });
 
   // Get yield predictions for all strategies in a vault. Shows where yields
   // might be heading in the next week and month, plus confidence levels.
@@ -41,18 +41,18 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
   fastify.get<{ Querystring: { vaultId?: Address } }>(
     '/predictions',
     async (request: FastifyRequest<{ Querystring: { vaultId?: Address } }>, reply: FastifyReply) => {
-    try {
-      const { vaultId } = request.query;
-      const targetVault = vaultId || process.env.DEFAULT_VAULT_ID;
-      if (!targetVault) {
-        reply.status(400).send({ success: false, error: 'Missing vaultId parameter' });
-        return;
+      try {
+        const { vaultId } = request.query;
+        const targetVault = vaultId || process.env.DEFAULT_VAULT_ID;
+        if (!targetVault) {
+          reply.status(400).send({ success: false, error: 'Missing vaultId parameter' });
+          return;
+        }
+        const predictions = await analytics.predictYieldTrends(targetVault);
+        return { success: true, data: predictions };
+      } catch (error) {
+        fastify.log.error(error);
+        reply.status(500).send({ success: false, error: 'Failed to generate predictions' });
       }
-      const predictions = await analytics.predictYieldTrends(targetVault);
-      return { success: true, data: predictions };
-    } catch (error) {
-      fastify.log.error(error);
-      reply.status(500).send({ success: false, error: 'Failed to generate predictions' });
-    }
-  });
+    });
 }

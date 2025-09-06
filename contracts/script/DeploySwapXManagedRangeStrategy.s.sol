@@ -31,7 +31,10 @@ contract DeploySwapXManagedRangeStrategy is Script {
         );
         vm.stopBroadcast();
 
-        console2.log("SwapXManagedRangeStrategy deployed at:", address(strategy));
+        console2.log(
+            "SwapXManagedRangeStrategy deployed at:",
+            address(strategy)
+        );
         console2.log("S Token:", sToken);
         console2.log("Vault:", vault);
         console2.log("SwapX Adapter:", swapxAdapter);

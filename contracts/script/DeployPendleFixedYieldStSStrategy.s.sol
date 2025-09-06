@@ -30,7 +30,10 @@ contract DeployPendleFixedYieldStSStrategy is Script {
 
         vm.stopBroadcast();
 
-        console2.log("PendleFixedYieldStSStrategy deployed at:", address(strategy));
+        console2.log(
+            "PendleFixedYieldStSStrategy deployed at:",
+            address(strategy)
+        );
         console2.log("stS Token:", stSToken);
         console2.log("Vault:", vault);
         console2.log("Pendle Adapter:", pendleAdapter);

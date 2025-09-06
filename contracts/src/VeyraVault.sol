@@ -26,6 +26,10 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
     event StrategyWithdrawn(address indexed strategy, uint256 amount);
     event RebalanceExecuted(address[] strategies, uint256[] allocations);
     event YieldHarvested(uint256 totalYield);
+    // New granular events for easier off-chain indexing
+    event StrategyDeposit(address indexed strategy, uint256 assets);
+    event StrategyWithdrawal(address indexed strategy, uint256 assets);
+    event StrategyAllocationUpdated(address indexed strategy, uint256 bps);
 
     /*//////////////////////////////////////////////////////////////
                                STORAGE
@@ -104,6 +108,7 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
         totalAllocation += allocation;
 
         emit StrategyAllocated(address(strategy), allocation);
+        emit StrategyAllocationUpdated(address(strategy), allocation);
     }
 
     /**
@@ -122,6 +127,10 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
         for (uint256 i = 0; i < newAllocations.length; i++) {
             totalNewAllocation += newAllocations[i];
             allocations[strategies[i]] = newAllocations[i];
+            emit StrategyAllocationUpdated(
+                address(strategies[i]),
+                newAllocations[i]
+            );
         }
 
         require(totalNewAllocation <= 10000, "Total allocation exceeded");
@@ -224,6 +233,10 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
                         strategyAmount
                     );
                     strategies[i].deposit(strategyAmount);
+                    emit StrategyDeposit(
+                        address(strategies[i]),
+                        strategyAmount
+                    );
                 }
             }
         }
@@ -243,6 +256,7 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
                     : remaining;
                 strategies[i].withdraw(toWithdraw);
                 remaining -= toWithdraw;
+                emit StrategyWithdrawal(address(strategies[i]), toWithdraw);
             }
         }
     }

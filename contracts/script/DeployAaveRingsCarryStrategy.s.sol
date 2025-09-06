@@ -19,7 +19,7 @@ contract DeployAaveRingsCarryStrategy is Script {
         uint256 borrowRatio = vm.envUint("BORROW_RATIO"); // e.g., 5000 for 50%
 
         vm.startBroadcast(deployerPrivateKey);
-        
+
         AaveRingsCarryStrategy strategy = new AaveRingsCarryStrategy(
             wsToken,
             vault,
@@ -28,7 +28,7 @@ contract DeployAaveRingsCarryStrategy is Script {
             usdc,
             borrowRatio
         );
-        
+
         vm.stopBroadcast();
 
         console2.log("AaveRingsCarryStrategy deployed at:", address(strategy));

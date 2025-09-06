@@ -19,7 +19,7 @@ contract DeployRingsAaveLoopStrategy is Script {
         uint256 maxIterations = vm.envUint("MAX_ITERATIONS"); // e.g., 3
 
         vm.startBroadcast(deployerPrivateKey);
-        
+
         RingsAaveLoopStrategy strategy = new RingsAaveLoopStrategy(
             usdc,
             vault,
@@ -28,7 +28,7 @@ contract DeployRingsAaveLoopStrategy is Script {
             targetHf,
             maxIterations
         );
-        
+
         vm.stopBroadcast();
 
         console2.log("RingsAaveLoopStrategy deployed at:", address(strategy));

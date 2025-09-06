@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import type { RecommendedAllocation, StrategyAnalysis } from '../types/ai.js';
 import type { StrategyDetails } from '../types/vault.js';
 import type { Address } from '../types/common.js';
+import { Repository } from './db/Repository.js';
 
 dotenv.config();
 
@@ -18,7 +19,7 @@ dotenv.config();
  * using Claude Sonnet 4 to analyze DeFi strategies and market conditions
  */
 export class InvestmentAgent {
-  private aiModel = anthropic('claude-3-5-sonnet-20241022');
+  private aiModel = anthropic('claude-sonnet-4-20250514');
 
   constructor(private readonly vaultService: VaultService) {
     if (!process.env.ANTHROPIC_API_KEY) {
@@ -141,7 +142,7 @@ export class InvestmentAgent {
           break;
         case 'rings':
         case 'lending':
-          smartContractRisk += 0.1; // Simpler lending protocols
+          smartContractRisk += 0.1; // Lower complexity protocols
           break;
       }
     }
@@ -177,7 +178,7 @@ export class InvestmentAgent {
         complexity += 0.5; // Automated range management
         break;
       case 'StSBeetsStrategy':
-        complexity += 0.3; // Simple liquidity provision
+        complexity += 0.3; // S/stS liquidity provision
         break;
       default:
         complexity += 0.2;
@@ -229,7 +230,7 @@ export class InvestmentAgent {
       });
     }
 
-    return {
+    const response = {
       vaultId,
       recommendedAllocation: allocations,
       expectedApy: result.object.expectedApy,
@@ -238,6 +239,25 @@ export class InvestmentAgent {
       confidence: result.object.confidence,
       marketContext: result.object.marketContext
     };
+
+    // Persist decision off-chain for observability (if DB configured)
+    try {
+      const chainId = Number(process.env.CHAIN_ID || 0);
+      await Repository.insertAgentDecision({
+        chainId,
+        vault: vaultId,
+        allocations,
+        expectedApyBp: response.expectedApy,
+        riskScore: response.riskScore,
+        confidence: response.confidence,
+        reasoning: response.reasoning,
+        marketContext: response.marketContext
+      });
+    } catch (e) {
+      console.warn('[Agent] Failed to persist decision', e);
+    }
+
+    return response;
   }
 
   /**
@@ -364,7 +384,7 @@ Your task is to optimally allocate 10,000 basis points (100%) across these strat
       recommendedAllocation: allocs,
       expectedApy: avgApy,
       riskScore: 0.5,
-      reasoning: 'AI system unavailable, using equal allocation fallback strategy.',
+      reasoning: 'AI system unavailable. Using equal allocation fallback.',
       confidence: 0.3,
       marketContext: 'Unable to assess due to AI system unavailability'
     };

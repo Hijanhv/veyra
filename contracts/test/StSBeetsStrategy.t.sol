@@ -148,7 +148,11 @@ contract MockBeetsAdapter is IBeetsAdapter {
         uint256 /*minAmtB*/
     ) external override returns (uint256 amtA, uint256 amtB) {
         // take back LP tokens from user
-        IERC20(address(lpTokenInternal)).safeTransferFrom(msg.sender, address(this), lpAmount);
+        IERC20(address(lpTokenInternal)).safeTransferFrom(
+            msg.sender,
+            address(this),
+            lpAmount
+        );
 
         // figure out how much to return based on what they originally put in
         uint256 totalSupplied = suppliedS[msg.sender] + suppliedStS[msg.sender];
@@ -173,7 +177,11 @@ contract MockBeetsAdapter is IBeetsAdapter {
         address /*gauge*/,
         uint256 lpAmount
     ) external override {
-        IERC20(address(lpTokenInternal)).safeTransferFrom(msg.sender, address(this), lpAmount);
+        IERC20(address(lpTokenInternal)).safeTransferFrom(
+            msg.sender,
+            address(this),
+            lpAmount
+        );
         staked[msg.sender] += lpAmount;
     }
 

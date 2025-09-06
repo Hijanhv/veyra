@@ -34,9 +34,9 @@ export class RebalancingService {
     if (!rpcUrl) {
       throw new Error('SONIC_RPC_URL is required');
     }
-    
+
     this.provider = new ethers.JsonRpcProvider(rpcUrl);
-    
+
     // Initialize wallet if private key is provided (for actual rebalancing)
     if (process.env.STRATEGY_MANAGER_PRIVATE_KEY) {
       this.wallet = new ethers.Wallet(process.env.STRATEGY_MANAGER_PRIVATE_KEY, this.provider);
@@ -50,13 +50,13 @@ export class RebalancingService {
     try {
       // Get current allocations
       const currentAllocations = await this.vaultService.getStrategyAllocations(vaultId);
-      
+
       // Get AI recommendation
       const recommendation = await this.investmentAgent.getOptimalAllocation(vaultId);
-      
+
       // Check if rebalancing is needed (threshold: 5% difference)
       const needsRebalancing = this.shouldRebalance(currentAllocations, recommendation.recommendedAllocation);
-      
+
       if (!needsRebalancing) {
         return {
           success: true,
@@ -70,7 +70,7 @@ export class RebalancingService {
       // Execute rebalancing transaction if wallet is available
       if (this.wallet && recommendation.confidence > 0.7) {
         const txHash = await this.executeRebalanceTransaction(vaultId, recommendation.recommendedAllocation);
-        
+
         return {
           success: true,
           transactionHash: txHash,
@@ -88,7 +88,7 @@ export class RebalancingService {
           reasoning: `AI recommends rebalancing but ${!this.wallet ? 'no wallet configured' : 'confidence too low'}: ${recommendation.reasoning}`
         };
       }
-      
+
     } catch (error) {
       return {
         success: false,
@@ -109,16 +109,16 @@ export class RebalancingService {
     recommended: Record<Address, BasisPoints>
   ): boolean {
     const threshold = 500; // 5% in basis points
-    
+
     for (const [strategy, recommendedAlloc] of Object.entries(recommended)) {
       const currentAlloc = current[strategy] || 0;
       const difference = Math.abs(recommendedAlloc - currentAlloc);
-      
+
       if (difference > threshold) {
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -144,10 +144,10 @@ export class RebalancingService {
     const vault = new ethers.Contract(vaultId, [
       'function strategies(uint256) view returns (address)'
     ], this.provider);
-    
+
     const strategies: Address[] = [];
     let index = 0;
-    
+
     // Get all strategies
     while (true) {
       try {
@@ -168,11 +168,11 @@ export class RebalancingService {
 
     // Execute rebalancing transaction
     const tx = await vaultContract.rebalance(allocationArray, {
-      gasLimit: 500000 // Set reasonable gas limit
+      gasLimit: 500000 // reasonable gas limit
     });
 
     await tx.wait();
-    
+
     return tx.hash;
   }
 
@@ -182,7 +182,7 @@ export class RebalancingService {
   async getRebalanceRecommendation(vaultId: string) {
     const currentAllocations = await this.vaultService.getStrategyAllocations(vaultId);
     const recommendation = await this.investmentAgent.getOptimalAllocation(vaultId);
-    
+
     return {
       currentAllocations,
       recommendedAllocations: recommendation.recommendedAllocation,

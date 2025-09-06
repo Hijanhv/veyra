@@ -7,6 +7,7 @@ import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/
 import {BaseStrategy} from "../strategies/BaseStrategy.sol";
 import {ISwapXAdapter} from "../interfaces/adapters/ISwapXAdapter.sol";
 import {IStSAdapter} from "../interfaces/adapters/IStSAdapter.sol";
+import {IStrategyIntrospection} from "../interfaces/IStrategyIntrospection.sol";
 
 /// @title SwapXManagedRangeStrategy
 /// @notice Strategy that provides liquidity to SwapX concentrated liquidity pools.
@@ -19,7 +20,7 @@ import {IStSAdapter} from "../interfaces/adapters/IStSAdapter.sol";
 /// fees for liquidity providers. This strategy makes it easy for vaults to
 /// use these pools without worrying about complex range management.
 /// Similar to BEETS strategy but uses SwapX and benefits from ALM
-contract SwapXManagedRangeStrategy is BaseStrategy {
+contract SwapXManagedRangeStrategy is BaseStrategy, IStrategyIntrospection {
     using SafeERC20 for IERC20;
 
     /// @notice Adapter for working with SwapX pools and gauges
@@ -126,7 +127,10 @@ contract SwapXManagedRangeStrategy is BaseStrategy {
                 }
             }
         }
-        require(ASSET.balanceOf(address(this)) >= amount, "insufficient after exit");
+        require(
+            ASSET.balanceOf(address(this)) >= amount,
+            "insufficient after exit"
+        );
         ASSET.safeTransfer(VAULT, amount);
     }
 
@@ -152,10 +156,45 @@ contract SwapXManagedRangeStrategy is BaseStrategy {
         return ASSET.balanceOf(address(this));
     }
 
-    /// @notice Get current yield percentage. Just returns SwapX pool APR
-    ///         which includes fees and rewards (scaled by 1e18). External services
-    ///         can calculate more accurate yield from harvested rewards
+    /// @notice Get current yield percentage in basis points (1% = 100 bps)
+    /// @dev Adapter returns APR scaled by 1e18. Convert to bps by / 1e14
     function apy() external view override returns (uint256) {
-        return SWAPX.getPoolApr(POOL);
+        return SWAPX.getPoolApr(POOL) / 1e14;
+    }
+
+    /// @notice Return component list for off-chain introspection
+    function components()
+        external
+        view
+        override
+        returns (
+            address asset,
+            uint8 schemaVersion,
+            IStrategyIntrospection.Component[] memory comps
+        )
+    {
+        asset = address(ASSET);
+        schemaVersion = 1;
+        comps = new IStrategyIntrospection.Component[](2);
+        // StS
+        comps[0] = IStrategyIntrospection.Component({
+            kind: IStrategyIntrospection.ComponentKind.StS,
+            adapter: address(STS),
+            token0: address(0),
+            token1: address(0),
+            pool: address(0),
+            gauge: address(0),
+            extra: ""
+        });
+        // SwapX DEX
+        comps[1] = IStrategyIntrospection.Component({
+            kind: IStrategyIntrospection.ComponentKind.Dex,
+            adapter: address(SWAPX),
+            token0: address(ASSET),
+            token1: STS_TOKEN,
+            pool: POOL,
+            gauge: GAUGE,
+            extra: ""
+        });
     }
 }

@@ -31,4 +31,9 @@ export const getStrategyRecommendation = (vaultId: string) => http<ApiResponse<a
 export const getAIRebalance = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/ai-rebalance`)
 export const postAIRebalance = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/ai-rebalance`, { method: 'POST' })
 export const getStrategyDetails = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/strategies/analysis`)
-
+export const getVaultOverview = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/overview`)
+export const getVaultFlows = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/flows`)
+export const getAllocHistory = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/allocations/history`)
+export const getHarvests = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/harvests`)
+export const getAgentDecisions = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/agent/decisions`)
+export const getPositions = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/positions`)

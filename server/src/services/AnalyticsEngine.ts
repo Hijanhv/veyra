@@ -153,7 +153,7 @@ export class AnalyticsEngine {
   }
 
   /**
-   * Tries to predict where yields are going using simple mean reversion.
+   * Tries to predict where yields are going using mean reversion.
    * High yields usually drop, low yields usually rise.
    */
   async predictYieldTrends(vaultId: string): Promise<YieldPredictions> {

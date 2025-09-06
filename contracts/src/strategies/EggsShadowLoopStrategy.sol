@@ -8,6 +8,7 @@ import {BaseStrategy} from "../strategies/BaseStrategy.sol";
 import {IEggsAdapter} from "../interfaces/adapters/IEggsAdapter.sol";
 import {IShadowAdapter} from "../interfaces/adapters/IShadowAdapter.sol";
 import {IStSAdapter} from "../interfaces/adapters/IStSAdapter.sol";
+import {IStrategyIntrospection} from "../interfaces/IStrategyIntrospection.sol";
 
 /// @title EggsShadowLoopStrategy
 /// @notice Leveraged yield farming strategy using Eggs Finance and Shadow Exchange.
@@ -15,7 +16,7 @@ import {IStSAdapter} from "../interfaces/adapters/IStSAdapter.sol";
 /// splits borrowed S into S and stS, provides liquidity to Shadow's S/stS pool,
 /// and stakes the LP tokens for rewards. Can loop multiple times until reaching
 /// target health factor for more leverage while managing risk
-contract EggsShadowLoopStrategy is BaseStrategy {
+contract EggsShadowLoopStrategy is BaseStrategy, IStrategyIntrospection {
     using SafeERC20 for IERC20;
 
     IEggsAdapter public immutable EGGS;
@@ -257,5 +258,51 @@ contract EggsShadowLoopStrategy is BaseStrategy {
         // convert Shadow APR from 1e18 to basis points by dividing by 1e14
         uint256 shadowBp = shadowApr / 1e14;
         return net + shadowBp;
+    }
+
+    /// @notice Return component list for off-chain introspection
+    function components()
+        external
+        view
+        override
+        returns (
+            address asset,
+            uint8 schemaVersion,
+            IStrategyIntrospection.Component[] memory comps
+        )
+    {
+        asset = address(ASSET);
+        schemaVersion = 1;
+        comps = new IStrategyIntrospection.Component[](3);
+        // Eggs (acts like lending for our reads but distinct kind)
+        comps[0] = IStrategyIntrospection.Component({
+            kind: IStrategyIntrospection.ComponentKind.Eggs,
+            adapter: address(EGGS),
+            token0: address(0),
+            token1: address(0),
+            pool: address(0),
+            gauge: address(0),
+            extra: ""
+        });
+        // StS
+        comps[1] = IStrategyIntrospection.Component({
+            kind: IStrategyIntrospection.ComponentKind.StS,
+            adapter: address(STS),
+            token0: address(0),
+            token1: address(0),
+            pool: address(0),
+            gauge: address(0),
+            extra: ""
+        });
+        // Shadow DEX
+        comps[2] = IStrategyIntrospection.Component({
+            kind: IStrategyIntrospection.ComponentKind.Dex,
+            adapter: address(SHADOW),
+            token0: address(ASSET),
+            token1: STS_TOKEN,
+            pool: POOL,
+            gauge: GAUGE,
+            extra: ""
+        });
     }
 }

@@ -47,7 +47,10 @@ contract DeployAllStrategies is Script {
             beetsAdapter,
             beetsPool
         );
-        console2.log("   StSBeetsStrategy deployed at:", address(stSBeetsStrategy));
+        console2.log(
+            "   StSBeetsStrategy deployed at:",
+            address(stSBeetsStrategy)
+        );
         console2.log("");
 
         // Deploy AaveRingsCarryStrategy
@@ -60,7 +63,10 @@ contract DeployAllStrategies is Script {
             usdc,
             borrowRatio
         );
-        console2.log("   AaveRingsCarryStrategy deployed at:", address(carryStrategy));
+        console2.log(
+            "   AaveRingsCarryStrategy deployed at:",
+            address(carryStrategy)
+        );
         console2.log("");
 
         // Deploy RingsAaveLoopStrategy
@@ -73,7 +79,10 @@ contract DeployAllStrategies is Script {
             targetHf,
             maxIterations
         );
-        console2.log("   RingsAaveLoopStrategy deployed at:", address(loopStrategy));
+        console2.log(
+            "   RingsAaveLoopStrategy deployed at:",
+            address(loopStrategy)
+        );
         console2.log("");
 
         vm.stopBroadcast();

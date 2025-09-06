@@ -7,6 +7,7 @@ import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/
 import {BaseStrategy} from "../strategies/BaseStrategy.sol";
 import {IPendleAdapter} from "../interfaces/adapters/IPendleAdapter.sol";
 import {ILendingAdapter} from "../interfaces/adapters/ILendingAdapter.sol";
+import {IStrategyIntrospection} from "../interfaces/IStrategyIntrospection.sol";
 
 /// @title PendleFixedYieldStSStrategy
 /// @notice Fixed-yield strategy using Pendle to sell future yield upfront.
@@ -20,7 +21,7 @@ import {ILendingAdapter} from "../interfaces/adapters/ILendingAdapter.sol";
 /// stable coins earn extra yield in lending protocol. When withdrawing,
 /// redeem principal tokens and convert stable coins back to stS.
 /// Result: more predictable returns than normal staking
-contract PendleFixedYieldStSStrategy is BaseStrategy {
+contract PendleFixedYieldStSStrategy is BaseStrategy, IStrategyIntrospection {
     using SafeERC20 for IERC20;
 
     /// @notice Pendle adapter for splitting stS into principal/yield tokens,
@@ -176,5 +177,41 @@ contract PendleFixedYieldStSStrategy is BaseStrategy {
     ///         The fixed yield from Pendle is locked in at deposit time so not shown here
     function apy() external view override returns (uint256) {
         return LENDING.getSupplyApy(STABLE);
+    }
+
+    /// @notice Return component list for off-chain introspection
+    function components()
+        external
+        view
+        override
+        returns (
+            address asset,
+            uint8 schemaVersion,
+            IStrategyIntrospection.Component[] memory comps
+        )
+    {
+        asset = address(ASSET);
+        schemaVersion = 1;
+        comps = new IStrategyIntrospection.Component[](2);
+        // Pendle
+        comps[0] = IStrategyIntrospection.Component({
+            kind: IStrategyIntrospection.ComponentKind.Pendle,
+            adapter: address(PENDLE),
+            token0: address(0),
+            token1: address(0),
+            pool: address(0),
+            gauge: address(0),
+            extra: ""
+        });
+        // Lending on stable coin
+        comps[1] = IStrategyIntrospection.Component({
+            kind: IStrategyIntrospection.ComponentKind.Lending,
+            adapter: address(LENDING),
+            token0: STABLE, // supply token
+            token1: address(0), // borrow token (none)
+            pool: address(0),
+            gauge: address(0),
+            extra: ""
+        });
     }
 }

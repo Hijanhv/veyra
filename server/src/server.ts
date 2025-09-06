@@ -47,7 +47,8 @@ async function start() {
       status: 'operational', 
       timestamp: new Date().toISOString(),
       ai: aiStatus,
-      scheduler: schedulerStatus
+      scheduler: schedulerStatus,
+      indexer: { implementation: 'ponder', managedByServer: false }
     };
   });
 

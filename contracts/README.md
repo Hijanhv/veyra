@@ -45,6 +45,13 @@ Each strategy follows a standardized interface:
 - `totalAssets()`: Calculate total value managed by strategy
 - `apy()`: Get current yield percentage
 
+### Introspection (for off-chain analytics)
+- All strategies implement `IStrategyIntrospection.components()` which returns:
+  - `asset` (base asset of the strategy)
+  - `schemaVersion` (uint8)
+  - `Component[]` with typed entries (Lending, Eggs, Rings, StS, Pendle, Dex, Custom)
+- Off-chain services (server/) use this to discover adapters and fetch live metrics.
+
 ## Deployment Scripts
 
 Pre-built deployment scripts for each strategy:
@@ -55,6 +62,44 @@ Pre-built deployment scripts for each strategy:
 - `DeployPendleFixedYieldStSStrategy.s.sol`
 - `DeploySwapXManagedRangeStrategy.s.sol`
 - `DeployAllStrategies.s.sol` - Deploy all strategies at once
+
+### Mock Deployment on Sonic
+For a full mock setup on Sonic (mock tokens, mock adapters, per-asset vaults, and all strategies wired together), use:
+
+```shell
+# Set required env in contracts/.env or export in your shell
+export PRIVATE_KEY=0x...
+# optional: set a distinct strategy manager address
+# export STRATEGY_MANAGER=0xYourEOA
+
+cd contracts
+forge script script/DeployMockSuite.s.sol:DeployMockSuite \
+  --rpc-url sonic \
+  --broadcast -vvvv
+```
+
+This deploys:
+- Mock tokens: `S`, `stS`, `wS`, `USDC`
+- Mock adapters for: StS, BEETS, SwapX, Rings, Lending, Pendle, Eggs, Shadow
+- Four ERC-4626 vaults (one per base asset)
+- All strategies wired to mocks and registered in their matching vaults
+
+### One command: deploy and update addresses
+
+Use the single helper to deploy and auto-update `contracts/DEPLOYED_ADDRESSES.md` and `server/.env`:
+
+```bash
+# From repo root
+SONIC_RPC_URL=$SONIC_RPC_URL PRIVATE_KEY=0x... CHAIN_ID=146 node scripts/deploy-mock.mjs
+```
+
+It will:
+- Run the Foundry mock deployment
+- Append a “Latest Deployment” section (grouped by contract name) to `contracts/DEPLOYED_ADDRESSES.md`
+- Update `server/.env` with `VAULT_ADDRESSES` (all deployed vaults), `DEFAULT_VAULT_ID` (first vault), and `CHAIN_ID`
+
+Notes:
+- The script loads env from `contracts/.env` and `server/.env` if present. It uses `SONIC_RPC_URL` for the RPC endpoint.
 
 ## Testing
 

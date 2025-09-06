@@ -7,6 +7,7 @@ import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/
 import {BaseStrategy} from "../strategies/BaseStrategy.sol";
 import {IRingsAdapter} from "../interfaces/adapters/IRingsAdapter.sol";
 import {ILendingAdapter} from "../interfaces/adapters/ILendingAdapter.sol";
+import {IStrategyIntrospection} from "../interfaces/IStrategyIntrospection.sol";
 
 /// @title AaveRingsCarryStrategy
 /// @notice Strategy that uses Aave lending and Rings yield farming together.
@@ -15,7 +16,7 @@ import {ILendingAdapter} from "../interfaces/adapters/ILendingAdapter.sol";
 /// from scUSD yield while paying Aave borrow costs. When withdrawing, it
 /// converts scUSD back to USDC, pays back the debt, and returns wS to the vault.
 /// Borrow ratio controls how much USDC to borrow compared to deposited wS
-contract AaveRingsCarryStrategy is BaseStrategy {
+contract AaveRingsCarryStrategy is BaseStrategy, IStrategyIntrospection {
     using SafeERC20 for IERC20;
 
     ILendingAdapter public immutable LENDING;
@@ -169,5 +170,41 @@ contract AaveRingsCarryStrategy is BaseStrategy {
         uint256 netCost = (borrowCost * BORROW_RATIO) / 10000;
 
         return netYield > netCost ? netYield - netCost : 0;
+    }
+
+    /// @notice Return component list for off-chain introspection
+    function components()
+        external
+        view
+        override
+        returns (
+            address asset,
+            uint8 schemaVersion,
+            IStrategyIntrospection.Component[] memory comps
+        )
+    {
+        asset = address(ASSET);
+        schemaVersion = 1;
+        comps = new IStrategyIntrospection.Component[](2);
+        // Lending
+        comps[0] = IStrategyIntrospection.Component({
+            kind: IStrategyIntrospection.ComponentKind.Lending,
+            adapter: address(LENDING),
+            token0: address(ASSET),
+            token1: USDC,
+            pool: address(0),
+            gauge: address(0),
+            extra: ""
+        });
+        // Rings
+        comps[1] = IStrategyIntrospection.Component({
+            kind: IStrategyIntrospection.ComponentKind.Rings,
+            adapter: address(RINGS),
+            token0: address(0),
+            token1: address(0),
+            pool: address(0),
+            gauge: address(0),
+            extra: ""
+        });
     }
 }

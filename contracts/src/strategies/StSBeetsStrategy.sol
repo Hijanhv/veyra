@@ -8,13 +8,14 @@ import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/
 import {BaseStrategy} from "../strategies/BaseStrategy.sol";
 import {IStSAdapter} from "../interfaces/adapters/IStSAdapter.sol";
 import {IBeetsAdapter} from "../interfaces/adapters/IBeetsAdapter.sol";
+import {IStrategyIntrospection} from "../interfaces/IStrategyIntrospection.sol";
 
 /// @title StSBeetsStrategy
 /// @notice Strategy that converts S to stS and provides liquidity to BEETS.
 ///         Takes S from vault, converts half to stS, adds both to BEETS S/stS pool,
 ///         stakes the LP tokens for rewards. When withdrawing, unstakes LP, exits pool,
 ///         converts stS back to S and sends to vault. Can harvest BEETS rewards
-contract StSBeetsStrategy is BaseStrategy {
+contract StSBeetsStrategy is BaseStrategy, IStrategyIntrospection {
     using SafeERC20 for IERC20;
 
     /// @notice Adapter for converting S to stS tokens and back
@@ -159,9 +160,41 @@ contract StSBeetsStrategy is BaseStrategy {
         return ASSET.balanceOf(address(this));
     }
 
-    /// @notice Get current yield percentage. Just returns the BEETS pool APR.
-    ///         External services can calculate more accurate yield from harvested rewards
+    /// @notice Get current yield percentage in basis points (1% = 100 bps)
+    /// @dev Adapter returns APR scaled by 1e18. Convert to bps by / 1e14
     function apy() external view override returns (uint256) {
-        return BEETS.getPoolApr(POOL);
+        return BEETS.getPoolApr(POOL) / 1e14;
+    }
+
+    /// @notice Return component list for off-chain introspection
+    function components()
+        external
+        view
+        override
+        returns (address asset, uint8 schemaVersion, IStrategyIntrospection.Component[] memory comps)
+    {
+        asset = address(ASSET);
+        schemaVersion = 1;
+        comps = new IStrategyIntrospection.Component[](2);
+        // StS
+        comps[0] = IStrategyIntrospection.Component({
+            kind: IStrategyIntrospection.ComponentKind.StS,
+            adapter: address(STS),
+            token0: address(0),
+            token1: address(0),
+            pool: address(0),
+            gauge: address(0),
+            extra: ""
+        });
+        // BEETS DEX
+        comps[1] = IStrategyIntrospection.Component({
+            kind: IStrategyIntrospection.ComponentKind.Dex,
+            adapter: address(BEETS),
+            token0: address(ASSET),
+            token1: STS_TOKEN,
+            pool: POOL,
+            gauge: BEETS.getPoolGauge(POOL),
+            extra: ""
+        });
     }
 }

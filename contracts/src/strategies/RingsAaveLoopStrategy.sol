@@ -8,13 +8,14 @@ import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/
 import {BaseStrategy} from "../strategies/BaseStrategy.sol";
 import {IRingsAdapter} from "../interfaces/adapters/IRingsAdapter.sol";
 import {ILendingAdapter} from "../interfaces/adapters/ILendingAdapter.sol";
+import {IStrategyIntrospection} from "../interfaces/IStrategyIntrospection.sol";
 
 /// @title RingsAaveLoopStrategy
 /// @notice Leveraged stablecoin strategy using Rings and Aave.
 ///         Takes USDC, mints scUSD through Rings, uses scUSD as collateral
 ///         on Aave to borrow more USDC, then loops until target health factor.
 ///         Withdrawals pay back debt and redeem scUSD to USDC
-contract RingsAaveLoopStrategy is BaseStrategy {
+contract RingsAaveLoopStrategy is BaseStrategy, IStrategyIntrospection {
     using SafeERC20 for IERC20;
 
     IRingsAdapter public immutable RINGS;
@@ -138,5 +139,41 @@ contract RingsAaveLoopStrategy is BaseStrategy {
     function _stepBorrow() internal view returns (uint256) {
         uint256 scCol = LENDING.collateralOf(address(this), SC_USD);
         return scCol / 10;
+    }
+
+    /// @notice Return component list for off-chain introspection
+    function components()
+        external
+        view
+        override
+        returns (
+            address asset,
+            uint8 schemaVersion,
+            IStrategyIntrospection.Component[] memory comps
+        )
+    {
+        asset = address(ASSET);
+        schemaVersion = 1;
+        comps = new IStrategyIntrospection.Component[](2);
+        // Lending (supply scUSD, borrow USDC)
+        comps[0] = IStrategyIntrospection.Component({
+            kind: IStrategyIntrospection.ComponentKind.Lending,
+            adapter: address(LENDING),
+            token0: SC_USD,
+            token1: USDC,
+            pool: address(0),
+            gauge: address(0),
+            extra: ""
+        });
+        // Rings
+        comps[1] = IStrategyIntrospection.Component({
+            kind: IStrategyIntrospection.ComponentKind.Rings,
+            adapter: address(RINGS),
+            token0: address(0),
+            token1: address(0),
+            pool: address(0),
+            gauge: address(0),
+            extra: ""
+        });
     }
 }

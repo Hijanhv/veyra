@@ -96,7 +96,11 @@ contract MockPendleAdapter is IPendleAdapter {
         uint256 amount
     ) external override returns (uint256 ptAmount, uint256 ytAmount) {
         // take the underlying tokens from user
-        IERC20(address(UNDERLYING)).safeTransferFrom(msg.sender, address(this), amount);
+        IERC20(address(UNDERLYING)).safeTransferFrom(
+            msg.sender,
+            address(this),
+            amount
+        );
         // give back PT and YT tokens 1:1
         pt.mint(msg.sender, amount);
         yt.mint(msg.sender, amount);
@@ -107,7 +111,11 @@ contract MockPendleAdapter is IPendleAdapter {
         uint256 ptAmount
     ) external override returns (uint256 underlyingAmount) {
         // take PT tokens from user
-        IERC20(address(pt)).safeTransferFrom(msg.sender, address(this), ptAmount);
+        IERC20(address(pt)).safeTransferFrom(
+            msg.sender,
+            address(this),
+            ptAmount
+        );
         // return underlying tokens 1:1
         UNDERLYING.mint(msg.sender, ptAmount);
         return ptAmount;
@@ -117,7 +125,11 @@ contract MockPendleAdapter is IPendleAdapter {
         uint256 ytAmount
     ) external override returns (uint256 stableAmount) {
         // take YT tokens from user
-        IERC20(address(yt)).safeTransferFrom(msg.sender, address(this), ytAmount);
+        IERC20(address(yt)).safeTransferFrom(
+            msg.sender,
+            address(this),
+            ytAmount
+        );
         // give back stable tokens 1:1
         STABLE.mint(msg.sender, ytAmount);
         return ytAmount;
@@ -127,7 +139,11 @@ contract MockPendleAdapter is IPendleAdapter {
         uint256 stableAmount
     ) external override returns (uint256 underlyingAmount) {
         // take stable tokens from user
-        IERC20(address(STABLE)).safeTransferFrom(msg.sender, address(this), stableAmount);
+        IERC20(address(STABLE)).safeTransferFrom(
+            msg.sender,
+            address(this),
+            stableAmount
+        );
         // return underlying tokens 1:1
         UNDERLYING.mint(msg.sender, stableAmount);
         return stableAmount;

@@ -2,7 +2,7 @@ import type { Address, BasisPoints } from './common.js';
 
 export interface VaultMetrics {
   vaultId: Address;
-  totalAssets: number; // formatted decimal (asset decimals assumed 18 for display)
+  totalAssets: number; // formatted decimal (uses vault asset decimals)
   currentApy: number;  // percentage, e.g. 12.34
   strategyAllocation: Record<Address, BasisPoints>; // bps per strategy
   performance: {
@@ -51,6 +51,12 @@ export type UnderlyingProtocol =
     apr: number; // bp
   }
   | {
+    name: 'Dex';
+    adapter: Address;
+    pool: Address | null;
+    apr: number; // bp
+  }
+  | {
     name: 'StS';
     adapter: Address;
     rate: number; // scaled to bp-like
@@ -67,4 +73,3 @@ export interface StrategyDetails {
   apy: number;         // basis points
   underlying: UnderlyingProtocol[];
 }
-

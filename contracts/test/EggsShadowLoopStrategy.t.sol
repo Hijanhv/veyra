@@ -120,7 +120,11 @@ contract MockEggsAdapter is IEggsAdapter {
         uint256 sAmount
     ) external override returns (uint256 eggsMinted) {
         // take S tokens from user
-        IERC20(address(sToken)).safeTransferFrom(msg.sender, address(this), sAmount);
+        IERC20(address(sToken)).safeTransferFrom(
+            msg.sender,
+            address(this),
+            sAmount
+        );
         // charge 2.5% minting fee
         eggsMinted = (sAmount * 975) / 1000;
         eggs.mint(msg.sender, eggsMinted);
@@ -130,7 +134,11 @@ contract MockEggsAdapter is IEggsAdapter {
     function redeemEggs(
         uint256 eggsAmount
     ) external override returns (uint256 sAmount) {
-        IERC20(address(eggs)).safeTransferFrom(msg.sender, address(this), eggsAmount);
+        IERC20(address(eggs)).safeTransferFrom(
+            msg.sender,
+            address(this),
+            eggsAmount
+        );
         if (collateral[msg.sender] >= eggsAmount) {
             collateral[msg.sender] -= eggsAmount;
         }
@@ -150,7 +158,11 @@ contract MockEggsAdapter is IEggsAdapter {
         uint256 owed = debt[msg.sender];
         repaid = sAmount > owed ? owed : sAmount;
         debt[msg.sender] = owed - repaid;
-        IERC20(address(sToken)).safeTransferFrom(msg.sender, address(this), repaid);
+        IERC20(address(sToken)).safeTransferFrom(
+            msg.sender,
+            address(this),
+            repaid
+        );
         return repaid;
     }
 
@@ -226,7 +238,11 @@ contract MockShadowAdapter is IShadowAdapter {
         uint256 /*minAmtA*/,
         uint256 /*minAmtB*/
     ) external override returns (uint256 amtA, uint256 amtB) {
-        IERC20(address(lpToken)).safeTransferFrom(msg.sender, address(this), lpTokens);
+        IERC20(address(lpToken)).safeTransferFrom(
+            msg.sender,
+            address(this),
+            lpTokens
+        );
         // calculate how much to return proportionally
         uint256 totalSupplied = suppliedA[msg.sender] + suppliedB[msg.sender];
         if (totalSupplied == 0) return (0, 0);
@@ -245,7 +261,11 @@ contract MockShadowAdapter is IShadowAdapter {
         address /*gauge*/,
         uint256 lpTokens
     ) external override {
-        IERC20(address(lpToken)).safeTransferFrom(msg.sender, address(this), lpTokens);
+        IERC20(address(lpToken)).safeTransferFrom(
+            msg.sender,
+            address(this),
+            lpTokens
+        );
         staked[msg.sender] += lpTokens;
     }
 

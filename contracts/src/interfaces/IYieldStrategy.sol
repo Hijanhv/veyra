@@ -10,5 +10,7 @@ interface IYieldStrategy {
 
     function totalAssets() external view returns (uint256);
 
+    /// @notice Annualized performance metric
+    /// @dev Return value MUST be in basis points (1% = 100 bps)
     function apy() external view returns (uint256);
 }

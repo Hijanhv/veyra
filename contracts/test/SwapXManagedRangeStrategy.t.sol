@@ -150,7 +150,11 @@ contract MockSwapXAdapter is ISwapXAdapter {
         uint256 /*minAmtB*/
     ) external override returns (uint256 amtA, uint256 amtB) {
         // take back LP tokens from user
-        IERC20(address(lpTokenInternal)).safeTransferFrom(msg.sender, address(this), lpAmount);
+        IERC20(address(lpTokenInternal)).safeTransferFrom(
+            msg.sender,
+            address(this),
+            lpAmount
+        );
         // figure out how much to return based on what they originally put in
         uint256 totalSupplied = suppliedA[msg.sender] + suppliedB[msg.sender];
         if (totalSupplied == 0) return (0, 0);
@@ -171,7 +175,11 @@ contract MockSwapXAdapter is ISwapXAdapter {
         address /*gauge*/,
         uint256 lpAmount
     ) external override {
-        IERC20(address(lpTokenInternal)).safeTransferFrom(msg.sender, address(this), lpAmount);
+        IERC20(address(lpTokenInternal)).safeTransferFrom(
+            msg.sender,
+            address(this),
+            lpAmount
+        );
         staked[msg.sender] += lpAmount;
     }
 

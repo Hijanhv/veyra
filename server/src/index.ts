@@ -1,0 +1,222 @@
+import { ponder } from "ponder:registry";
+import {
+  vaultMetrics,
+  deposits,
+  withdrawals,
+  strategyEvents,
+  rebalances,
+  userBalances,
+  yieldHarvests,
+} from "ponder:schema";
+
+// Helper function to calculate share price
+function calculateSharePrice(totalAssets: bigint, totalSupply: bigint): bigint {
+  if (totalSupply === 0n) return 0n;
+  return (totalAssets * 10n ** 18n) / totalSupply;
+}
+
+// Helper function to create user balance ID
+function getUserBalanceId(user: string, vault: string): string {
+  return `${user}-${vault}`;
+}
+
+// Track deposits
+ponder.on("VeyraVault:Deposit", async ({ event, context }) => {
+  const { sender, owner, assets, shares } = event.args;
+
+  // Record the deposit event
+  await context.db.insert(deposits).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    sender,
+    owner,
+    assets,
+    shares,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+    transactionHash: event.transaction.hash,
+  });
+
+  // Update user balance
+  const userBalanceId = getUserBalanceId(owner, event.log.address);
+  await context.db
+    .insert(userBalances)
+    .values({
+      id: userBalanceId,
+      user: owner,
+      vault: event.log.address,
+      shares,
+      updatedAt: event.block.timestamp,
+      blockNumber: event.block.number,
+    })
+    .onConflictDoUpdate((row) => ({
+      shares: row.shares + shares,
+      updatedAt: event.block.timestamp,
+      blockNumber: event.block.number,
+    }));
+});
+
+// Track withdrawals
+ponder.on("VeyraVault:Withdraw", async ({ event, context }) => {
+  const { sender, receiver, owner, assets, shares } = event.args;
+
+  // Record the withdrawal event
+  await context.db.insert(withdrawals).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    sender,
+    receiver,
+    owner,
+    assets,
+    shares,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+    transactionHash: event.transaction.hash,
+  });
+
+  // Update user balance
+  const userBalanceId = getUserBalanceId(owner, event.log.address);
+  await context.db
+    .insert(userBalances)
+    .values({
+      id: userBalanceId,
+      user: owner,
+      vault: event.log.address,
+      shares: 0n - shares, // This will be negative, but we'll handle it in onConflictDoUpdate
+      updatedAt: event.block.timestamp,
+      blockNumber: event.block.number,
+    })
+    .onConflictDoUpdate((row) => ({
+      shares: row.shares - shares,
+      updatedAt: event.block.timestamp,
+      blockNumber: event.block.number,
+    }));
+});
+
+// Track strategy deposits
+ponder.on("VeyraVault:StrategyDeposit", async ({ event, context }) => {
+  const { strategy, assets } = event.args;
+
+  await context.db.insert(strategyEvents).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    strategy,
+    eventType: "deposit",
+    amount: assets,
+    allocation: null,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+    transactionHash: event.transaction.hash,
+  });
+});
+
+// Track strategy withdrawals
+ponder.on("VeyraVault:StrategyWithdrawal", async ({ event, context }) => {
+  const { strategy, assets } = event.args;
+
+  await context.db.insert(strategyEvents).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    strategy,
+    eventType: "withdrawal",
+    amount: assets,
+    allocation: null,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+    transactionHash: event.transaction.hash,
+  });
+});
+
+// Track strategy allocation updates
+ponder.on("VeyraVault:StrategyAllocationUpdated", async ({ event, context }) => {
+  const { strategy, bps } = event.args;
+
+  await context.db.insert(strategyEvents).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    strategy,
+    eventType: "allocation_updated",
+    amount: null,
+    allocation: bps,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+    transactionHash: event.transaction.hash,
+  });
+});
+
+// Track rebalance events
+ponder.on("VeyraVault:RebalanceExecuted", async ({ event, context }) => {
+  const { strategies, allocations } = event.args;
+
+  await context.db.insert(rebalances).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    strategies: strategies.map((addr: `0x${string}`) => addr.toLowerCase()),
+    allocations: Array.from(allocations),
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+    transactionHash: event.transaction.hash,
+  });
+});
+
+// Track yield harvesting
+ponder.on("VeyraVault:YieldHarvested", async ({ event, context }) => {
+  const { totalYield } = event.args;
+
+  await context.db.insert(yieldHarvests).values({
+    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    totalYield,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+    transactionHash: event.transaction.hash,
+  });
+});
+
+// Update vault metrics on every significant event
+async function updateVaultMetrics(event: any, context: any) {
+  // Read current vault state (use event.log.address to support multi-address configs)
+  const totalAssets = await context.client.readContract({
+    abi: context.contracts.VeyraVault.abi,
+    address: event.log.address,
+    functionName: "totalAssets",
+  });
+  const totalSupply = await context.client.readContract({
+    abi: context.contracts.VeyraVault.abi,
+    address: event.log.address,
+    functionName: "totalSupply",
+  });
+
+  const sharePrice = calculateSharePrice(totalAssets, totalSupply);
+
+  await context.db
+    .insert(vaultMetrics)
+    .values({
+      id: event.log.address,
+      totalAssets,
+      totalSupply,
+      sharePrice,
+      updatedAt: event.block.timestamp,
+      blockNumber: event.block.number,
+    })
+    .onConflictDoUpdate(() => ({
+      totalAssets,
+      totalSupply,
+      sharePrice,
+      updatedAt: event.block.timestamp,
+      blockNumber: event.block.number,
+    }));
+}
+
+// Update metrics after deposits
+ponder.on("VeyraVault:Deposit", async ({ event, context }) => {
+  await updateVaultMetrics(event, context);
+});
+
+// Update metrics after withdrawals
+ponder.on("VeyraVault:Withdraw", async ({ event, context }) => {
+  await updateVaultMetrics(event, context);
+});
+
+// Update metrics after rebalances
+ponder.on("VeyraVault:RebalanceExecuted", async ({ event, context }) => {
+  await updateVaultMetrics(event, context);
+});
+
+// Update metrics after yield harvest
+ponder.on("VeyraVault:YieldHarvested", async ({ event, context }) => {
+  await updateVaultMetrics(event, context);
+});
