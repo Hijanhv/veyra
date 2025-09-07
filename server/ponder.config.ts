@@ -1,8 +1,6 @@
 import "dotenv/config";
 import { createConfig } from "ponder";
-import { createRequire } from "module";
-const requireJson = createRequire(import.meta.url);
-const VeyraVaultArtifact = requireJson("./src/abi/VeyraVault.json");
+import VeyraVaultAbi from "./src/abi/VeyraVaultAbi.js";
 
 // Helper to parse a comma-separated env var into an array of addresses
 const parseAddresses = (v?: string): `0x${string}`[] | undefined =>
@@ -26,7 +24,8 @@ export default createConfig({
   },
   contracts: {
     VeyraVault: {
-      abi: VeyraVaultArtifact.abi,
+      // Typed ABI ensures event names (Deposit/Withdraw/etc.) are inferred.
+      abi: VeyraVaultAbi,
       chain: "sonic",
       // Support multiple vaults via VAULT_ADDRESSES, or fall back to a single VEYRA_VAULT_ADDRESS
       address:

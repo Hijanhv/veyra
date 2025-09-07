@@ -74,3 +74,43 @@ export interface RebalanceResult {
 export type VaultOverview = VaultMetrics & { latestAllocations: Record<Address, BasisPoints> }
 
 export interface SchedulerStatus { isRunning: boolean; vaultCount: number; vaultAddresses: string[] }
+
+// Indexed data (via backend that proxies Ponder)
+export interface VaultFlowItem {
+  id: string
+  vault: Address
+  type: 'deposit' | 'withdrawal'
+  sender?: Address
+  owner?: Address
+  receiver?: Address | null
+  assetsWei: string
+  sharesWei: string
+  blockNumber: number
+  timestamp: number
+  txHash: Address
+}
+
+export interface VaultRebalanceItem {
+  id: string
+  vault: Address
+  strategies: Address[]
+  allocations: string[]
+  blockNumber: number
+  timestamp: number
+  txHash: Address
+}
+
+export interface VaultHarvestItem {
+  id: string
+  vault: Address
+  totalYieldWei: string
+  blockNumber: number
+  timestamp: number
+  txHash: Address
+}
+
+export interface Paginated<T> {
+  items: T[]
+  nextOffset: number
+  hasMore: boolean
+}

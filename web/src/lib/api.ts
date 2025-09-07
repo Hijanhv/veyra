@@ -7,9 +7,12 @@ import type {
   VaultMetrics,
   RecommendedAllocation,
   RebalanceRecommendation,
-  RebalanceResult,
   StrategyDetails,
   VaultOverview,
+  Paginated,
+  VaultFlowItem,
+  VaultRebalanceItem,
+  VaultHarvestItem,
 } from '@/types/api'
 
 function isHeaders(x: HeadersInit): x is Headers {
@@ -46,3 +49,10 @@ export const getStrategyRecommendation = (vaultId: Address) => http<ApiResponse<
 export const getAIRebalance = (vaultId: Address) => http<ApiResponse<RebalanceRecommendation>>(`/api/vaults/${vaultId}/ai-rebalance`)
 export const getStrategyDetails = (vaultId: Address) => http<ApiResponse<StrategyDetails[]>>(`/api/vaults/${vaultId}/strategies/analysis`)
 export const getVaultOverview = (vaultId: Address) => http<ApiResponse<VaultOverview>>(`/api/vaults/${vaultId}/overview`)
+// Indexed (via backend)
+export const getVaultFlows = (vaultId: Address, limit = 50, offset = 0) =>
+  http<ApiResponse<Paginated<VaultFlowItem>>>(`/api/vaults/${vaultId}/flows?limit=${limit}&offset=${offset}`)
+export const getVaultRebalances = (vaultId: Address, limit = 50, offset = 0) =>
+  http<ApiResponse<Paginated<VaultRebalanceItem>>>(`/api/vaults/${vaultId}/rebalances?limit=${limit}&offset=${offset}`)
+export const getVaultHarvests = (vaultId: Address, limit = 50, offset = 0) =>
+  http<ApiResponse<Paginated<VaultHarvestItem>>>(`/api/vaults/${vaultId}/harvests?limit=${limit}&offset=${offset}`)

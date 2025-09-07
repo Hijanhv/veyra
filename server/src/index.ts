@@ -27,6 +27,7 @@ ponder.on("VeyraVault:Deposit", async ({ event, context }) => {
   // Record the deposit event
   await context.db.insert(deposits).values({
     id: `${event.transaction.hash}-${event.log.logIndex}`,
+    vault: event.log.address,
     sender,
     owner,
     assets,
@@ -65,6 +66,7 @@ ponder.on("VeyraVault:Withdraw", async ({ event, context }) => {
   // Record the withdrawal event
   await context.db.insert(withdrawals).values({
     id: `${event.transaction.hash}-${event.log.logIndex}`,
+    vault: event.log.address,
     sender,
     receiver,
     owner,
@@ -103,6 +105,7 @@ ponder.on("VeyraVault:StrategyDeposit", async ({ event, context }) => {
 
   await context.db.insert(strategyEvents).values({
     id: `${event.transaction.hash}-${event.log.logIndex}`,
+    vault: event.log.address,
     strategy,
     eventType: "deposit",
     amount: assets,
@@ -119,6 +122,7 @@ ponder.on("VeyraVault:StrategyWithdrawal", async ({ event, context }) => {
 
   await context.db.insert(strategyEvents).values({
     id: `${event.transaction.hash}-${event.log.logIndex}`,
+    vault: event.log.address,
     strategy,
     eventType: "withdrawal",
     amount: assets,
@@ -135,6 +139,7 @@ ponder.on("VeyraVault:StrategyAllocationUpdated", async ({ event, context }) => 
 
   await context.db.insert(strategyEvents).values({
     id: `${event.transaction.hash}-${event.log.logIndex}`,
+    vault: event.log.address,
     strategy,
     eventType: "allocation_updated",
     amount: null,
@@ -151,6 +156,7 @@ ponder.on("VeyraVault:RebalanceExecuted", async ({ event, context }) => {
 
   await context.db.insert(rebalances).values({
     id: `${event.transaction.hash}-${event.log.logIndex}`,
+    vault: event.log.address,
     strategies: strategies.map((addr: `0x${string}`) => addr.toLowerCase()),
     allocations: Array.from(allocations),
     blockNumber: event.block.number,
@@ -168,6 +174,7 @@ ponder.on("VeyraVault:YieldHarvested", async ({ event, context }) => {
 
   await context.db.insert(yieldHarvests).values({
     id: `${event.transaction.hash}-${event.log.logIndex}`,
+    vault: event.log.address,
     totalYield,
     blockNumber: event.block.number,
     timestamp: event.block.timestamp,

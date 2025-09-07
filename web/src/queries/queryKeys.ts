@@ -14,5 +14,8 @@ export const qk = {
     aiRebalance: (vaultId: string) => ['vaults', vaultId, 'ai-rebalance'] as const,
     details: (vaultId: string) => ['vaults', vaultId, 'strategies', 'analysis'] as const,
     overview: (vaultId: string) => ['vaults', vaultId, 'overview'] as const,
+    flows: (vaultId: string, limit: number, offset: number) => ['vaults', vaultId, 'flows', limit, offset] as const,
+    rebalances: (vaultId: string, limit: number, offset: number) => ['vaults', vaultId, 'rebalances', limit, offset] as const,
+    harvests: (vaultId: string, limit: number, offset: number) => ['vaults', vaultId, 'harvests', limit, offset] as const,
   },
 } as const

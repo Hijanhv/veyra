@@ -18,7 +18,7 @@ export class SchedulerService {
     const vaultService = new VaultService();
     const investmentAgent = new InvestmentAgent(vaultService);
     this.rebalancingService = new RebalancingService(investmentAgent, vaultService);
-    
+
     // Get vault addresses from environment variable
     const vaultAddressesStr = process.env.VAULT_ADDRESSES || '';
     this.vaultAddresses = vaultAddressesStr
@@ -37,7 +37,7 @@ export class SchedulerService {
     }
 
     console.log('Starting AI-powered vault rebalancing scheduler...');
-    
+
     // Run every 6 hours
     cron.schedule('0 */6 * * *', async () => {
       await this.executeScheduledRebalancing();
@@ -85,14 +85,14 @@ export class SchedulerService {
     for (const vaultAddress of this.vaultAddresses) {
       try {
         console.log(`Analyzing vault ${vaultAddress}...`);
-        
+
         const recommendation = await this.rebalancingService.getRebalanceRecommendation(vaultAddress);
-        
+
         if (recommendation.needsRebalancing && recommendation.confidence > 0.8) {
           console.log(`Executing rebalancing for vault ${vaultAddress} (confidence: ${recommendation.confidence})`);
-          
+
           const result = await this.rebalancingService.executeRebalancing(vaultAddress);
-          
+
           if (result.success && result.transactionHash) {
             console.log(`✅ Rebalancing successful for ${vaultAddress}: ${result.transactionHash}`);
           } else if (result.success) {
@@ -103,10 +103,10 @@ export class SchedulerService {
         } else {
           console.log(`⏭️ Skipping ${vaultAddress} - ${recommendation.needsRebalancing ? 'low confidence' : 'no rebalancing needed'}`);
         }
-        
+
         // Wait between vaults to avoid overwhelming the network
         await this.sleep(5000);
-        
+
       } catch (error) {
         console.error(`Error processing vault ${vaultAddress}:`, error);
       }
@@ -124,17 +124,17 @@ export class SchedulerService {
     for (const vaultAddress of this.vaultAddresses) {
       try {
         const recommendation = await this.rebalancingService.getRebalanceRecommendation(vaultAddress);
-        
+
         console.log(`Vault ${vaultAddress}:`);
         console.log(`  - Expected APY: ${(recommendation.expectedApy / 100).toFixed(2)}%`);
         console.log(`  - Risk Score: ${recommendation.riskScore.toFixed(2)}`);
         console.log(`  - Confidence: ${recommendation.confidence.toFixed(2)}`);
         console.log(`  - Needs Rebalancing: ${recommendation.needsRebalancing ? '⚠️ Yes' : '✅ No'}`);
-        
+
         if (recommendation.needsRebalancing) {
           console.log(`  - Reasoning: ${recommendation.reasoning}`);
         }
-        
+
       } catch (error) {
         console.error(`Error monitoring vault ${vaultAddress}:`, error);
       }

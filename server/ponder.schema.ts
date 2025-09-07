@@ -1,4 +1,4 @@
-import { onchainTable } from "ponder";
+import { onchainTable, index } from "ponder";
 
 // Vault metrics table
 export const vaultMetrics = onchainTable("vault_metrics", (t) => ({
@@ -13,6 +13,7 @@ export const vaultMetrics = onchainTable("vault_metrics", (t) => ({
 // Deposit events
 export const deposits = onchainTable("deposits", (t) => ({
   id: t.text().primaryKey(), // transaction hash + log index
+  vault: t.hex().notNull(),
   sender: t.hex().notNull(),
   owner: t.hex().notNull(),
   assets: t.bigint().notNull(),
@@ -20,11 +21,15 @@ export const deposits = onchainTable("deposits", (t) => ({
   blockNumber: t.bigint().notNull(),
   timestamp: t.bigint().notNull(),
   transactionHash: t.hex().notNull(),
+}), (table) => ({
+  vaultIndex: index().on(table.vault),
+  tsIndex: index().on(table.timestamp),
 }));
 
 // Withdrawal events
 export const withdrawals = onchainTable("withdrawals", (t) => ({
   id: t.text().primaryKey(), // transaction hash + log index
+  vault: t.hex().notNull(),
   sender: t.hex().notNull(),
   receiver: t.hex().notNull(),
   owner: t.hex().notNull(),
@@ -33,11 +38,15 @@ export const withdrawals = onchainTable("withdrawals", (t) => ({
   blockNumber: t.bigint().notNull(),
   timestamp: t.bigint().notNull(),
   transactionHash: t.hex().notNull(),
+}), (table) => ({
+  vaultIndex: index().on(table.vault),
+  tsIndex: index().on(table.timestamp),
 }));
 
 // Strategy events
 export const strategyEvents = onchainTable("strategy_events", (t) => ({
   id: t.text().primaryKey(), // transaction hash + log index
+  vault: t.hex().notNull(),
   strategy: t.hex().notNull(),
   eventType: t.text().notNull(), // "deposit", "withdrawal", "allocation_updated", "harvested"
   amount: t.bigint(), // nullable for allocation updates
@@ -45,16 +54,23 @@ export const strategyEvents = onchainTable("strategy_events", (t) => ({
   blockNumber: t.bigint().notNull(),
   timestamp: t.bigint().notNull(),
   transactionHash: t.hex().notNull(),
+}), (table) => ({
+  vaultIndex: index().on(table.vault),
+  tsIndex: index().on(table.timestamp),
 }));
 
 // Rebalance events
 export const rebalances = onchainTable("rebalances", (t) => ({
   id: t.text().primaryKey(), // transaction hash + log index
+  vault: t.hex().notNull(),
   strategies: t.text().array().notNull(), // array of strategy addresses as strings
   allocations: t.bigint().array().notNull(), // array of allocation amounts
   blockNumber: t.bigint().notNull(),
   timestamp: t.bigint().notNull(),
   transactionHash: t.hex().notNull(),
+}), (table) => ({
+  vaultIndex: index().on(table.vault),
+  tsIndex: index().on(table.timestamp),
 }));
 
 // User balances (track individual user positions)
@@ -70,8 +86,12 @@ export const userBalances = onchainTable("user_balances", (t) => ({
 // Yield harvesting events
 export const yieldHarvests = onchainTable("yield_harvests", (t) => ({
   id: t.text().primaryKey(), // transaction hash + log index
+  vault: t.hex().notNull(),
   totalYield: t.bigint().notNull(),
   blockNumber: t.bigint().notNull(),
   timestamp: t.bigint().notNull(),
   transactionHash: t.hex().notNull(),
+}), (table) => ({
+  vaultIndex: index().on(table.vault),
+  tsIndex: index().on(table.timestamp),
 }));

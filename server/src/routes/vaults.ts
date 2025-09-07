@@ -4,6 +4,7 @@ import { RebalancingService } from '../services/RebalancingService.js';
 import { Repository } from '../services/db/Repository.js';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Address } from '../types/index.js';
+import { fetchFlows, fetchRebalances, fetchHarvests } from '../services/PonderClient.js';
 
 /**
  * API routes for working with Veyra vaults.
@@ -136,6 +137,90 @@ export async function vaultRoutes(fastify: FastifyInstance) {
       } catch (error) {
         fastify.log.error(error);
         reply.status(500).send({ success: false, error: 'Failed to fetch agent decisions' });
+      }
+    }
+  );
+
+  // Indexed flows (deposits & withdrawals) via Ponder, paginated
+  fastify.get<{ Params: { vaultId: Address }, Querystring: { limit?: string; offset?: string } }>(
+    '/:vaultId/flows',
+    async (request: FastifyRequest<{ Params: { vaultId: Address }, Querystring: { limit?: string; offset?: string } }>, reply: FastifyReply) => {
+      try {
+        const { vaultId } = request.params;
+        const limit = Math.max(1, Math.min(200, parseInt(request.query.limit ?? '50', 10)));
+        const offset = Math.max(0, parseInt(request.query.offset ?? '0', 10));
+        const rows = await fetchFlows(vaultId, limit, offset);
+        const items = rows.map((r) => ({
+          id: r.id,
+          vault: r.vault,
+          type: r.action,
+          sender: r.sender,
+          owner: r.owner,
+          receiver: r.receiver ?? null,
+          assetsWei: r.assets,
+          sharesWei: r.shares,
+          blockNumber: Number(r.blockNumber),
+          timestamp: Number(r.timestamp),
+          txHash: r.transactionHash,
+        }));
+        const hasMore = items.length === limit; // heuristic without count
+        return { success: true, data: { items, nextOffset: offset + items.length, hasMore } };
+      } catch (error) {
+        fastify.log.error(error);
+        reply.status(500).send({ success: false, error: 'Failed to fetch flows' });
+      }
+    }
+  );
+
+  // Indexed rebalances via Ponder, paginated
+  fastify.get<{ Params: { vaultId: Address }, Querystring: { limit?: string; offset?: string } }>(
+    '/:vaultId/rebalances',
+    async (request: FastifyRequest<{ Params: { vaultId: Address }, Querystring: { limit?: string; offset?: string } }>, reply: FastifyReply) => {
+      try {
+        const { vaultId } = request.params;
+        const limit = Math.max(1, Math.min(200, parseInt(request.query.limit ?? '50', 10)));
+        const offset = Math.max(0, parseInt(request.query.offset ?? '0', 10));
+        const rows = await fetchRebalances(vaultId, limit, offset);
+        const items = rows.map((r) => ({
+          id: r.id,
+          vault: r.vault,
+          strategies: r.strategies,
+          allocations: r.allocations,
+          blockNumber: Number(r.blockNumber),
+          timestamp: Number(r.timestamp),
+          txHash: r.transactionHash,
+        }));
+        const hasMore = items.length === limit;
+        return { success: true, data: { items, nextOffset: offset + items.length, hasMore } };
+      } catch (error) {
+        fastify.log.error(error);
+        reply.status(500).send({ success: false, error: 'Failed to fetch rebalances' });
+      }
+    }
+  );
+
+  // Indexed yield harvests via Ponder, paginated
+  fastify.get<{ Params: { vaultId: Address }, Querystring: { limit?: string; offset?: string } }>(
+    '/:vaultId/harvests',
+    async (request: FastifyRequest<{ Params: { vaultId: Address }, Querystring: { limit?: string; offset?: string } }>, reply: FastifyReply) => {
+      try {
+        const { vaultId } = request.params;
+        const limit = Math.max(1, Math.min(200, parseInt(request.query.limit ?? '50', 10)));
+        const offset = Math.max(0, parseInt(request.query.offset ?? '0', 10));
+        const rows = await fetchHarvests(vaultId, limit, offset);
+        const items = rows.map((r) => ({
+          id: r.id,
+          vault: r.vault,
+          totalYieldWei: r.totalYield,
+          blockNumber: Number(r.blockNumber),
+          timestamp: Number(r.timestamp),
+          txHash: r.transactionHash,
+        }));
+        const hasMore = items.length === limit;
+        return { success: true, data: { items, nextOffset: offset + items.length, hasMore } };
+      } catch (error) {
+        fastify.log.error(error);
+        reply.status(500).send({ success: false, error: 'Failed to fetch harvests' });
       }
     }
   );

@@ -1,7 +1,7 @@
 import { useQuery, UseQueryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getVaultMetrics, getStrategyRecommendation, getAIRebalance, getStrategyDetails, getVaults, getVaultOverview } from '@/lib/api'
+import { getVaultMetrics, getStrategyRecommendation, getAIRebalance, getStrategyDetails, getVaults, getVaultOverview, getVaultFlows, getVaultRebalances, getVaultHarvests } from '@/lib/api'
 import { qk } from './queryKeys'
-import type { ApiResponse, VaultMetrics, RecommendedAllocation, RebalanceRecommendation, StrategyDetails, VaultOverview } from '@/types/api'
+import type { ApiResponse, VaultMetrics, RecommendedAllocation, RebalanceRecommendation, StrategyDetails, VaultOverview, Paginated, VaultFlowItem, VaultRebalanceItem, VaultHarvestItem } from '@/types/api'
 
 export function useVaultList(options?: Omit<UseQueryOptions<ApiResponse<{ vaults: string[]; defaultVaultId: string | null }>>, 'queryKey' | 'queryFn'>) {
   return useQuery<ApiResponse<{ vaults: string[]; defaultVaultId: string | null }>>({
@@ -52,6 +52,33 @@ export function useVaultOverviewQuery(vaultId: string | undefined, options?: Omi
   return useQuery<ApiResponse<VaultOverview>>({
     queryKey: vaultId ? qk.vaults.overview(vaultId) : ['vaults', 'overview', 'nil'],
     queryFn: () => getVaultOverview(vaultId!),
+    enabled: !!vaultId && (options?.enabled ?? true),
+    ...options,
+  })
+}
+
+export function useVaultFlowsQuery(vaultId: string | undefined, limit = 50, offset = 0, options?: Omit<UseQueryOptions<ApiResponse<Paginated<VaultFlowItem>>>, 'queryKey' | 'queryFn'>) {
+  return useQuery<ApiResponse<Paginated<VaultFlowItem>>>({
+    queryKey: vaultId ? qk.vaults.flows(vaultId, limit, offset) : ['vaults', 'flows', 'nil', limit, offset],
+    queryFn: () => getVaultFlows(vaultId!, limit, offset),
+    enabled: !!vaultId && (options?.enabled ?? true),
+    ...options,
+  })
+}
+
+export function useVaultRebalancesQuery(vaultId: string | undefined, limit = 50, offset = 0, options?: Omit<UseQueryOptions<ApiResponse<Paginated<VaultRebalanceItem>>>, 'queryKey' | 'queryFn'>) {
+  return useQuery<ApiResponse<Paginated<VaultRebalanceItem>>>({
+    queryKey: vaultId ? qk.vaults.rebalances(vaultId, limit, offset) : ['vaults', 'rebalances', 'nil', limit, offset],
+    queryFn: () => getVaultRebalances(vaultId!, limit, offset),
+    enabled: !!vaultId && (options?.enabled ?? true),
+    ...options,
+  })
+}
+
+export function useVaultHarvestsQuery(vaultId: string | undefined, limit = 50, offset = 0, options?: Omit<UseQueryOptions<ApiResponse<Paginated<VaultHarvestItem>>>, 'queryKey' | 'queryFn'>) {
+  return useQuery<ApiResponse<Paginated<VaultHarvestItem>>>({
+    queryKey: vaultId ? qk.vaults.harvests(vaultId, limit, offset) : ['vaults', 'harvests', 'nil', limit, offset],
+    queryFn: () => getVaultHarvests(vaultId!, limit, offset),
     enabled: !!vaultId && (options?.enabled ?? true),
     ...options,
   })

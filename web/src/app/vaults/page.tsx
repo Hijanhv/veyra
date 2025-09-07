@@ -6,10 +6,12 @@ import {
   useStrategyRecommendationQuery,
   useAIRebalanceQuery,
   useStrategyDetailsQuery,
+  useVaultFlowsQuery,
+  useVaultRebalancesQuery,
 } from '@/queries/vaults'
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts'
 import { useVault } from '@/context/VaultContext'
-import type { VaultMetrics, RecommendedAllocation, RebalanceRecommendation, StrategyDetails } from '@/types/api'
+import type { VaultMetrics, RecommendedAllocation, RebalanceRecommendation, StrategyDetails, VaultFlowItem, VaultRebalanceItem } from '@/types/api'
 
 export default function VaultsPage() {
   const { selectedVaultId } = useVault()
@@ -18,9 +20,11 @@ export default function VaultsPage() {
   const strategyQ = useStrategyRecommendationQuery(selectedVaultId || undefined, { enabled: !!selectedVaultId })
   const rebalanceQ = useAIRebalanceQuery(selectedVaultId || undefined, { enabled: !!selectedVaultId })
   const detailsQ = useStrategyDetailsQuery(selectedVaultId || undefined, { enabled: !!selectedVaultId })
+  const flowsQ = useVaultFlowsQuery(selectedVaultId || undefined, 25, 0, { enabled: !!selectedVaultId })
+  const rebalancesQ = useVaultRebalancesQuery(selectedVaultId || undefined, 25, 0, { enabled: !!selectedVaultId })
 
 
-  const loading = metricsQ.isLoading || strategyQ.isLoading || rebalanceQ.isLoading || detailsQ.isLoading
+  const loading = metricsQ.isLoading || strategyQ.isLoading || rebalanceQ.isLoading || detailsQ.isLoading || flowsQ.isLoading || rebalancesQ.isLoading
   const metrics: VaultMetrics | undefined = metricsQ.data && metricsQ.data.success ? metricsQ.data.data : undefined
   const strategyRec: RecommendedAllocation | undefined = strategyQ.data && strategyQ.data.success ? strategyQ.data.data : undefined
   const rebalance: RebalanceRecommendation | undefined = rebalanceQ.data && rebalanceQ.data.success ? rebalanceQ.data.data : undefined
@@ -33,6 +37,8 @@ export default function VaultsPage() {
     || (strategyQ.error instanceof Error ? strategyQ.error.message : undefined)
     || (rebalanceQ.error instanceof Error ? rebalanceQ.error.message : undefined)
     || (detailsQ.error instanceof Error ? detailsQ.error.message : undefined)
+    || (flowsQ.error instanceof Error ? flowsQ.error.message : undefined)
+    || (rebalancesQ.error instanceof Error ? rebalancesQ.error.message : undefined)
 
   return (
     <div className="min-h-screen">
@@ -112,6 +118,45 @@ export default function VaultsPage() {
             <CardContent>
               {!details ? <div className="text-[var(--muted)] text-sm">No data.</div> : (
                 <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify(details, null, 2)}</pre>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="backdrop-blur">
+            <CardHeader>
+              <CardTitle className="text-[var(--foreground)]">Recent Flows</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!flowsQ.data || !('success' in flowsQ.data) || !flowsQ.data.success || flowsQ.data.data.items.length === 0 ? (
+                <div className="text-[var(--muted)] text-sm">No flows.</div>
+              ) : (
+                <ul className="text-xs space-y-2">
+                  {flowsQ.data.data.items.slice(0, 10).map((f: VaultFlowItem) => (
+                    <li key={f.id} className="text-[var(--foreground)]/90">
+                      <span className="uppercase">{f.type}</span> • assets {f.assetsWei} • shares {f.sharesWei} •
+                      block {f.blockNumber} • {new Date(f.timestamp * 1000).toLocaleString()}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="backdrop-blur">
+            <CardHeader>
+              <CardTitle className="text-[var(--foreground)]">Recent Rebalances</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!rebalancesQ.data || !('success' in rebalancesQ.data) || !rebalancesQ.data.success || rebalancesQ.data.data.items.length === 0 ? (
+                <div className="text-[var(--muted)] text-sm">No rebalances.</div>
+              ) : (
+                <ul className="text-xs space-y-2">
+                  {rebalancesQ.data.data.items.slice(0, 10).map((r: VaultRebalanceItem) => (
+                    <li key={r.id} className="text-[var(--foreground)]/90">
+                      {new Date(r.timestamp * 1000).toLocaleString()} • strategies {r.strategies.length}
+                    </li>
+                  ))}
+                </ul>
               )}
             </CardContent>
           </Card>
