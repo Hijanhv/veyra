@@ -1,0 +1,16 @@
+services:
+  indexer:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: deps
+    working_dir: /app
+    command: [ "npm", "run", "indexer:dev" ]
+    env_file:
+      - server/.env
+    ports:
+      - "42069:42069"
+      - "8080:8080"
+    volumes:
+      - ./server:/app
+      - /app/node_modules

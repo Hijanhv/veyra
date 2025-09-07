@@ -13,7 +13,7 @@
     "db:types": "sh -c 'supabase gen types typescript --schema public --project-id \"${SUPABASE_PROJECT_REF:-iyrqtchhttmpyopfvipl}\" > src/types/supabase.generated.ts'",
     "db:reset": "node scripts/reset-schema.js",
     "indexer:dev": "node scripts/run-ponder.mjs dev",
-    "indexer:start": "node scripts/run-ponder.mjs start"
+    "indexer:prod": "node scripts/run-ponder.mjs start"
   },
   "dependencies": {
     "@fastify/cors": "^9.0.1",

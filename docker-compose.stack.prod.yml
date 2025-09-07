@@ -1,0 +1,13 @@
+services:
+  indexer:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+      target: prod
+    command: [ "node", "scripts/run-ponder.mjs", "start" ]
+    env_file:
+      - server/.env
+    ports:
+      - "42069:42069"
+      - "8080:8080"
+    restart: unless-stopped
