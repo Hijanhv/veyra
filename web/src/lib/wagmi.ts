@@ -12,10 +12,12 @@ const sonic = defineChain({
   },
   rpcUrls: {
     default: {
-      http: ['wss://sonic-rpc.publicnode.com'],
+      http: [process.env.NEXT_PUBLIC_SONIC_RPC_URL || 'https://sonic-rpc.publicnode.com'],
+      webSocket: [process.env.NEXT_PUBLIC_SONIC_WS_URL || 'wss://sonic-rpc.publicnode.com'],
     },
     public: {
-      http: ['wss://sonic-rpc.publicnode.com'],
+      http: [process.env.NEXT_PUBLIC_SONIC_RPC_URL || 'https://sonic-rpc.publicnode.com'],
+      webSocket: [process.env.NEXT_PUBLIC_SONIC_WS_URL || 'wss://sonic-rpc.publicnode.com'],
     },
   },
   blockExplorers: {
