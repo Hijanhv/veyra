@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { vaultRoutes } from './routes/vaults.js';
 import { analyticsRoutes } from './routes/analytics.js';
 import { SchedulerService } from './services/SchedulerService.js';
+import { SettingsStore } from './cache/settings/SettingsStore.js';
 
 // Load environment variables from .env file if it exists
 dotenv.config();
@@ -19,12 +20,18 @@ async function start() {
   }
   const fastify = Fastify({ logger: loggerOptions });
 
-  // Initialize AI-powered scheduler if enabled
-  let scheduler: SchedulerService | null = null;
-  if (process.env.ENABLE_AUTO_REBALANCING === 'true') {
-    scheduler = new SchedulerService();
+  // Initialize AI-powered scheduler (enabled by default; can be toggled via API)
+  const scheduler = new SchedulerService();
+  const persisted = SettingsStore.get('scheduler_enabled');
+  const envDefault = process.env.ENABLE_AUTO_REBALANCING; // legacy env; if absent, default to on
+  const shouldStart = persisted !== undefined
+    ? persisted === 'true'
+    : (envDefault === undefined ? true : envDefault === 'true');
+  if (shouldStart) {
     scheduler.start();
     fastify.log.info('AI-powered auto-rebalancing scheduler started');
+  } else {
+    fastify.log.info('Scheduler is disabled by settings');
   }
 
   // Enable CORS for frontend
@@ -38,8 +45,8 @@ async function start() {
 
   // Health check with AI system status
   fastify.get('/health', async () => {
-    const aiStatus = process.env.ANTHROPIC_API_KEY ? 'enabled' : 'disabled';
-    const schedulerStatus = scheduler ? scheduler.getStatus() : { isRunning: false };
+  const aiStatus = process.env.ANTHROPIC_API_KEY ? 'enabled' : 'disabled';
+  const schedulerStatus = scheduler.getStatus();
 
     return {
       status: 'operational',
@@ -51,7 +58,6 @@ async function start() {
   });
 
   // Scheduler management endpoints
-  if (scheduler) {
     const verifyAdmin = (req: any, reply: any) => {
       const adminKey = (req.headers['x-admin-key'] || req.headers['X-Admin-Key']) as string | undefined;
       if (!process.env.ADMIN_API_KEY || adminKey !== process.env.ADMIN_API_KEY) {
@@ -69,15 +75,16 @@ async function start() {
     fastify.post('/admin/scheduler/stop', async (req, reply) => {
       if (!verifyAdmin(req, reply)) return;
       scheduler.stop();
+      SettingsStore.set('scheduler_enabled', 'false');
       return { success: true, message: 'Scheduler stopped' };
     });
 
     fastify.post('/admin/scheduler/start', async (req, reply) => {
       if (!verifyAdmin(req, reply)) return;
       scheduler.start();
+      SettingsStore.set('scheduler_enabled', 'true');
       return { success: true, message: 'Scheduler started' };
     });
-  }
 
   // Start server
   const port = parseInt(process.env.PORT || '8080', 10);

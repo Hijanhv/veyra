@@ -11,6 +11,7 @@
     "abis:sync": "node ../scripts/refresh-contracts.mjs",
     "contracts:build": "node ../scripts/refresh-contracts.mjs",
     "db:types": "sh -c 'supabase gen types typescript --schema public --project-id \"${SUPABASE_PROJECT_REF:-iyrqtchhttmpyopfvipl}\" > src/types/supabase.generated.ts'",
+    "db:reset": "node scripts/reset-schema.js",
     "indexer:dev": "ponder dev",
     "indexer:start": "ponder start"
   },
@@ -21,6 +22,7 @@
     "@ponder/client": "^0.12.21",
     "@supabase/supabase-js": "^2.45.4",
     "ai": "^5.0.30",
+    "better-sqlite3": "^9.4.5",
     "dotenv": "^16.3.1",
     "ethers": "^6.8.1",
     "fastify": "^4.24.3",
@@ -31,6 +33,7 @@
     "zod": "^4.1.5"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.3.0",
     "nodemon": "^3.0.1",
     "pino-pretty": "^11.2.2",

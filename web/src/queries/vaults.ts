@@ -21,8 +21,8 @@ export function useVaultMetricsQuery(vaultId: string | undefined, options?: Omit
   })
 }
 
-export function useStrategyRecommendationQuery(vaultId: string | undefined, options?: Omit<UseQueryOptions<ApiResponse<RecommendedAllocation>>, 'queryKey' | 'queryFn'>) {
-  return useQuery<ApiResponse<RecommendedAllocation>>({
+export function useStrategyRecommendationQuery(vaultId: string | undefined, options?: Omit<UseQueryOptions<ApiResponse<RecommendedAllocation | null>>, 'queryKey' | 'queryFn'>) {
+  return useQuery<ApiResponse<RecommendedAllocation | null>>({
     queryKey: vaultId ? qk.vaults.strategy(vaultId) : ['vaults', 'strategy', 'nil'],
     queryFn: () => getStrategyRecommendation(vaultId!),
     enabled: !!vaultId && (options?.enabled ?? true),

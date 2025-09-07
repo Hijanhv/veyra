@@ -8,7 +8,11 @@ const parseAddresses = (v?: string): `0x${string}`[] | undefined =>
     .filter(Boolean) as `0x${string}`[] | undefined;
 
 const database = process.env.DATABASE_URL
-  ? { kind: "postgres" as const, connectionString: process.env.DATABASE_URL }
+  ? { 
+      kind: "postgres" as const, 
+      connectionString: process.env.DATABASE_URL,
+      schema: process.env.DATABASE_SCHEMA || "veyra_indexer"
+    }
   : undefined;
 
 export default createConfig({

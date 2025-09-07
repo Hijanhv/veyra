@@ -7,6 +7,8 @@ import type { RecommendedAllocation, StrategyAnalysis } from '../types/ai.js';
 import type { StrategyDetails } from '../types/vault.js';
 import type { Address } from '../types/common.js';
 import { Repository } from './db/Repository.js';
+import { AgentCache } from '../cache/agent/AgentCache.js';
+import { Config } from '../config.js';
 
 dotenv.config();
 
@@ -19,7 +21,7 @@ dotenv.config();
  * using Claude Sonnet 4 to analyze DeFi strategies and market conditions
  */
 export class InvestmentAgent {
-  private aiModel = anthropic('claude-sonnet-4-20250514');
+  private aiModel = anthropic(Config.aiModel);
 
   constructor(private readonly vaultService: VaultService) {
     if (!process.env.ANTHROPIC_API_KEY) {
@@ -46,8 +48,8 @@ export class InvestmentAgent {
 
       return aiDecision;
     } catch (error) {
-      console.error('AI allocation failed, falling back to simple algorithm:', error);
-      return this.fallbackAllocation(vaultId);
+      console.error('AI allocation failed:', error);
+      throw error;
     }
   }
 
@@ -237,6 +239,18 @@ export class InvestmentAgent {
     // Persist decision off-chain for observability (if DB configured)
     try {
       const chainId = Number(process.env.CHAIN_ID || 0);
+      // Persist to local cache
+      AgentCache.saveDecision({
+        chainId,
+        vault: vaultId,
+        allocations,
+        expectedApyBp: response.expectedApy,
+        riskScore: response.riskScore,
+        confidence: response.confidence,
+        reasoning: response.reasoning,
+        marketContext: response.marketContext,
+      });
+      // Also best-effort persist to Supabase if configured
       await Repository.insertAgentDecision({
         chainId,
         vault: vaultId,

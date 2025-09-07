@@ -199,6 +199,9 @@ out/
 *.swo
 *~
 
+# Local cache database
+data/
+
 # OS generated files
 .DS_Store
 .DS_Store?

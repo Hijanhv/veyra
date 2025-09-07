@@ -1,5 +1,7 @@
 import { ethers } from 'ethers';
 import { InvestmentAgent } from './InvestmentAgent.js';
+import { AgentCache } from '../cache/agent/AgentCache.js';
+import { Config } from '../config.js';
 import { VaultService } from './VaultService.js';
 import dotenv from 'dotenv';
 import type { Address, BasisPoints } from '../types/index.js';
@@ -52,9 +54,23 @@ export class RebalancingService {
     try {
       // Get current allocations
       const currentAllocations = await this.vaultService.getStrategyAllocations(vaultId);
-
-      // Get AI recommendation
-      const recommendation = await this.investmentAgent.getOptimalAllocation(vaultId);
+      // Use cached AI recommendation (do not call AI here)
+      const cached = AgentCache.getLatest(vaultId);
+      if (!cached) {
+        return {
+          success: false,
+          error: 'No cached recommendation available. Scheduler has not produced one yet.',
+          oldAllocations: currentAllocations,
+          newAllocations: currentAllocations,
+          confidence: 0,
+          reasoning: 'Awaiting scheduled AI run to cache a recommendation.'
+        };
+      }
+      const recommendation = {
+        recommendedAllocation: JSON.parse(cached.allocations_json) as Record<Address, BasisPoints>,
+        confidence: cached.confidence,
+        reasoning: cached.reasoning ?? 'Cached recommendation',
+      };
 
       // Check if rebalancing is needed (threshold: 5% difference)
       const needsRebalancing = this.shouldRebalance(currentAllocations, recommendation.recommendedAllocation);
@@ -70,7 +86,7 @@ export class RebalancingService {
       }
 
       // Execute rebalancing transaction if wallet is available
-      if (this.wallet && recommendation.confidence > 0.7) {
+      if (this.wallet && recommendation.confidence > Config.rebalanceMinConfidence) {
         const txHash = await this.executeRebalanceTransaction(vaultId, recommendation.recommendedAllocation);
 
         return {
@@ -106,11 +122,11 @@ export class RebalancingService {
   /**
    * Check if rebalancing is needed based on allocation differences
    */
-  private shouldRebalance(
+  shouldRebalance(
     current: Record<Address, BasisPoints>,
     recommended: Record<Address, BasisPoints>
   ): boolean {
-    const threshold = 500; // 5% in basis points
+    const threshold = Config.rebalanceThresholdBp; // basis points
 
     for (const [strategy, recommendedAlloc] of Object.entries(recommended)) {
       const currentAlloc = current[strategy] || 0;
@@ -170,7 +186,7 @@ export class RebalancingService {
 
     // Execute rebalancing transaction
     const tx = await vaultContract.rebalance(allocationArray, {
-      gasLimit: 500000 // reasonable gas limit
+      gasLimit: Config.rebalanceGasLimit
     });
 
     await tx.wait();
@@ -183,17 +199,74 @@ export class RebalancingService {
    */
   async getRebalanceRecommendation(vaultId: string) {
     const currentAllocations = await this.vaultService.getStrategyAllocations(vaultId);
-    const recommendation = await this.investmentAgent.getOptimalAllocation(vaultId);
+    const cached = AgentCache.getLatest(vaultId);
+    if (!cached) {
+      return {
+        currentAllocations,
+        recommendedAllocations: currentAllocations,
+        needsRebalancing: false,
+        confidence: 0,
+        reasoning: 'No cached recommendation. Scheduler will populate shortly.',
+        marketContext: 'N/A',
+        expectedApy: 0,
+        riskScore: 0
+      };
+    }
 
+    const rec = JSON.parse(cached.allocations_json) as Record<Address, BasisPoints>;
     return {
       currentAllocations,
-      recommendedAllocations: recommendation.recommendedAllocation,
-      needsRebalancing: this.shouldRebalance(currentAllocations, recommendation.recommendedAllocation),
+      recommendedAllocations: rec,
+      needsRebalancing: this.shouldRebalance(currentAllocations, rec),
+      confidence: cached.confidence,
+      reasoning: cached.reasoning ?? 'Cached recommendation',
+      marketContext: cached.market_context ?? 'N/A',
+      expectedApy: cached.expected_apy_bp,
+      riskScore: cached.risk_score
+    };
+  }
+
+  /** Execute rebalancing given an already computed recommendation */
+  async executeRebalancingWithRecommendation(
+    vaultId: string,
+    rec: { allocations: Record<Address, BasisPoints>; confidence: number; reasoning?: string }
+  ): Promise<RebalanceResult> {
+    const currentAllocations = await this.vaultService.getStrategyAllocations(vaultId);
+    const recommendation = {
+      recommendedAllocation: rec.allocations,
+      confidence: rec.confidence,
+      reasoning: rec.reasoning ?? 'Scheduled recommendation'
+    };
+
+    const needsRebalancing = this.shouldRebalance(currentAllocations, recommendation.recommendedAllocation);
+    if (!needsRebalancing) {
+      return {
+        success: true,
+        oldAllocations: currentAllocations,
+        newAllocations: currentAllocations,
+        confidence: recommendation.confidence,
+        reasoning: 'No rebalancing needed - allocations are within acceptable thresholds'
+      };
+    }
+
+    if (this.wallet && recommendation.confidence > Config.rebalanceMinConfidence) {
+      const txHash = await this.executeRebalanceTransaction(vaultId, recommendation.recommendedAllocation);
+      return {
+        success: true,
+        transactionHash: txHash,
+        oldAllocations: currentAllocations,
+        newAllocations: recommendation.recommendedAllocation,
+        confidence: recommendation.confidence,
+        reasoning: recommendation.reasoning
+      };
+    }
+
+    return {
+      success: true,
+      oldAllocations: currentAllocations,
+      newAllocations: recommendation.recommendedAllocation,
       confidence: recommendation.confidence,
-      reasoning: recommendation.reasoning,
-      marketContext: recommendation.marketContext,
-      expectedApy: recommendation.expectedApy,
-      riskScore: recommendation.riskScore
+      reasoning: `AI recommends rebalancing but ${!this.wallet ? 'no wallet configured' : 'confidence too low'}: ${recommendation.reasoning}`
     };
   }
 }

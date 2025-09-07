@@ -1,10 +1,12 @@
 import { VaultService } from '../services/VaultService.js';
-import { InvestmentAgent } from '../services/InvestmentAgent.js';
 import { RebalancingService } from '../services/RebalancingService.js';
 import { Repository } from '../services/db/Repository.js';
+import { AgentCache } from '../cache/agent/AgentCache.js';
+import { CachedRecommendationsService } from '../services/CachedRecommendationsService.js';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Address } from '../types/index.js';
 import { fetchFlows, fetchRebalances, fetchHarvests } from '../services/PonderClient.js';
+import { InvestmentAgent } from '../services/InvestmentAgent.js';
 
 /**
  * API routes for working with Veyra vaults.
@@ -17,6 +19,7 @@ export async function vaultRoutes(fastify: FastifyInstance) {
   const vaultService = new VaultService();
   const agent = new InvestmentAgent(vaultService);
   const rebalancingService = new RebalancingService(agent, vaultService);
+  const cachedRecs = new CachedRecommendationsService(vaultService);
 
   // List configured vaults and default (from env)
   fastify.get('/', async (_request: FastifyRequest, _reply: FastifyReply) => {
@@ -46,18 +49,16 @@ export async function vaultRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Get allocation recommendations based on current yields and risk factors.
-  // The InvestmentAgent analyzes all strategies and suggests how to split your funds
-  // for the best risk-adjusted returns. Recommendation only - no actual
-  // transactions are made.
+  // Get latest cached AI allocation recommendation (no real-time AI calls)
   fastify.get<{ Params: { vaultId: Address } }>('/:vaultId/strategy', async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
     try {
       const { vaultId } = request.params;
-      const recommendation = await agent.getOptimalAllocation(vaultId);
+      const recommendation = await cachedRecs.getLatest(vaultId);
+      if (!recommendation) return reply.status(404).send({ success: false, error: 'No cached recommendation available' });
       return { success: true, data: recommendation };
     } catch (error) {
       fastify.log.error(error);
-      reply.status(500).send({ success: false, error: 'Failed to generate strategy' });
+      reply.status(500).send({ success: false, error: 'Failed to fetch cached strategy' });
     }
   });
 
@@ -65,6 +66,8 @@ export async function vaultRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: { vaultId: Address } }>('/:vaultId/ai-rebalance', async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
     try {
       const { vaultId } = request.params;
+      const hasCached = AgentCache.getLatest(vaultId);
+      if (!hasCached) return reply.status(404).send({ success: false, error: 'No cached recommendation available' });
       const recommendation = await rebalancingService.getRebalanceRecommendation(vaultId);
       return { success: true, data: recommendation };
     } catch (error) {
@@ -73,11 +76,11 @@ export async function vaultRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Execute AI-powered rebalancing (requires proper authentication in production)
+  // Execute AI-powered rebalancing
   fastify.post<{ Params: { vaultId: Address } }>(
     '/:vaultId/ai-rebalance',
     async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
-      // Simple admin auth: require x-admin-key header to match ADMIN_API_KEY
+      // Admin auth: require x-admin-key header to match ADMIN_API_KEY
       const adminKey = (request.headers['x-admin-key'] || request.headers['X-Admin-Key']) as string | undefined;
       if (!process.env.ADMIN_API_KEY || adminKey !== process.env.ADMIN_API_KEY) {
         return reply.status(401).send({ success: false, error: 'Unauthorized' });
@@ -126,14 +129,24 @@ export async function vaultRoutes(fastify: FastifyInstance) {
       }
     }
   );
-  // AI agent decisions (off-chain)
+  // AI agent decisions (off-chain, cached locally)
   fastify.get<{ Params: { vaultId: Address } }>(
     '/:vaultId/agent/decisions',
     async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
       try {
         const { vaultId } = request.params;
-        const items = await Repository.getAgentDecisions(vaultId, 20);
-        return { success: true, data: items.data };
+        const items = AgentCache.list(vaultId, 20).map((r) => ({
+          id: r.id,
+          vault_address: r.vault_address,
+          allocations_json: r.allocations_json,
+          expected_apy_bp: r.expected_apy_bp,
+          risk_score: r.risk_score,
+          confidence: r.confidence,
+          reasoning: r.reasoning,
+          market_context: r.market_context,
+          created_at: r.created_at,
+        }));
+        return { success: true, data: items };
       } catch (error) {
         fastify.log.error(error);
         reply.status(500).send({ success: false, error: 'Failed to fetch agent decisions' });
@@ -167,6 +180,10 @@ export async function vaultRoutes(fastify: FastifyInstance) {
         return { success: true, data: { items, nextOffset: offset + items.length, hasMore } };
       } catch (error) {
         fastify.log.error(error);
+        const e = error as any;
+        if (e?.name === 'IndexerUnavailable') {
+          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Start Ponder dev and set PONDER_SQL_URL.' });
+        }
         reply.status(500).send({ success: false, error: 'Failed to fetch flows' });
       }
     }
@@ -194,6 +211,10 @@ export async function vaultRoutes(fastify: FastifyInstance) {
         return { success: true, data: { items, nextOffset: offset + items.length, hasMore } };
       } catch (error) {
         fastify.log.error(error);
+        const e = error as any;
+        if (e?.name === 'IndexerUnavailable') {
+          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Start Ponder dev and set PONDER_SQL_URL.' });
+        }
         reply.status(500).send({ success: false, error: 'Failed to fetch rebalances' });
       }
     }
@@ -220,7 +241,30 @@ export async function vaultRoutes(fastify: FastifyInstance) {
         return { success: true, data: { items, nextOffset: offset + items.length, hasMore } };
       } catch (error) {
         fastify.log.error(error);
+        const e = error as any;
+        if (e?.name === 'IndexerUnavailable') {
+          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Start Ponder dev and set PONDER_SQL_URL.' });
+        }
         reply.status(500).send({ success: false, error: 'Failed to fetch harvests' });
+      }
+    }
+  );
+
+  // Admin: Generate and cache a fresh AI recommendation immediately
+  fastify.post<{ Params: { vaultId: Address } }>(
+    '/:vaultId/agent/generate',
+    async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
+      const adminKey = (request.headers['x-admin-key'] || request.headers['X-Admin-Key']) as string | undefined;
+      if (!process.env.ADMIN_API_KEY || adminKey !== process.env.ADMIN_API_KEY) {
+        return reply.status(401).send({ success: false, error: 'Unauthorized' });
+      }
+      try {
+        const { vaultId } = request.params;
+        const rec = await agent.getOptimalAllocation(vaultId);
+        return { success: true, data: rec };
+      } catch (error) {
+        fastify.log.error(error);
+        reply.status(500).send({ success: false, error: 'Failed to generate recommendation' });
       }
     }
   );

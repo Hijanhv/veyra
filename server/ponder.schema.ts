@@ -2,7 +2,7 @@ import { onchainTable, index } from "ponder";
 
 // Vault metrics table
 export const vaultMetrics = onchainTable("vault_metrics", (t) => ({
-  id: t.text().primaryKey(), // vault address
+  id: t.hex().primaryKey(), // vault address
   totalAssets: t.bigint().notNull(),
   totalSupply: t.bigint().notNull(),
   sharePrice: t.bigint().notNull(), // in wei, calculated as totalAssets / totalSupply
@@ -24,6 +24,7 @@ export const deposits = onchainTable("deposits", (t) => ({
 }), (table) => ({
   vaultIndex: index().on(table.vault),
   tsIndex: index().on(table.timestamp),
+  blockIndex: index().on(table.blockNumber),
 }));
 
 // Withdrawal events
@@ -41,6 +42,7 @@ export const withdrawals = onchainTable("withdrawals", (t) => ({
 }), (table) => ({
   vaultIndex: index().on(table.vault),
   tsIndex: index().on(table.timestamp),
+  blockIndex: index().on(table.blockNumber),
 }));
 
 // Strategy events
@@ -57,6 +59,7 @@ export const strategyEvents = onchainTable("strategy_events", (t) => ({
 }), (table) => ({
   vaultIndex: index().on(table.vault),
   tsIndex: index().on(table.timestamp),
+  blockIndex: index().on(table.blockNumber),
 }));
 
 // Rebalance events
@@ -71,6 +74,7 @@ export const rebalances = onchainTable("rebalances", (t) => ({
 }), (table) => ({
   vaultIndex: index().on(table.vault),
   tsIndex: index().on(table.timestamp),
+  blockIndex: index().on(table.blockNumber),
 }));
 
 // User balances (track individual user positions)
@@ -81,6 +85,9 @@ export const userBalances = onchainTable("user_balances", (t) => ({
   shares: t.bigint().notNull(),
   updatedAt: t.bigint().notNull(),
   blockNumber: t.bigint().notNull(),
+}), (table) => ({
+  userIndex: index().on(table.user),
+  vaultIndex: index().on(table.vault),
 }));
 
 // Yield harvesting events
@@ -94,4 +101,5 @@ export const yieldHarvests = onchainTable("yield_harvests", (t) => ({
 }), (table) => ({
   vaultIndex: index().on(table.vault),
   tsIndex: index().on(table.timestamp),
+  blockIndex: index().on(table.blockNumber),
 }));

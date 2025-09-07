@@ -26,7 +26,7 @@ export default function VaultsPage() {
 
   const loading = metricsQ.isLoading || strategyQ.isLoading || rebalanceQ.isLoading || detailsQ.isLoading || flowsQ.isLoading || rebalancesQ.isLoading
   const metrics: VaultMetrics | undefined = metricsQ.data && metricsQ.data.success ? metricsQ.data.data : undefined
-  const strategyRec: RecommendedAllocation | undefined = strategyQ.data && strategyQ.data.success ? strategyQ.data.data : undefined
+  const strategyRec = strategyQ.data && strategyQ.data.success ? strategyQ.data.data : null
   const rebalance: RebalanceRecommendation | undefined = rebalanceQ.data && rebalanceQ.data.success ? rebalanceQ.data.data : undefined
   const details: StrategyDetails[] | undefined = detailsQ.data && detailsQ.data.success ? detailsQ.data.data : undefined
   const error = (metricsQ.data && !metricsQ.data.success && metricsQ.data.error)

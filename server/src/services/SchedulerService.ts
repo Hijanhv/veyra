@@ -3,6 +3,7 @@ import { RebalancingService } from './RebalancingService.js';
 import { InvestmentAgent } from './InvestmentAgent.js';
 import { VaultService } from './VaultService.js';
 import dotenv from 'dotenv';
+import { Config } from '../config.js';
 
 dotenv.config();
 
@@ -13,11 +14,13 @@ export class SchedulerService {
   private rebalancingService: RebalancingService;
   private vaultAddresses: string[];
   private isRunning = false;
+  private investmentAgent: InvestmentAgent;
+  private vaultService: VaultService;
 
   constructor() {
-    const vaultService = new VaultService();
-    const investmentAgent = new InvestmentAgent(vaultService);
-    this.rebalancingService = new RebalancingService(investmentAgent, vaultService);
+    this.vaultService = new VaultService();
+    this.investmentAgent = new InvestmentAgent(this.vaultService);
+    this.rebalancingService = new RebalancingService(this.investmentAgent, this.vaultService);
 
     // Get vault addresses from environment variable
     const vaultAddressesStr = process.env.VAULT_ADDRESSES || '';
@@ -38,25 +41,25 @@ export class SchedulerService {
 
     console.log('Starting AI-powered vault rebalancing scheduler...');
 
-    // Run every 6 hours
-    cron.schedule('0 */6 * * *', async () => {
+    // Run every hour for fresh AI decisions and optional execution
+    cron.schedule(Config.schedAnalysisCron, async () => {
       await this.executeScheduledRebalancing();
     }, {
       scheduled: true,
       timezone: "UTC"
     });
 
-    // Run every hour for monitoring
-    cron.schedule('0 * * * *', async () => {
+    // Also log status every hour offset by 30m
+    cron.schedule(Config.schedMonitorCron, async () => {
       await this.monitorVaults();
-    }, {
-      scheduled: true,
-      timezone: "UTC"
-    });
+    }, { scheduled: true, timezone: 'UTC' });
 
     this.isRunning = true;
     console.log('Scheduler started successfully');
     console.log(`Monitoring ${this.vaultAddresses.length} vaults`);
+
+    // Run once on startup
+    void this.executeScheduledRebalancing();
   }
 
   /**
@@ -80,18 +83,27 @@ export class SchedulerService {
    * Execute scheduled rebalancing for all vaults
    */
   private async executeScheduledRebalancing() {
-    console.log(`[${new Date().toISOString()}] Starting scheduled rebalancing for ${this.vaultAddresses.length} vaults`);
+    console.log(`[${new Date().toISOString()}] Starting scheduled AI analysis for ${this.vaultAddresses.length} vaults`);
 
     for (const vaultAddress of this.vaultAddresses) {
       try {
-        console.log(`Analyzing vault ${vaultAddress}...`);
+        console.log(`Analyzing vault ${vaultAddress} with AI...`);
 
-        const recommendation = await this.rebalancingService.getRebalanceRecommendation(vaultAddress);
+        // Produce a fresh AI recommendation and persist to cache
+        const ai = await this.investmentAgent.getOptimalAllocation(vaultAddress);
 
-        if (recommendation.needsRebalancing && recommendation.confidence > 0.8) {
-          console.log(`Executing rebalancing for vault ${vaultAddress} (confidence: ${recommendation.confidence})`);
+        // Compare against current on-chain allocations
+        const currentAllocations = await this.vaultService.getStrategyAllocations(vaultAddress);
+        const needsRebalancing = this.rebalancingService.shouldRebalance(currentAllocations, ai.recommendedAllocation);
 
-          const result = await this.rebalancingService.executeRebalancing(vaultAddress);
+        if (needsRebalancing && ai.confidence > 0.8) {
+          console.log(`Executing rebalancing for vault ${vaultAddress} (confidence: ${ai.confidence})`);
+
+          const result = await this.rebalancingService.executeRebalancingWithRecommendation(vaultAddress, {
+            allocations: ai.recommendedAllocation,
+            confidence: ai.confidence,
+            reasoning: ai.reasoning
+          });
 
           if (result.success && result.transactionHash) {
             console.log(`✅ Rebalancing successful for ${vaultAddress}: ${result.transactionHash}`);
@@ -101,7 +113,7 @@ export class SchedulerService {
             console.log(`❌ Rebalancing failed for ${vaultAddress}: ${result.error}`);
           }
         } else {
-          console.log(`⏭️ Skipping ${vaultAddress} - ${recommendation.needsRebalancing ? 'low confidence' : 'no rebalancing needed'}`);
+          console.log(`⏭️ Skipping ${vaultAddress} - ${needsRebalancing ? 'low confidence' : 'no rebalancing needed'}`);
         }
 
         // Wait between vaults to avoid overwhelming the network
@@ -112,7 +124,7 @@ export class SchedulerService {
       }
     }
 
-    console.log(`[${new Date().toISOString()}] Scheduled rebalancing completed`);
+    console.log(`[${new Date().toISOString()}] Scheduled AI analysis completed`);
   }
 
   /**
