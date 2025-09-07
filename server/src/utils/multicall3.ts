@@ -1,4 +1,4 @@
-import { Contract, Interface, JsonRpcProvider } from 'ethers';
+import { Contract, Interface, AbstractProvider } from 'ethers';
 
 /**
  * Multicall3 Utilities - Making Blockchain Calls Super Efficient! 🚀
@@ -64,18 +64,27 @@ export type MulticallCall = { target: string; callData: string; name: string };
  * - returnData: The raw result (still needs to be decoded)
  */
 export async function tryAggregate(
-  provider: JsonRpcProvider,
+  provider: AbstractProvider,
   multicallAddress: string,
   calls: MulticallCall[]
 ): Promise<Array<{ name: string; success: boolean; returnData: string }>> {
   const mc = new Contract(multicallAddress, MULTICALL3_ABI, provider) as unknown as {
-    tryAggregate: (
+    tryAggregate: ((
       requireSuccess: boolean,
       calls: Array<{ target: string; callData: string }>
-    ) => Promise<Array<{ success: boolean; returnData: string }>>;
+    ) => Promise<Array<{ success: boolean; returnData: string }>>) & {
+      staticCall: (
+        requireSuccess: boolean,
+        calls: Array<{ target: string; callData: string }>
+      ) => Promise<Array<{ success: boolean; returnData: string }>>;
+    };
   };
   // Build the input for Multicall3 (strip to target + callData only)
-  const res = await mc.tryAggregate(false, calls.map(({ target, callData }) => ({ target, callData })));
+  // Use staticCall so this executes as a read with a provider-only Contract
+  const res = await mc.tryAggregate.staticCall(
+    false,
+    calls.map(({ target, callData }) => ({ target, callData }))
+  );
   // Attach our original `name` back to each result for easy matching upstream
   return res.map((r, i) => ({ name: calls[i]!.name, success: r.success, returnData: r.returnData }));
 }

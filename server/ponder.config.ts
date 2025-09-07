@@ -2,7 +2,6 @@ import "dotenv/config";
 import { createConfig } from "ponder";
 import VeyraVaultAbi from "./src/abi/VeyraVaultAbi.js";
 
-// Helper to parse a comma-separated env var into an array of addresses
 const parseAddresses = (v?: string): `0x${string}`[] | undefined =>
   v?.split(",")
     .map((s) => s.trim())

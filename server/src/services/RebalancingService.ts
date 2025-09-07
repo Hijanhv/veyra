@@ -23,7 +23,7 @@ export interface RebalanceResult {
  * Service responsible for executing AI-driven rebalancing decisions on-chain
  */
 export class RebalancingService {
-  private provider: ethers.JsonRpcProvider;
+  private provider: ethers.AbstractProvider;
   private wallet?: ethers.Wallet;
 
   constructor(
@@ -35,7 +35,9 @@ export class RebalancingService {
       throw new Error('SONIC_RPC_URL is required');
     }
 
-    this.provider = new ethers.JsonRpcProvider(rpcUrl);
+    this.provider = rpcUrl.startsWith('ws')
+      ? new ethers.WebSocketProvider(rpcUrl)
+      : new ethers.JsonRpcProvider(rpcUrl);
 
     // Initialize wallet if private key is provided (for actual rebalancing)
     if (process.env.STRATEGY_MANAGER_PRIVATE_KEY) {

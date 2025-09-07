@@ -9,7 +9,7 @@
  */
 
 import dotenv from 'dotenv';
-import { ethers, Contract, JsonRpcProvider, Interface, type InterfaceAbi } from 'ethers';
+import { ethers, Contract, Interface, type InterfaceAbi } from 'ethers';
 import { createRequire } from 'module';
 const requireJson = createRequire(import.meta.url);
 const vaultAbiJson = requireJson('../abi/VeyraVault.json');
@@ -109,7 +109,7 @@ type PendleAdapterRead = {
 
 // Service for composing vault/strategy analytics from on-chain reads
 export class VaultService {
-  private provider: JsonRpcProvider;
+  private provider: ethers.AbstractProvider;
   private readonly stdIntrospectInterface: Interface;
   private readonly vaultInterface: Interface;
   private readonly strategyInterface: Interface;
@@ -139,7 +139,10 @@ export class VaultService {
     const mc = process.env.MULTICALL3_ADDRESS;
     if (!mc) throw new Error('MULTICALL3_ADDRESS is required');
 
-    this.provider = new JsonRpcProvider(rpcUrl);
+    // Choose provider based on URL scheme (http(s) vs ws(s))
+    this.provider = rpcUrl.startsWith('ws')
+      ? new ethers.WebSocketProvider(rpcUrl)
+      : new ethers.JsonRpcProvider(rpcUrl);
     this.stdIntrospectInterface = new Interface(introspectInterfaceAbi);
     this.vaultInterface = new Interface(VAULT_ABI);
     this.strategyInterface = new Interface(IYIELDSTRATEGY_ABI);
