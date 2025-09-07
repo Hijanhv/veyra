@@ -8,8 +8,8 @@
     "build": "tsc",
     "postbuild": "cp -R src/abi dist/abi || true",
     "start": "node dist/server.js",
-    "abis:sync": "node ./scripts/sync-abis.mjs",
-    "contracts:build": "node ./scripts/refresh-contracts.mjs",
+    "abis:sync": "node ../scripts/refresh-contracts.mjs",
+    "contracts:build": "node ../scripts/refresh-contracts.mjs",
     "db:types": "sh -c 'supabase gen types typescript --schema public --project-id \"${SUPABASE_PROJECT_REF:-iyrqtchhttmpyopfvipl}\" > src/types/supabase.generated.ts'",
     "indexer:dev": "ponder dev",
     "indexer:start": "ponder start"

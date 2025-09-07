@@ -7,8 +7,8 @@ Quick start
 - Env: `cp .env.example .env` then set `SONIC_RPC_URL` and `MULTICALL3_ADDRESS`
 
 Build/sync contracts
-- Build + sync ABIs: `npm run contracts:build`
-- Sync ABIs (no build): `npm run abis:sync`
+- From repo root: `node scripts/refresh-contracts.mjs` (build + sync ABIs to `server/src/abi` and `web/src/abi`)
+- Alternatively from `server/`: `npm run contracts:build` or `npm run abis:sync` (wrappers around the root script)
 
 Notes
 - Strategies expose `IStrategyIntrospection.components()` (components-based introspection).

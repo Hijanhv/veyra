@@ -135,4 +135,9 @@ envText = upsertEnv(envText, kv);
 writeFileSync(serverEnvPath, envText, 'utf8');
 console.log(`Updated ${path.relative(root, serverEnvPath)} (VAULT_ADDRESSES, DEFAULT_VAULT_ID, CHAIN_ID)`);
 
+// 5) Build contracts (no-op if unchanged) and sync ABIs to server and web after deploy
+try {
+  execSync('node scripts/refresh-contracts.mjs', { stdio: 'inherit', cwd: root });
+} catch { /* ignore sync errors here */ }
+
 console.log('Done.');

@@ -5,8 +5,6 @@ import {Test} from "forge-std/Test.sol";
 import {IERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 import {AaveRingsCarryStrategy} from "src/strategies/AaveRingsCarryStrategy.sol";
-import {IRingsAdapter} from "src/interfaces/adapters/IRingsAdapter.sol";
-import {ILendingAdapter} from "src/interfaces/adapters/ILendingAdapter.sol";
 import {MockRingsAdapter} from "src/mocks/MockRingsAdapter.sol";
 import {MockLendingAdapter} from "src/mocks/MockLendingAdapter.sol";
 import {MockERC20} from "src/mocks/MockERC20.sol";

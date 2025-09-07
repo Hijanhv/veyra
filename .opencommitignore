@@ -1,1 +1,3 @@
 contracts/broadcast/**/*.json
+web/src/abi/**/*.json
+server/src/abi/**/*.json

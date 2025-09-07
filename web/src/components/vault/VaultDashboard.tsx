@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { parseUnits, erc20Abi, type Address as ViemAddress } from 'viem'
-import VeyraVaultAbi from '@/abis/VeyraVault'
+import VeyraVaultArtifact from '@/abi/VeyraVault.json'
 
 export function VaultDashboard() {
   const [depositAmount, setDepositAmount] = useState('')
@@ -21,7 +21,7 @@ export function VaultDashboard() {
 
   const { data: assetAddress } = useReadContract({
     address: vaultAddress as ViemAddress,
-    abi: VeyraVaultAbi,
+    abi: VeyraVaultArtifact.abi as any,
     functionName: 'asset',
     query: { enabled: !!vaultAddress },
   })
@@ -73,7 +73,7 @@ export function VaultDashboard() {
     }
     await writeContractAsync({
       address: vaultAddress as ViemAddress,
-      abi: VeyraVaultAbi,
+      abi: VeyraVaultArtifact.abi as any,
       functionName: 'deposit',
       args: [amount, address as `0x${string}`],
     })
@@ -85,7 +85,7 @@ export function VaultDashboard() {
     const amount = parseUnits(withdrawAmount, assetDecimals as number)
     await writeContractAsync({
       address: vaultAddress as ViemAddress,
-      abi: VeyraVaultAbi,
+      abi: VeyraVaultArtifact.abi as any,
       functionName: 'withdraw',
       args: [amount, address as `0x${string}`, address as `0x${string}`],
     })

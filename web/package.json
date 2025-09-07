@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "abis:sync": "node ../scripts/refresh-contracts.mjs"
   },
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.2.8",

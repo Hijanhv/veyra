@@ -6,7 +6,7 @@ This directory contains contract ABIs used by the server.
 ABIs are copied from Foundry build artifacts in `contracts/out`.
 
 Sync commands:
-- From server/: `npm run sync:abis` (copy only)
-- From server/: `npm run contracts:build` (forge build + copy)
+- From repo root: `node scripts/refresh-contracts.mjs` (forge build + sync to `server/src/abi` and `web/src/abi`)
+- From server/: `npm run abis:sync` or `npm run contracts:build` (wrappers that call the root script)
 
 Artifacts synced: IYieldStrategy.json, VeyraVault.json, plus common adapters and strategies for tooling.
