@@ -13,21 +13,18 @@ const database = process.env.DATABASE_URL
   : undefined;
 
 export default createConfig({
-  // Use Postgres if DATABASE_URL is provided, else default to embedded
   ...(database ? { database } : {}),
   chains: {
     sonic: {
       id: Number(process.env.CHAIN_ID ?? 146),
-      rpc: process.env.SONIC_RPC_URL ?? "wss://sonic-rpc.publicnode.com",
+      rpc: process.env.SONIC_RPC_URL ?? "https://sonic-rpc.publicnode.com",
       pollingInterval: 1_000,
     },
   },
   contracts: {
     VeyraVault: {
-      // Typed ABI ensures event names (Deposit/Withdraw/etc.) are inferred.
       abi: VeyraVaultAbi,
       chain: "sonic",
-      // Support multiple vaults via VAULT_ADDRESSES, or fall back to a single VEYRA_VAULT_ADDRESS
       address:
         parseAddresses(process.env.VAULT_ADDRESSES) ||
         ((process.env.VEYRA_VAULT_ADDRESS as `0x${string}`) ??
