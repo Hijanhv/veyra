@@ -13,6 +13,7 @@ contract MockLendingAdapter is ILendingAdapter {
 
     mapping(address => mapping(address => uint256)) public coll; // user => token => amount
     mapping(address => mapping(address => uint256)) public deb; // user => token => amount
+    uint256 public hf = 2e18; // configurable health factor for tests
 
     function deposit(address token, uint256 amount) external override {
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
@@ -60,8 +61,8 @@ contract MockLendingAdapter is ILendingAdapter {
         return deb[user][token];
     }
 
-    function healthFactor(address) external pure override returns (uint256) {
-        return 2e18;
+    function healthFactor(address) external view override returns (uint256) {
+        return hf;
     }
 
     function getSupplyApy(address) external pure override returns (uint256) {
@@ -70,5 +71,10 @@ contract MockLendingAdapter is ILendingAdapter {
 
     function getBorrowApy(address) external pure override returns (uint256) {
         return 450; // 4.5%
+    }
+
+    /// @notice Helper to change health factor for testing
+    function setHealthFactor(uint256 _hf) external {
+        hf = _hf;
     }
 }

@@ -7,177 +7,24 @@ import {SafeERC20} from "lib/openzeppelin-contracts/contracts/token/ERC20/utils/
 import {AaveRingsCarryStrategy} from "src/strategies/AaveRingsCarryStrategy.sol";
 import {IRingsAdapter} from "src/interfaces/adapters/IRingsAdapter.sol";
 import {ILendingAdapter} from "src/interfaces/adapters/ILendingAdapter.sol";
-
-/// @notice Basic ERC20 token implementation for testing wS and USDC functionality
-contract DummyToken is IERC20 {
-    string public name;
-    string public symbol;
-    uint8 public decimals;
-    uint256 public override totalSupply;
-    mapping(address => uint256) public override balanceOf;
-    mapping(address => mapping(address => uint256)) public override allowance;
-
-    constructor(string memory _name, string memory _symbol) {
-        name = _name;
-        symbol = _symbol;
-        decimals = 18;
-    }
-
-    function transfer(
-        address to,
-        uint256 amount
-    ) external override returns (bool) {
-        balanceOf[msg.sender] -= amount;
-        balanceOf[to] += amount;
-        emit Transfer(msg.sender, to, amount);
-        return true;
-    }
-
-    function approve(
-        address spender,
-        uint256 amount
-    ) external override returns (bool) {
-        allowance[msg.sender][spender] = amount;
-        emit Approval(msg.sender, spender, amount);
-        return true;
-    }
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) external override returns (bool) {
-        uint256 allowed = allowance[from][msg.sender];
-        require(allowed >= amount, "allowance");
-        allowance[from][msg.sender] = allowed - amount;
-        balanceOf[from] -= amount;
-        balanceOf[to] += amount;
-        emit Transfer(from, to, amount);
-        return true;
-    }
-
-    function mint(address to, uint256 amount) external {
-        balanceOf[to] += amount;
-        totalSupply += amount;
-        emit Transfer(address(0), to, amount);
-    }
-}
-
-/// @notice Test implementation of Rings adapter that handles scUSD minting and redemption
-contract MockRings is IRingsAdapter {
-    using SafeERC20 for IERC20;
-    DummyToken public scToken;
-    address public usdc;
-
-    constructor(address _usdc) {
-        usdc = _usdc;
-        scToken = new DummyToken("scUSD", "scUSD");
-    }
-
-    function scUsd() external view override returns (address) {
-        return address(scToken);
-    }
-
-    function mintScUsd(uint256 usdcIn) external override returns (uint256) {
-        IERC20(usdc).safeTransferFrom(msg.sender, address(this), usdcIn);
-        scToken.mint(msg.sender, usdcIn);
-        return usdcIn;
-    }
-
-    function redeemScUsd(uint256 scAmount) external override returns (uint256) {
-        IERC20(address(scToken)).safeTransferFrom(
-            msg.sender,
-            address(this),
-            scAmount
-        );
-        DummyToken(usdc).mint(msg.sender, scAmount);
-        return scAmount;
-    }
-
-    function getApy() external pure override returns (uint256) {
-        return 1300; // 13% APY
-    }
-}
-
-/// @notice Test lending adapter that simulates Aave protocol behavior
-contract MockLending is ILendingAdapter {
-    using SafeERC20 for IERC20;
-    mapping(address => mapping(address => uint256)) public coll;
-    mapping(address => mapping(address => uint256)) public deb;
-
-    function deposit(address token, uint256 amount) external override {
-        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-        coll[msg.sender][token] += amount;
-    }
-
-    function withdraw(
-        address token,
-        uint256 amount
-    ) external override returns (uint256) {
-        uint256 c = coll[msg.sender][token];
-        require(c >= amount, "no collateral");
-        coll[msg.sender][token] = c - amount;
-        DummyToken(token).mint(msg.sender, amount);
-        return amount;
-    }
-
-    function borrow(address token, uint256 amount) external override {
-        deb[msg.sender][token] += amount;
-        DummyToken(token).mint(msg.sender, amount);
-    }
-
-    function repay(
-        address token,
-        uint256 amount
-    ) external override returns (uint256) {
-        uint256 owed = deb[msg.sender][token];
-        uint256 repaid = amount > owed ? owed : amount;
-        deb[msg.sender][token] = owed - repaid;
-        IERC20(token).safeTransferFrom(msg.sender, address(this), repaid);
-        return repaid;
-    }
-
-    function collateralOf(
-        address user,
-        address token
-    ) external view override returns (uint256) {
-        return coll[user][token];
-    }
-
-    function debtOf(
-        address user,
-        address token
-    ) external view override returns (uint256) {
-        return deb[user][token];
-    }
-
-    function healthFactor(address) external pure override returns (uint256) {
-        return 2e18;
-    }
-
-    function getSupplyApy(address) external pure override returns (uint256) {
-        return 250; // 2.5% APY
-    }
-
-    function getBorrowApy(address) external pure override returns (uint256) {
-        return 450; // 4.5% APY
-    }
-}
+import {MockRingsAdapter} from "src/mocks/MockRingsAdapter.sol";
+import {MockLendingAdapter} from "src/mocks/MockLendingAdapter.sol";
+import {MockERC20} from "src/mocks/MockERC20.sol";
 
 contract AaveRingsCarryStrategyTest is Test {
     using SafeERC20 for IERC20;
-    DummyToken wS;
-    DummyToken usdc;
-    MockRings rings;
-    MockLending lend;
+    MockERC20 wS;
+    MockERC20 usdc;
+    MockRingsAdapter rings;
+    MockLendingAdapter lend;
     AaveRingsCarryStrategy strategy;
     address vault = address(0x1111);
 
     function setUp() public {
-        wS = new DummyToken("wS", "wS");
-        usdc = new DummyToken("USDC", "USDC");
-        rings = new MockRings(address(usdc));
-        lend = new MockLending();
+        wS = new MockERC20("wS", "wS", 18);
+        usdc = new MockERC20("USDC", "USDC", 18);
+        rings = new MockRingsAdapter(address(usdc));
+        lend = new MockLendingAdapter();
         // Set borrow ratio to 50% (5000 basis points)
         strategy = new AaveRingsCarryStrategy(
             address(wS),
@@ -189,7 +36,7 @@ contract AaveRingsCarryStrategyTest is Test {
         );
         // Give the vault some tokens and approve the strategy to spend them
         wS.mint(vault, 1000 ether);
-        usdc.mint(address(lend), 1000 ether);
+        // No need to pre-fund lending; borrow mints tokens in mock
         vm.startPrank(vault);
         wS.approve(address(strategy), type(uint256).max);
         usdc.approve(address(rings), type(uint256).max);

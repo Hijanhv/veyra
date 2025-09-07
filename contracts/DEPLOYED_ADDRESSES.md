@@ -1,27 +1,27 @@
 # Deployed Addresses
 
-## Latest Deployment (chain 146) — 2025-09-06T20:36:47.363Z
+## Latest Deployment (chain 146) — 2025-09-07T11:11:20.471Z
 - MockERC20:
-  - [0] 0x41c0c607726b7f9cd88fca30b5141a173d7920b4
-  - [1] 0x62bc4bb7baa540729951d2289d2085bd700facc5
-  - [2] 0xf0296590574fd32049925a4f1515dcbc5226e44a
-  - [3] 0xa2c921ed05ff3264b31473eb4be29345fa36f5d5
-- MockStSAdapter: 0x8583262936c526bde57239b8af2743928c61847e
-- MockBeetsAdapter: 0xa0811ee1b2a0d47f48a02f606a73506fa757bc8f
-- MockSwapXAdapter: 0x243822ad4d41907a9c688e6063b1ac8b78ae8265
-- MockRingsAdapter: 0x15c6eb7bb763520930331876f583f740651238c0
-- MockLendingAdapter: 0x14e64972aecb0b6d729f6c46ef1e8489312de6c7
-- MockPendleAdapter: 0x04d93872335ba9bdbde6caca6ae1583661c85a82
-- MockEggsAdapter: 0xd4cebe0a50ebaaaff638837402a0d9175c068931
-- MockShadowAdapter: 0x020ece2a452b557ba660a3f3e74fd4a5f7c0f81d
+  - [0] 0x247d4221bcd41c033722fc10cb7ac41c3a88af88
+  - [1] 0xc2123f56adacbbc14e39a645eaa69802ddec8b55
+  - [2] 0xf6c9f62b9688fbb1c514292e9c25ccbce4342efb
+  - [3] 0x56ca547b8920e54f9be6c3c9094a03de90d6f656
+- MockStSAdapter: 0xc384e2d9fc4a6d083cbe41721e2ecd0912bd3c2f
+- MockBeetsAdapter: 0x2071bfc31602c51ab26a31023a0380d9f5f3a31a
+- MockSwapXAdapter: 0x3ef19d8d958db17887c05968c3d2ecde0edba3fb
+- MockRingsAdapter: 0x927b23617f3aafb8a9a92ad8d2ce0114fd574486
+- MockLendingAdapter: 0x1c062c58b40ad510f92dab577beeb66438a94e4e
+- MockPendleAdapter: 0x4323a1fc47c968125cb26f20398c7b62cae528c0
+- MockEggsAdapter: 0x69d93aab436497b6d1df3961d9c0e67e8a5d811e
+- MockShadowAdapter: 0x0e7c8a4a53b0e615062ab708e20b6a0782001d33
 - VeyraVault:
-  - [0] 0x211b911cac4fb4365801a841d5ac6936ef0521fa
-  - [1] 0xf313fe3cfe58cde784abd8f18c691ffa620b83c4
-  - [2] 0xabe0105f5e78166870457f91e206c52a0f97e2b9
-  - [3] 0xd8d1ff89c28fe8eeb4598579a90765ccad55aadd
-- StSBeetsStrategy: 0x392e5dde2642165f95bdeaf52156e30171eb8579
-- SwapXManagedRangeStrategy: 0x1f191455c5fb5d15a3fee069237f18068c272ebc
-- EggsShadowLoopStrategy: 0x79d30e3d1ea223b71ce306f13b8a8a0077a77452
-- AaveRingsCarryStrategy: 0xef45a061e45181c1d9354206702a6ae4fbe62cce
-- RingsAaveLoopStrategy: 0x852d4890ab9d8a704e8ce55403e0401bfc16718c
-- PendleFixedYieldStSStrategy: 0x44c07181258101916459dceb20497e15c954a61d
+  - [0] 0x260922ced914a74423746af9113fc976a430fd94
+  - [1] 0xa923a3a4373188d5e907460ab7d7ffe790f2fc7d
+  - [2] 0x7f580106fb62e5e8a593c99fa8150779cc822705
+  - [3] 0x7f689a8c1da93c5e54a8bbdd163727b9e2fdae38
+- StSBeetsStrategy: 0x302d69ad7b4f7a9c95426c432d4bbb2e22d5046d
+- SwapXManagedRangeStrategy: 0x9e89745d0818c9add072ba4b5c7af0e5c86fe636
+- EggsShadowLoopStrategy: 0xb05c5387284c3d509ffcc67d47b79aa6a7328845
+- AaveRingsCarryStrategy: 0x1a370802a689a62f591d6f0aa448d24f8044b560
+- RingsAaveLoopStrategy: 0x35dae978788f974099590a36a7df990bd2450e90
+- PendleFixedYieldStSStrategy: 0xa309b3cb8ca3083cdfe23e689e6f7f8fd14a8102

@@ -95,5 +95,9 @@ contract MockSwapXAdapter is ISwapXAdapter {
     function getPendingRewards(address /*gauge*/, address /*account*/) external view override returns (uint256) {
         return rewardAmount;
     }
-}
 
+    /// @notice Helper to set reward amount for tests
+    function setReward(uint256 amount) external {
+        rewardAmount = amount;
+    }
+}

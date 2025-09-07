@@ -120,4 +120,9 @@ contract MockShadowAdapter is IShadowAdapter {
     ) external view override returns (uint256 balance) {
         return staked[account];
     }
+
+    /// @notice Helper to set reward amount for tests
+    function setReward(uint256 amount) external {
+        rewardAmount = amount;
+    }
 }

@@ -264,10 +264,57 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
      * @notice Execute strategy rebalancing
      */
     function _executeRebalance() internal {
-        // TODO: Implement rebalancing logic
-        // 1. Calculate current vs target allocations
-        // 2. Withdraw excess from over-allocated strategies
-        // 3. Deploy to under-allocated strategies
+        // Snapshot current state
+        uint256 idle = IERC20(asset()).balanceOf(address(this));
+        uint256 len = strategies.length;
+        if (len == 0) return;
+
+        // Collect current balances and compute total assets
+        uint256[] memory current = new uint256[](len);
+        uint256 deployed;
+        for (uint256 i = 0; i < len; i++) {
+            uint256 bal = strategies[i].totalAssets();
+            current[i] = bal;
+            deployed += bal;
+        }
+        uint256 total = idle + deployed;
+        if (total == 0) return;
+
+        // Compute desired balances per strategy according to target allocations
+        uint256[] memory desired = new uint256[](len);
+        for (uint256 i = 0; i < len; i++) {
+            uint256 bps = allocations[strategies[i]];
+            desired[i] = (total * bps) / 10000;
+        }
+
+        // Phase 1: Withdraw from over-allocated strategies to increase idle
+        for (uint256 i = 0; i < len; i++) {
+            if (current[i] > desired[i]) {
+                uint256 excess = current[i] - desired[i];
+                if (excess > 0) {
+                    // Withdraw excess; strategy is expected to transfer asset back to this vault
+                    strategies[i].withdraw(excess);
+                    current[i] -= excess;
+                    idle += excess;
+                    emit StrategyWithdrawal(address(strategies[i]), excess);
+                }
+            }
+        }
+
+        // Phase 2: Deploy idle to under-allocated strategies
+        for (uint256 i = 0; i < len && idle > 0; i++) {
+            if (current[i] < desired[i]) {
+                uint256 deficit = desired[i] - current[i];
+                uint256 toDeploy = deficit <= idle ? deficit : idle;
+                if (toDeploy > 0) {
+                    IERC20(asset()).safeTransfer(address(strategies[i]), toDeploy);
+                    strategies[i].deposit(toDeploy);
+                    current[i] += toDeploy;
+                    idle -= toDeploy;
+                    emit StrategyDeposit(address(strategies[i]), toDeploy);
+                }
+            }
+        }
     }
 
     /*//////////////////////////////////////////////////////////////
