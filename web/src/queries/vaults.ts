@@ -83,5 +83,3 @@ export function useVaultHarvestsQuery(vaultId: string | undefined, limit = 50, o
     ...options,
   })
 }
-
-// Admin-only rebalance execution moved out of frontend UI.
