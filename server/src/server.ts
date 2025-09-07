@@ -52,16 +52,28 @@ async function start() {
 
   // Scheduler management endpoints
   if (scheduler) {
-    fastify.get('/admin/scheduler/status', async () => {
+    const verifyAdmin = (req: any, reply: any) => {
+      const adminKey = (req.headers['x-admin-key'] || req.headers['X-Admin-Key']) as string | undefined;
+      if (!process.env.ADMIN_API_KEY || adminKey !== process.env.ADMIN_API_KEY) {
+        reply.status(401).send({ success: false, error: 'Unauthorized' });
+        return false;
+      }
+      return true;
+    };
+
+    fastify.get('/admin/scheduler/status', async (req, reply) => {
+      if (!verifyAdmin(req, reply)) return;
       return { success: true, data: scheduler.getStatus() };
     });
 
-    fastify.post('/admin/scheduler/stop', async () => {
+    fastify.post('/admin/scheduler/stop', async (req, reply) => {
+      if (!verifyAdmin(req, reply)) return;
       scheduler.stop();
       return { success: true, message: 'Scheduler stopped' };
     });
 
-    fastify.post('/admin/scheduler/start', async () => {
+    fastify.post('/admin/scheduler/start', async (req, reply) => {
+      if (!verifyAdmin(req, reply)) return;
       scheduler.start();
       return { success: true, message: 'Scheduler started' };
     });

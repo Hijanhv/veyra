@@ -61,6 +61,11 @@ export async function vaultRoutes(fastify: FastifyInstance) {
   fastify.post<{ Params: { vaultId: Address } }>(
     '/:vaultId/ai-rebalance',
     async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
+    // Simple admin auth: require x-admin-key header to match ADMIN_API_KEY
+    const adminKey = (request.headers['x-admin-key'] || request.headers['X-Admin-Key']) as string | undefined;
+    if (!process.env.ADMIN_API_KEY || adminKey !== process.env.ADMIN_API_KEY) {
+      return reply.status(401).send({ success: false, error: 'Unauthorized' });
+    }
     try {
       const { vaultId } = request.params;
       const result = await rebalancingService.executeRebalancing(vaultId);

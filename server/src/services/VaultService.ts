@@ -12,7 +12,7 @@ import dotenv from 'dotenv';
 import { ethers, Contract, JsonRpcProvider, Interface, type InterfaceAbi } from 'ethers';
 import { createRequire } from 'module';
 const requireJson = createRequire(import.meta.url);
-const vaultAbiJson = requireJson('../abi/VeyraVault.json');
+import { VeyraVaultAbi } from '../abis/VeyraVault.js';
 const yieldStrategyAbiJson = requireJson('../abi/IYieldStrategy.json');
 const lendingAbiJson = requireJson('../abi/ILendingAdapter.json');
 const eggsAbiJson = requireJson('../abi/IEggsAdapter.json');
@@ -57,7 +57,7 @@ type V2Introspection = {
 
 dotenv.config();
 
-const VAULT_ABI = vaultAbiJson.abi as InterfaceAbi;
+const VAULT_ABI = VeyraVaultAbi as unknown as InterfaceAbi;
 const IYIELDSTRATEGY_ABI = yieldStrategyAbiJson.abi as InterfaceAbi;
 const LENDING_ABI = lendingAbiJson.abi as InterfaceAbi;
 const EGGS_ABI = eggsAbiJson.abi as InterfaceAbi;

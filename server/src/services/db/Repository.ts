@@ -4,8 +4,6 @@ import type { Database } from '../../types/supabase.generated.js';
 export type Address = string;
 
 type Tables = Database['public']['Tables'];
-// Removed custom indexer; indexer_state helpers/types no longer required
-// Supabase now stores only off-chain AI decisions (and optional metadata)
 type AgentDecisionRow = Tables['agent_decisions']['Row'];
 type AgentDecisionInsert = Tables['agent_decisions']['Insert'];
 

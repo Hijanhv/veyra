@@ -1,14 +1,56 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { TrendingUp, DollarSign, Target, Zap } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { parseUnits, erc20Abi, type Address as ViemAddress } from 'viem'
+import VeyraVaultAbi from '@/abis/VeyraVault'
 
 export function VaultDashboard() {
   const [depositAmount, setDepositAmount] = useState('')
   const [withdrawAmount, setWithdrawAmount] = useState('')
+
+  const vaultAddress = useMemo(() => {
+    const a = process.env.NEXT_PUBLIC_DEFAULT_VAULT_ID
+    return a && a.startsWith('0x') ? (a as ViemAddress) : undefined
+  }, [])
+  const { address } = useAccount()
+
+  const { data: assetAddress } = useReadContract({
+    address: vaultAddress as ViemAddress,
+    abi: VeyraVaultAbi,
+    functionName: 'asset',
+    query: { enabled: !!vaultAddress },
+  })
+
+  const { data: assetDecimals } = useReadContract({
+    address: assetAddress as ViemAddress,
+    abi: erc20Abi,
+    functionName: 'decimals',
+    query: { enabled: !!assetAddress },
+  })
+
+  const { data: allowance } = useReadContract({
+    address: assetAddress as ViemAddress,
+    abi: erc20Abi,
+    functionName: 'allowance',
+    args: [address as ViemAddress, vaultAddress as ViemAddress],
+    query: { enabled: !!assetAddress && !!address && !!vaultAddress },
+  })
+
+  const { writeContractAsync, data: txHash } = useWriteContract()
+  const { isLoading: isPendingTx } = useWaitForTransactionReceipt({ hash: txHash })
+
+  const needsApproval = useMemo(() => {
+    try {
+      if (!assetDecimals || !allowance || !depositAmount) return false
+      const want = parseUnits(depositAmount, assetDecimals as number)
+      return want > (allowance as bigint)
+    } catch { return true }
+  }, [assetDecimals, allowance, depositAmount])
 
   const performanceData = [
     { date: '2024-01', yield: 8.2 },
@@ -17,6 +59,38 @@ export function VaultDashboard() {
     { date: '2024-04', yield: 15.6 },
     { date: '2024-05', yield: 18.3 }
   ]
+
+  const onDeposit = async () => {
+    if (!vaultAddress || !assetAddress || !assetDecimals || !address || !depositAmount) return
+    const amount = parseUnits(depositAmount, assetDecimals as number)
+    if (needsApproval) {
+      await writeContractAsync({
+        address: assetAddress as ViemAddress,
+        abi: erc20Abi,
+        functionName: 'approve',
+        args: [vaultAddress, amount],
+      })
+    }
+    await writeContractAsync({
+      address: vaultAddress as ViemAddress,
+      abi: VeyraVaultAbi,
+      functionName: 'deposit',
+      args: [amount, address as `0x${string}`],
+    })
+    setDepositAmount('')
+  }
+
+  const onWithdraw = async () => {
+    if (!vaultAddress || !assetDecimals || !address || !withdrawAmount) return
+    const amount = parseUnits(withdrawAmount, assetDecimals as number)
+    await writeContractAsync({
+      address: vaultAddress as ViemAddress,
+      abi: VeyraVaultAbi,
+      functionName: 'withdraw',
+      args: [amount, address as `0x${string}`, address as `0x${string}`],
+    })
+    setWithdrawAmount('')
+  }
 
   return (
     <div className="space-y-6">
@@ -91,7 +165,9 @@ export function VaultDashboard() {
                 value={depositAmount}
                 onChange={(e) => setDepositAmount(e.target.value)}
               />
-              <Button className="w-full">Deposit</Button>
+              <Button className="w-full" onClick={onDeposit} disabled={!depositAmount || isPendingTx || !vaultAddress}>
+                {isPendingTx ? 'Pending…' : needsApproval ? 'Approve & Deposit' : 'Deposit'}
+              </Button>
             </div>
 
             <div className="space-y-2">
@@ -102,7 +178,9 @@ export function VaultDashboard() {
                 value={withdrawAmount}
                 onChange={(e) => setWithdrawAmount(e.target.value)}
               />
-              <Button variant="outline" className="w-full">Withdraw</Button>
+              <Button variant="outline" className="w-full" onClick={onWithdraw} disabled={!withdrawAmount || isPendingTx || !vaultAddress}>
+                {isPendingTx ? 'Pending…' : 'Withdraw'}
+              </Button>
             </div>
 
             <div className="pt-4">

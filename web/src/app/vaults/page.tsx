@@ -4,13 +4,14 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { 
-  useVaultMetricsQuery, 
-  useStrategyRecommendationQuery, 
-  useAIRebalanceQuery, 
+import {
+  useVaultMetricsQuery,
+  useStrategyRecommendationQuery,
+  useAIRebalanceQuery,
   useStrategyDetailsQuery,
   useExecuteRebalanceMutation,
 } from '@/queries/vaults'
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts'
 
 export default function VaultsPage() {
   const [vaultId, setVaultId] = useState<string>(process.env.NEXT_PUBLIC_DEFAULT_VAULT_ID || '')
@@ -42,7 +43,7 @@ export default function VaultsPage() {
             <p className="text-sm text-[var(--muted)]">Metrics, strategy, and AI rebalancing</p>
           </div>
           <div className="flex gap-2">
-            <Input value={vaultId} onChange={e=>setVaultId(e.target.value)} placeholder="Vault address" className="min-w-[360px]" />
+            <Input value={vaultId} onChange={e => setVaultId(e.target.value)} placeholder="Vault address" className="min-w-[360px]" />
             <Button onClick={() => setSubmitted(vaultId)} disabled={!vaultId || loading}>
               {loading ? 'Loading…' : 'Load'}
             </Button>
@@ -57,8 +58,32 @@ export default function VaultsPage() {
               <CardTitle className="text-[var(--foreground)]">Metrics</CardTitle>
             </CardHeader>
             <CardContent>
-              {!metricsQ.data || ('success' in metricsQ.data && !metricsQ.data.success) ? <div className="text-[var(--muted)] text-sm">No data.</div> : (
-                <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify((metricsQ.data as any).data, null, 2)}</pre>
+              {!metricsQ.data || ('success' in metricsQ.data && !metricsQ.data.success) ? (
+                <div className="text-[var(--muted)] text-sm">No data.</div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          dataKey="value"
+                          data={Object.entries((metricsQ.data as any).data.strategyAllocation || {}).map(([addr, bp]: any) => ({
+                            name: `${addr.slice(0, 6)}…${addr.slice(-4)}`,
+                            value: Number(bp) / 100,
+                          }))}
+                          label
+                        >
+                          {Object.entries((metricsQ.data as any).data.strategyAllocation || {}).map((_, i) => (
+                            <Cell key={i} fill={["#60a5fa", "#34d399", "#f472b6", "#fbbf24", "#a78bfa", "#fb7185"][i % 6]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify((metricsQ.data as any).data, null, 2)}</pre>
+                </div>
               )}
             </CardContent>
           </Card>

@@ -208,20 +208,14 @@ export class InvestmentAgent {
 
     const prompt = this.buildAllocationPrompt(strategies);
 
-    const go = generateObject as unknown as (o: {
-      model: unknown;
-      schema: unknown;
-      prompt: string;
-    }) => Promise<{ object: z.infer<typeof allocationSchema> }>;
-
-    const result = await go({
+    const result = await generateObject({
       model: this.aiModel,
       schema: allocationSchema,
-      prompt
+      prompt,
     });
 
     // Ensure allocations sum to 10000 basis points
-    const { allocations } = result.object as { allocations: Record<string, number> };
+    const { allocations } = result.object;
     const totalAllocation = (Object.values(allocations) as number[]).reduce((sum: number, val: number) => sum + val, 0);
     if (totalAllocation !== 10000 && totalAllocation > 0) {
       const scaleFactor = 10000 / totalAllocation;

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useInsightsQuery, usePredictionsQuery } from '@/queries/analytics'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, CartesianGrid } from 'recharts'
 
 export default function AnalyticsPage() {
   const [vaultId, setVaultId] = useState<string>(process.env.NEXT_PUBLIC_DEFAULT_VAULT_ID || '')
@@ -59,7 +60,26 @@ export default function AnalyticsPage() {
               {!predictionsQ.data || ('success' in predictionsQ.data && !predictionsQ.data.success) ? (
                 <div className="text-[var(--muted)] text-sm">No predictions yet.</div>
               ) : (
-                <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify((predictionsQ.data as any).data, null, 2)}</pre>
+                <div className="space-y-4">
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={Object.entries((predictionsQ.data as any).data.predictions).map(([addr, p]: any) => ({
+                        name: `${addr.slice(0,6)}…${addr.slice(-4)}`,
+                        nextWeek: p.nextWeek,
+                        nextMonth: p.nextMonth,
+                      }))}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                        <XAxis dataKey="name" tick={{ fill: 'var(--muted)' }} />
+                        <YAxis tick={{ fill: 'var(--muted)' }} />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="nextWeek" stroke="#60a5fa" name="Next Week %" />
+                        <Line type="monotone" dataKey="nextMonth" stroke="#34d399" name="Next Month %" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify((predictionsQ.data as any).data, null, 2)}</pre>
+                </div>
               )}
             </CardContent>
           </Card>

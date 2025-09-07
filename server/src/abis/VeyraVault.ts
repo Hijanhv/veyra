@@ -15,6 +15,50 @@ export const VeyraVaultAbi = [
     outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
   },
 
+  // ERC4626 surface commonly used by UI
+  {
+    type: "function",
+    name: "asset",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "address", internalType: "address" }],
+  },
+  {
+    type: "function",
+    name: "strategies",
+    stateMutability: "view",
+    inputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+    outputs: [{ name: "", type: "address", internalType: "address" }],
+  },
+  {
+    type: "function",
+    name: "allocations",
+    stateMutability: "view",
+    inputs: [{ name: "", type: "address", internalType: "address" }],
+    outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "deposit",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "assets", type: "uint256", internalType: "uint256" },
+      { name: "receiver", type: "address", internalType: "address" },
+    ],
+    outputs: [{ name: "shares", type: "uint256", internalType: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "withdraw",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "assets", type: "uint256", internalType: "uint256" },
+      { name: "receiver", type: "address", internalType: "address" },
+      { name: "owner", type: "address", internalType: "address" },
+    ],
+    outputs: [{ name: "shares", type: "uint256", internalType: "uint256" }],
+  },
+
   // Events used by the indexer
   {
     type: "event",
@@ -86,4 +130,3 @@ export const VeyraVaultAbi = [
 ] as const;
 
 export default VeyraVaultAbi;
-

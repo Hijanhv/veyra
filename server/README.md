@@ -19,6 +19,16 @@ Run
 - Dev: `npm run dev`
 - Prod: `npm run build && npm start`
 
+Admin access (API key)
+- Some endpoints are admin-only for safety (manual AI rebalance, scheduler controls).
+- Set `ADMIN_API_KEY` in `server/.env` and send it as header `x-admin-key`.
+- Protected endpoints:
+  - `POST /api/vaults/:vaultId/ai-rebalance`
+  - `GET/POST /admin/scheduler/status|start|stop`
+- Example (curl):
+  - `curl -H "x-admin-key: $ADMIN_API_KEY" -X POST http://localhost:8080/api/vaults/0xYourVault/ai-rebalance`
+  - `curl -H "x-admin-key: $ADMIN_API_KEY" http://localhost:8080/admin/scheduler/status`
+
 Endpoints (examples)
 - `GET /api/vaults/:vaultId/metrics`
 - `GET /api/vaults/:vaultId/strategies/analysis`

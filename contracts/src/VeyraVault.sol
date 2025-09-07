@@ -26,7 +26,6 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
     event StrategyWithdrawn(address indexed strategy, uint256 amount);
     event RebalanceExecuted(address[] strategies, uint256[] allocations);
     event YieldHarvested(uint256 totalYield);
-    // New granular events for easier off-chain indexing
     event StrategyDeposit(address indexed strategy, uint256 assets);
     event StrategyWithdrawal(address indexed strategy, uint256 assets);
     event StrategyAllocationUpdated(address indexed strategy, uint256 bps);

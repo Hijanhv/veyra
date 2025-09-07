@@ -29,7 +29,12 @@ export const getPredictions = (vaultId: string) => http<ApiResponse<any>>(`/api/
 export const getVaultMetrics = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/metrics`)
 export const getStrategyRecommendation = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/strategy`)
 export const getAIRebalance = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/ai-rebalance`)
-export const postAIRebalance = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/ai-rebalance`, { method: 'POST' })
+export const postAIRebalance = (vaultId: string) => {
+  const adminHeader = typeof window !== 'undefined' && window.localStorage
+    ? { 'x-admin-key': window.localStorage.getItem('adminKey') || undefined }
+    : {}
+  return http<ApiResponse<any>>(`/api/vaults/${vaultId}/ai-rebalance`, { method: 'POST', headers: adminHeader })
+}
 export const getStrategyDetails = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/strategies/analysis`)
 export const getVaultOverview = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/overview`)
 export const getVaultFlows = (vaultId: string) => http<ApiResponse<any>>(`/api/vaults/${vaultId}/flows`)
