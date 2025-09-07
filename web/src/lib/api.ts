@@ -2,8 +2,6 @@ export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhos
 import type {
   ApiResponse,
   Address,
-  MarketInsights,
-  YieldPredictions,
   VaultMetrics,
   RecommendedAllocation,
   RebalanceRecommendation,
@@ -13,6 +11,7 @@ import type {
   VaultFlowItem,
   VaultRebalanceItem,
   VaultHarvestItem,
+  AgentDecisionItem,
 } from '@/types/api'
 
 function isHeaders(x: HeadersInit): x is Headers {
@@ -39,9 +38,7 @@ export const getHealth = () => http('/health')
 // Vault catalog
 export const getVaults = () => http<ApiResponse<{ vaults: Address[]; defaultVaultId: Address | null }>>('/api/vaults')
 
-// Analytics
-export const getInsights = (vaultId: Address) => http<ApiResponse<MarketInsights>>(`/api/analytics/insights?vaultId=${vaultId}`)
-export const getPredictions = (vaultId: Address) => http<ApiResponse<YieldPredictions>>(`/api/analytics/predictions?vaultId=${vaultId}`)
+// Analytics (deprecated): removed server endpoints
 
 // Vaults
 export const getVaultMetrics = (vaultId: Address) => http<ApiResponse<VaultMetrics>>(`/api/vaults/${vaultId}/metrics`)
@@ -56,3 +53,6 @@ export const getVaultRebalances = (vaultId: Address, limit = 50, offset = 0) =>
   http<ApiResponse<Paginated<VaultRebalanceItem>>>(`/api/vaults/${vaultId}/rebalances?limit=${limit}&offset=${offset}`)
 export const getVaultHarvests = (vaultId: Address, limit = 50, offset = 0) =>
   http<ApiResponse<Paginated<VaultHarvestItem>>>(`/api/vaults/${vaultId}/harvests?limit=${limit}&offset=${offset}`)
+
+// Agent decisions
+export const getAgentDecisions = (vaultId: Address) => http<ApiResponse<AgentDecisionItem[]>>(`/api/vaults/${vaultId}/agent/decisions`)

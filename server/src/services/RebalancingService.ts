@@ -1,6 +1,5 @@
 import { ethers } from 'ethers';
-import { InvestmentAgent } from './InvestmentAgent.js';
-import { AgentCache } from '../cache/agent/AgentCache.js';
+import { Repository, type AgentDecision } from './db/Repository.js';
 import { Config } from '../config.js';
 import { VaultService } from './VaultService.js';
 import dotenv from 'dotenv';
@@ -29,7 +28,6 @@ export class RebalancingService {
   private wallet?: ethers.Wallet;
 
   constructor(
-    private readonly investmentAgent: InvestmentAgent,
     private readonly vaultService: VaultService
   ) {
     const rpcUrl = process.env.SONIC_RPC_URL;
@@ -54,22 +52,23 @@ export class RebalancingService {
     try {
       // Get current allocations
       const currentAllocations = await this.vaultService.getStrategyAllocations(vaultId);
-      // Use cached AI recommendation (do not call AI here)
-      const cached = AgentCache.getLatest(vaultId);
+      // Use latest stored recommendation (Supabase)
+      const cached: AgentDecision | null = await Repository.getLatestAgentDecision(vaultId);
       if (!cached) {
         return {
           success: false,
-          error: 'No cached recommendation available. Scheduler has not produced one yet.',
+          error: 'No recommendation available in DB.',
           oldAllocations: currentAllocations,
           newAllocations: currentAllocations,
           confidence: 0,
-          reasoning: 'Awaiting scheduled AI run to cache a recommendation.'
+          reasoning: 'Awaiting external decision to be saved to DB.'
         };
       }
+      const allocs = cached.allocations as Record<Address, BasisPoints>;
       const recommendation = {
-        recommendedAllocation: JSON.parse(cached.allocations_json) as Record<Address, BasisPoints>,
-        confidence: cached.confidence,
-        reasoning: cached.reasoning ?? 'Cached recommendation',
+        recommendedAllocation: allocs,
+        confidence: cached.confidence ?? 0,
+        reasoning: cached.reasoning ?? 'Latest DB recommendation',
       };
 
       // Check if rebalancing is needed (threshold: 5% difference)
@@ -199,30 +198,29 @@ export class RebalancingService {
    */
   async getRebalanceRecommendation(vaultId: string) {
     const currentAllocations = await this.vaultService.getStrategyAllocations(vaultId);
-    const cached = AgentCache.getLatest(vaultId);
+    const cached: AgentDecision | null = await Repository.getLatestAgentDecision(vaultId);
     if (!cached) {
       return {
         currentAllocations,
         recommendedAllocations: currentAllocations,
         needsRebalancing: false,
         confidence: 0,
-        reasoning: 'No cached recommendation. Scheduler will populate shortly.',
+        reasoning: 'No recommendation found in DB.',
         marketContext: 'N/A',
         expectedApy: 0,
         riskScore: 0
       };
     }
-
-    const rec = JSON.parse(cached.allocations_json) as Record<Address, BasisPoints>;
+    const rec = cached.allocations as Record<Address, BasisPoints>;
     return {
       currentAllocations,
       recommendedAllocations: rec,
       needsRebalancing: this.shouldRebalance(currentAllocations, rec),
-      confidence: cached.confidence,
-      reasoning: cached.reasoning ?? 'Cached recommendation',
-      marketContext: cached.market_context ?? 'N/A',
-      expectedApy: cached.expected_apy_bp,
-      riskScore: cached.risk_score
+      confidence: cached.confidence ?? 0,
+      reasoning: cached.reasoning ?? 'Latest DB recommendation',
+      marketContext: cached.marketContext ?? 'N/A',
+      expectedApy: cached.expectedApyBp ?? 0,
+      riskScore: cached.riskScore ?? 0
     };
   }
 

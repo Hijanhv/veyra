@@ -14,6 +14,330 @@ export type Database = {
   }
   public: {
     Tables: {
+      _ponder_checkpoint: {
+        Row: {
+          chain_id: number
+          chain_name: string
+          finalized_checkpoint: string
+          latest_checkpoint: string
+          safe_checkpoint: string
+        }
+        Insert: {
+          chain_id: number
+          chain_name: string
+          finalized_checkpoint: string
+          latest_checkpoint: string
+          safe_checkpoint: string
+        }
+        Update: {
+          chain_id?: number
+          chain_name?: string
+          finalized_checkpoint?: string
+          latest_checkpoint?: string
+          safe_checkpoint?: string
+        }
+        Relationships: []
+      }
+      _ponder_meta: {
+        Row: {
+          key: string
+          value: Json
+        }
+        Insert: {
+          key: string
+          value: Json
+        }
+        Update: {
+          key?: string
+          value?: Json
+        }
+        Relationships: []
+      }
+      _reorg__deposits: {
+        Row: {
+          assets: number
+          block_number: number
+          checkpoint: string
+          id: string
+          operation: number
+          operation_id: number
+          owner: string
+          sender: string
+          shares: number
+          timestamp: number
+          transaction_hash: string
+          vault: string
+        }
+        Insert: {
+          assets: number
+          block_number: number
+          checkpoint: string
+          id: string
+          operation: number
+          operation_id?: number
+          owner: string
+          sender: string
+          shares: number
+          timestamp: number
+          transaction_hash: string
+          vault: string
+        }
+        Update: {
+          assets?: number
+          block_number?: number
+          checkpoint?: string
+          id?: string
+          operation?: number
+          operation_id?: number
+          owner?: string
+          sender?: string
+          shares?: number
+          timestamp?: number
+          transaction_hash?: string
+          vault?: string
+        }
+        Relationships: []
+      }
+      _reorg__rebalances: {
+        Row: {
+          allocations: number[]
+          block_number: number
+          checkpoint: string
+          id: string
+          operation: number
+          operation_id: number
+          strategies: string[]
+          timestamp: number
+          transaction_hash: string
+          vault: string
+        }
+        Insert: {
+          allocations: number[]
+          block_number: number
+          checkpoint: string
+          id: string
+          operation: number
+          operation_id?: number
+          strategies: string[]
+          timestamp: number
+          transaction_hash: string
+          vault: string
+        }
+        Update: {
+          allocations?: number[]
+          block_number?: number
+          checkpoint?: string
+          id?: string
+          operation?: number
+          operation_id?: number
+          strategies?: string[]
+          timestamp?: number
+          transaction_hash?: string
+          vault?: string
+        }
+        Relationships: []
+      }
+      _reorg__strategy_events: {
+        Row: {
+          allocation: number | null
+          amount: number | null
+          block_number: number
+          checkpoint: string
+          event_type: string
+          id: string
+          operation: number
+          operation_id: number
+          strategy: string
+          timestamp: number
+          transaction_hash: string
+          vault: string
+        }
+        Insert: {
+          allocation?: number | null
+          amount?: number | null
+          block_number: number
+          checkpoint: string
+          event_type: string
+          id: string
+          operation: number
+          operation_id?: number
+          strategy: string
+          timestamp: number
+          transaction_hash: string
+          vault: string
+        }
+        Update: {
+          allocation?: number | null
+          amount?: number | null
+          block_number?: number
+          checkpoint?: string
+          event_type?: string
+          id?: string
+          operation?: number
+          operation_id?: number
+          strategy?: string
+          timestamp?: number
+          transaction_hash?: string
+          vault?: string
+        }
+        Relationships: []
+      }
+      _reorg__user_balances: {
+        Row: {
+          block_number: number
+          checkpoint: string
+          id: string
+          operation: number
+          operation_id: number
+          shares: number
+          updated_at: number
+          user: string
+          vault: string
+        }
+        Insert: {
+          block_number: number
+          checkpoint: string
+          id: string
+          operation: number
+          operation_id?: number
+          shares: number
+          updated_at: number
+          user: string
+          vault: string
+        }
+        Update: {
+          block_number?: number
+          checkpoint?: string
+          id?: string
+          operation?: number
+          operation_id?: number
+          shares?: number
+          updated_at?: number
+          user?: string
+          vault?: string
+        }
+        Relationships: []
+      }
+      _reorg__vault_metrics: {
+        Row: {
+          block_number: number
+          checkpoint: string
+          id: string
+          operation: number
+          operation_id: number
+          share_price: number
+          total_assets: number
+          total_supply: number
+          updated_at: number
+        }
+        Insert: {
+          block_number: number
+          checkpoint: string
+          id: string
+          operation: number
+          operation_id?: number
+          share_price: number
+          total_assets: number
+          total_supply: number
+          updated_at: number
+        }
+        Update: {
+          block_number?: number
+          checkpoint?: string
+          id?: string
+          operation?: number
+          operation_id?: number
+          share_price?: number
+          total_assets?: number
+          total_supply?: number
+          updated_at?: number
+        }
+        Relationships: []
+      }
+      _reorg__withdrawals: {
+        Row: {
+          assets: number
+          block_number: number
+          checkpoint: string
+          id: string
+          operation: number
+          operation_id: number
+          owner: string
+          receiver: string
+          sender: string
+          shares: number
+          timestamp: number
+          transaction_hash: string
+          vault: string
+        }
+        Insert: {
+          assets: number
+          block_number: number
+          checkpoint: string
+          id: string
+          operation: number
+          operation_id?: number
+          owner: string
+          receiver: string
+          sender: string
+          shares: number
+          timestamp: number
+          transaction_hash: string
+          vault: string
+        }
+        Update: {
+          assets?: number
+          block_number?: number
+          checkpoint?: string
+          id?: string
+          operation?: number
+          operation_id?: number
+          owner?: string
+          receiver?: string
+          sender?: string
+          shares?: number
+          timestamp?: number
+          transaction_hash?: string
+          vault?: string
+        }
+        Relationships: []
+      }
+      _reorg__yield_harvests: {
+        Row: {
+          block_number: number
+          checkpoint: string
+          id: string
+          operation: number
+          operation_id: number
+          timestamp: number
+          total_yield: number
+          transaction_hash: string
+          vault: string
+        }
+        Insert: {
+          block_number: number
+          checkpoint: string
+          id: string
+          operation: number
+          operation_id?: number
+          timestamp: number
+          total_yield: number
+          transaction_hash: string
+          vault: string
+        }
+        Update: {
+          block_number?: number
+          checkpoint?: string
+          id?: string
+          operation?: number
+          operation_id?: number
+          timestamp?: number
+          total_yield?: number
+          transaction_hash?: string
+          vault?: string
+        }
+        Relationships: []
+      }
       agent_decisions: {
         Row: {
           allocations_json: Json
@@ -53,129 +377,69 @@ export type Database = {
         }
         Relationships: []
       }
-      erc4626_flows: {
+      deposits: {
         Row: {
-          action: string
-          assets_wei: number
+          assets: number
           block_number: number
-          caller: string | null
-          chain_id: number
-          log_index: number
-          owner: string | null
-          receiver: string | null
-          shares_wei: number
-          ts: string
-          tx_hash: string
-          vault_address: string
+          id: string
+          owner: string
+          sender: string
+          shares: number
+          timestamp: number
+          transaction_hash: string
+          vault: string
         }
         Insert: {
-          action: string
-          assets_wei: number
+          assets: number
           block_number: number
-          caller?: string | null
-          chain_id: number
-          log_index: number
-          owner?: string | null
-          receiver?: string | null
-          shares_wei: number
-          ts: string
-          tx_hash: string
-          vault_address: string
+          id: string
+          owner: string
+          sender: string
+          shares: number
+          timestamp: number
+          transaction_hash: string
+          vault: string
         }
         Update: {
-          action?: string
-          assets_wei?: number
+          assets?: number
           block_number?: number
-          caller?: string | null
-          chain_id?: number
-          log_index?: number
-          owner?: string | null
-          receiver?: string | null
-          shares_wei?: number
-          ts?: string
-          tx_hash?: string
-          vault_address?: string
-        }
-        Relationships: []
-      }
-      harvests: {
-        Row: {
-          block_number: number
-          chain_id: number
-          log_index: number
-          total_yield_wei: number
-          ts: string
-          tx_hash: string
-          vault_address: string
-        }
-        Insert: {
-          block_number: number
-          chain_id: number
-          log_index: number
-          total_yield_wei: number
-          ts: string
-          tx_hash: string
-          vault_address: string
-        }
-        Update: {
-          block_number?: number
-          chain_id?: number
-          log_index?: number
-          total_yield_wei?: number
-          ts?: string
-          tx_hash?: string
-          vault_address?: string
-        }
-        Relationships: []
-      }
-      indexer_state: {
-        Row: {
-          chain_id: number
-          cursor_block: number
-          updated_at: string | null
-        }
-        Insert: {
-          chain_id: number
-          cursor_block: number
-          updated_at?: string | null
-        }
-        Update: {
-          chain_id?: number
-          cursor_block?: number
-          updated_at?: string | null
+          id?: string
+          owner?: string
+          sender?: string
+          shares?: number
+          timestamp?: number
+          transaction_hash?: string
+          vault?: string
         }
         Relationships: []
       }
       rebalances: {
         Row: {
-          after_alloc_json: Json
-          before_alloc_json: Json | null
+          allocations: number[]
           block_number: number
-          chain_id: number
-          log_index: number
-          ts: string
-          tx_hash: string
-          vault_address: string
+          id: string
+          strategies: string[]
+          timestamp: number
+          transaction_hash: string
+          vault: string
         }
         Insert: {
-          after_alloc_json: Json
-          before_alloc_json?: Json | null
+          allocations: number[]
           block_number: number
-          chain_id: number
-          log_index: number
-          ts: string
-          tx_hash: string
-          vault_address: string
+          id: string
+          strategies: string[]
+          timestamp: number
+          transaction_hash: string
+          vault: string
         }
         Update: {
-          after_alloc_json?: Json
-          before_alloc_json?: Json | null
+          allocations?: number[]
           block_number?: number
-          chain_id?: number
-          log_index?: number
-          ts?: string
-          tx_hash?: string
-          vault_address?: string
+          id?: string
+          strategies?: string[]
+          timestamp?: number
+          transaction_hash?: string
+          vault?: string
         }
         Relationships: []
       }
@@ -211,42 +475,93 @@ export type Database = {
           },
         ]
       }
-      strategy_flows: {
+      strategy_events: {
         Row: {
-          action: string
-          amount_wei: number | null
-          asset_address: string | null
+          allocation: number | null
+          amount: number | null
           block_number: number
-          chain_id: number
-          log_index: number
-          strategy_address: string
-          ts: string
-          tx_hash: string
-          vault_address: string
+          event_type: string
+          id: string
+          strategy: string
+          timestamp: number
+          transaction_hash: string
+          vault: string
         }
         Insert: {
-          action: string
-          amount_wei?: number | null
-          asset_address?: string | null
+          allocation?: number | null
+          amount?: number | null
           block_number: number
-          chain_id: number
-          log_index: number
-          strategy_address: string
-          ts: string
-          tx_hash: string
-          vault_address: string
+          event_type: string
+          id: string
+          strategy: string
+          timestamp: number
+          transaction_hash: string
+          vault: string
         }
         Update: {
-          action?: string
-          amount_wei?: number | null
-          asset_address?: string | null
+          allocation?: number | null
+          amount?: number | null
           block_number?: number
-          chain_id?: number
-          log_index?: number
-          strategy_address?: string
-          ts?: string
-          tx_hash?: string
-          vault_address?: string
+          event_type?: string
+          id?: string
+          strategy?: string
+          timestamp?: number
+          transaction_hash?: string
+          vault?: string
+        }
+        Relationships: []
+      }
+      user_balances: {
+        Row: {
+          block_number: number
+          id: string
+          shares: number
+          updated_at: number
+          user: string
+          vault: string
+        }
+        Insert: {
+          block_number: number
+          id: string
+          shares: number
+          updated_at: number
+          user: string
+          vault: string
+        }
+        Update: {
+          block_number?: number
+          id?: string
+          shares?: number
+          updated_at?: number
+          user?: string
+          vault?: string
+        }
+        Relationships: []
+      }
+      vault_metrics: {
+        Row: {
+          block_number: number
+          id: string
+          share_price: number
+          total_assets: number
+          total_supply: number
+          updated_at: number
+        }
+        Insert: {
+          block_number: number
+          id: string
+          share_price: number
+          total_assets: number
+          total_supply: number
+          updated_at: number
+        }
+        Update: {
+          block_number?: number
+          id?: string
+          share_price?: number
+          total_assets?: number
+          total_supply?: number
+          updated_at?: number
         }
         Relationships: []
       }
@@ -271,6 +586,72 @@ export type Database = {
           decimals?: number | null
           name?: string | null
           vault_address?: string
+        }
+        Relationships: []
+      }
+      withdrawals: {
+        Row: {
+          assets: number
+          block_number: number
+          id: string
+          owner: string
+          receiver: string
+          sender: string
+          shares: number
+          timestamp: number
+          transaction_hash: string
+          vault: string
+        }
+        Insert: {
+          assets: number
+          block_number: number
+          id: string
+          owner: string
+          receiver: string
+          sender: string
+          shares: number
+          timestamp: number
+          transaction_hash: string
+          vault: string
+        }
+        Update: {
+          assets?: number
+          block_number?: number
+          id?: string
+          owner?: string
+          receiver?: string
+          sender?: string
+          shares?: number
+          timestamp?: number
+          transaction_hash?: string
+          vault?: string
+        }
+        Relationships: []
+      }
+      yield_harvests: {
+        Row: {
+          block_number: number
+          id: string
+          timestamp: number
+          total_yield: number
+          transaction_hash: string
+          vault: string
+        }
+        Insert: {
+          block_number: number
+          id: string
+          timestamp: number
+          total_yield: number
+          transaction_hash: string
+          vault: string
+        }
+        Update: {
+          block_number?: number
+          id?: string
+          timestamp?: number
+          total_yield?: number
+          transaction_hash?: string
+          vault?: string
         }
         Relationships: []
       }

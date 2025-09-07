@@ -3,7 +3,7 @@
 import { Client } from 'pg';
 import 'dotenv/config';
 
-const schemaName = process.env.DATABASE_SCHEMA || 'veyra_indexer';
+const schemaName = process.env.DATABASE_SCHEMA || 'public';
 
 async function resetSchema() {
   if (!process.env.DATABASE_URL) {
@@ -18,11 +18,11 @@ async function resetSchema() {
   try {
     await client.connect();
     console.log(`Dropping schema '${schemaName}' if it exists...`);
-    
+
     // Drop the schema if it exists (CASCADE will drop all objects in it)
     await client.query(`DROP SCHEMA IF EXISTS "${schemaName}" CASCADE;`);
     console.log(`Schema '${schemaName}' dropped successfully`);
-    
+
   } catch (error) {
     console.error('Error resetting schema:', error);
     process.exit(1);

@@ -1,12 +1,9 @@
 import { VaultService } from '../services/VaultService.js';
 import { RebalancingService } from '../services/RebalancingService.js';
 import { Repository } from '../services/db/Repository.js';
-import { AgentCache } from '../cache/agent/AgentCache.js';
-import { CachedRecommendationsService } from '../services/CachedRecommendationsService.js';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Address } from '../types/index.js';
 import { fetchFlows, fetchRebalances, fetchHarvests } from '../services/PonderClient.js';
-import { InvestmentAgent } from '../services/InvestmentAgent.js';
 
 /**
  * API routes for working with Veyra vaults.
@@ -15,11 +12,8 @@ import { InvestmentAgent } from '../services/InvestmentAgent.js';
  */
 export async function vaultRoutes(fastify: FastifyInstance) {
   // Set up our services once and reuse them for all requests.
-  // VaultService handles blockchain communication, InvestmentAgent makes allocation decisions.
   const vaultService = new VaultService();
-  const agent = new InvestmentAgent(vaultService);
-  const rebalancingService = new RebalancingService(agent, vaultService);
-  const cachedRecs = new CachedRecommendationsService(vaultService);
+  const rebalancingService = new RebalancingService(vaultService);
 
   // List configured vaults and default (from env)
   fastify.get('/', async (_request: FastifyRequest, _reply: FastifyReply) => {
@@ -49,16 +43,28 @@ export async function vaultRoutes(fastify: FastifyInstance) {
     }
   });
 
-  // Get latest cached AI allocation recommendation (no real-time AI calls)
+  // Get latest stored allocation recommendation (from Supabase)
   fastify.get<{ Params: { vaultId: Address } }>('/:vaultId/strategy', async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
     try {
       const { vaultId } = request.params;
-      const recommendation = await cachedRecs.getLatest(vaultId);
-      if (!recommendation) return reply.status(404).send({ success: false, error: 'No cached recommendation available' });
-      return { success: true, data: recommendation };
+      const row = await Repository.getLatestAgentDecision(vaultId);
+      if (!row) return reply.status(404).send({ success: false, error: 'No recommendation found' });
+      const allocations = row.allocations as Record<Address, number>;
+      return {
+        success: true,
+        data: {
+          vaultId,
+          recommendedAllocation: allocations,
+          expectedApy: row.expectedApyBp ?? 0,
+          riskScore: row.riskScore ?? 0,
+          reasoning: row.reasoning ?? 'Latest DB recommendation',
+          confidence: row.confidence ?? 0,
+          marketContext: row.marketContext ?? 'N/A',
+        }
+      };
     } catch (error) {
       fastify.log.error(error);
-      reply.status(500).send({ success: false, error: 'Failed to fetch cached strategy' });
+      reply.status(500).send({ success: false, error: 'Failed to fetch latest strategy' });
     }
   });
 
@@ -66,8 +72,8 @@ export async function vaultRoutes(fastify: FastifyInstance) {
   fastify.get<{ Params: { vaultId: Address } }>('/:vaultId/ai-rebalance', async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
     try {
       const { vaultId } = request.params;
-      const hasCached = AgentCache.getLatest(vaultId);
-      if (!hasCached) return reply.status(404).send({ success: false, error: 'No cached recommendation available' });
+      const latest = await Repository.getLatestAgentDecision(vaultId);
+      if (!latest) return reply.status(404).send({ success: false, error: 'No recommendation found' });
       const recommendation = await rebalancingService.getRebalanceRecommendation(vaultId);
       return { success: true, data: recommendation };
     } catch (error) {
@@ -129,22 +135,23 @@ export async function vaultRoutes(fastify: FastifyInstance) {
       }
     }
   );
-  // AI agent decisions (off-chain, cached locally)
+  // AI agent decisions (from Supabase)
   fastify.get<{ Params: { vaultId: Address } }>(
     '/:vaultId/agent/decisions',
     async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
       try {
         const { vaultId } = request.params;
-        const items = AgentCache.list(vaultId, 20).map((r) => ({
+        const data = await Repository.listAgentDecisions(vaultId, 20);
+        const items = data.map((r) => ({
           id: r.id,
-          vault_address: r.vault_address,
-          allocations_json: r.allocations_json,
-          expected_apy_bp: r.expected_apy_bp,
-          risk_score: r.risk_score,
+          vault_address: r.vault,
+          allocations_json: r.allocations,
+          expected_apy_bp: r.expectedApyBp,
+          risk_score: r.riskScore,
           confidence: r.confidence,
           reasoning: r.reasoning,
-          market_context: r.market_context,
-          created_at: r.created_at,
+          market_context: r.marketContext,
+          created_at: r.createdAt,
         }));
         return { success: true, data: items };
       } catch (error) {
@@ -180,8 +187,8 @@ export async function vaultRoutes(fastify: FastifyInstance) {
         return { success: true, data: { items, nextOffset: offset + items.length, hasMore } };
       } catch (error) {
         fastify.log.error(error);
-        const e = error as any;
-        if (e?.name === 'IndexerUnavailable') {
+        const e = error as unknown as { name?: string };
+        if (e && e.name === 'IndexerUnavailable') {
           return reply.status(503).send({ success: false, error: 'Indexer unavailable. Start Ponder dev and set PONDER_SQL_URL.' });
         }
         reply.status(500).send({ success: false, error: 'Failed to fetch flows' });
@@ -211,8 +218,8 @@ export async function vaultRoutes(fastify: FastifyInstance) {
         return { success: true, data: { items, nextOffset: offset + items.length, hasMore } };
       } catch (error) {
         fastify.log.error(error);
-        const e = error as any;
-        if (e?.name === 'IndexerUnavailable') {
+        const e = error as unknown as { name?: string };
+        if (e && e.name === 'IndexerUnavailable') {
           return reply.status(503).send({ success: false, error: 'Indexer unavailable. Start Ponder dev and set PONDER_SQL_URL.' });
         }
         reply.status(500).send({ success: false, error: 'Failed to fetch rebalances' });
@@ -241,8 +248,8 @@ export async function vaultRoutes(fastify: FastifyInstance) {
         return { success: true, data: { items, nextOffset: offset + items.length, hasMore } };
       } catch (error) {
         fastify.log.error(error);
-        const e = error as any;
-        if (e?.name === 'IndexerUnavailable') {
+        const e = error as unknown as { name?: string };
+        if (e && e.name === 'IndexerUnavailable') {
           return reply.status(503).send({ success: false, error: 'Indexer unavailable. Start Ponder dev and set PONDER_SQL_URL.' });
         }
         reply.status(500).send({ success: false, error: 'Failed to fetch harvests' });
@@ -250,22 +257,5 @@ export async function vaultRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // Admin: Generate and cache a fresh AI recommendation immediately
-  fastify.post<{ Params: { vaultId: Address } }>(
-    '/:vaultId/agent/generate',
-    async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
-      const adminKey = (request.headers['x-admin-key'] || request.headers['X-Admin-Key']) as string | undefined;
-      if (!process.env.ADMIN_API_KEY || adminKey !== process.env.ADMIN_API_KEY) {
-        return reply.status(401).send({ success: false, error: 'Unauthorized' });
-      }
-      try {
-        const { vaultId } = request.params;
-        const rec = await agent.getOptimalAllocation(vaultId);
-        return { success: true, data: rec };
-      } catch (error) {
-        fastify.log.error(error);
-        reply.status(500).send({ success: false, error: 'Failed to generate recommendation' });
-      }
-    }
-  );
+  // Removed: generation endpoint (AI generation no longer handled by server)
 }

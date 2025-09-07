@@ -1,6 +1,5 @@
 import cron, { type ScheduledTask } from 'node-cron';
 import { RebalancingService } from './RebalancingService.js';
-import { InvestmentAgent } from './InvestmentAgent.js';
 import { VaultService } from './VaultService.js';
 import dotenv from 'dotenv';
 import { Config } from '../config.js';
@@ -14,13 +13,11 @@ export class SchedulerService {
   private rebalancingService: RebalancingService;
   private vaultAddresses: string[];
   private isRunning = false;
-  private investmentAgent: InvestmentAgent;
   private vaultService: VaultService;
 
   constructor() {
     this.vaultService = new VaultService();
-    this.investmentAgent = new InvestmentAgent(this.vaultService);
-    this.rebalancingService = new RebalancingService(this.investmentAgent, this.vaultService);
+    this.rebalancingService = new RebalancingService(this.vaultService);
 
     // Get vault addresses from environment variable
     const vaultAddressesStr = process.env.VAULT_ADDRESSES || '';
@@ -39,7 +36,7 @@ export class SchedulerService {
       return;
     }
 
-    console.log('Starting AI-powered vault rebalancing scheduler...');
+    console.log('Starting vault rebalancing scheduler...');
 
     // Run every hour for fresh AI decisions and optional execution
     cron.schedule(Config.schedAnalysisCron, async () => {
@@ -83,28 +80,15 @@ export class SchedulerService {
    * Execute scheduled rebalancing for all vaults
    */
   private async executeScheduledRebalancing() {
-    console.log(`[${new Date().toISOString()}] Starting scheduled AI analysis for ${this.vaultAddresses.length} vaults`);
+    console.log(`[${new Date().toISOString()}] Starting scheduled check for ${this.vaultAddresses.length} vaults`);
 
     for (const vaultAddress of this.vaultAddresses) {
       try {
-        console.log(`Analyzing vault ${vaultAddress} with AI...`);
-
-        // Produce a fresh AI recommendation and persist to cache
-        const ai = await this.investmentAgent.getOptimalAllocation(vaultAddress);
-
-        // Compare against current on-chain allocations
-        const currentAllocations = await this.vaultService.getStrategyAllocations(vaultAddress);
-        const needsRebalancing = this.rebalancingService.shouldRebalance(currentAllocations, ai.recommendedAllocation);
-
-        if (needsRebalancing && ai.confidence > 0.8) {
-          console.log(`Executing rebalancing for vault ${vaultAddress} (confidence: ${ai.confidence})`);
-
-          const result = await this.rebalancingService.executeRebalancingWithRecommendation(vaultAddress, {
-            allocations: ai.recommendedAllocation,
-            confidence: ai.confidence,
-            reasoning: ai.reasoning
-          });
-
+        console.log(`Checking vault ${vaultAddress} for latest recommendation...`);
+        const rec = await this.rebalancingService.getRebalanceRecommendation(vaultAddress);
+        if (rec.needsRebalancing && rec.confidence > 0.8) {
+          console.log(`Executing rebalancing for vault ${vaultAddress} (confidence: ${rec.confidence})`);
+          const result = await this.rebalancingService.executeRebalancing(vaultAddress);
           if (result.success && result.transactionHash) {
             console.log(`✅ Rebalancing successful for ${vaultAddress}: ${result.transactionHash}`);
           } else if (result.success) {
@@ -113,7 +97,7 @@ export class SchedulerService {
             console.log(`❌ Rebalancing failed for ${vaultAddress}: ${result.error}`);
           }
         } else {
-          console.log(`⏭️ Skipping ${vaultAddress} - ${needsRebalancing ? 'low confidence' : 'no rebalancing needed'}`);
+          console.log(`⏭️ Skipping ${vaultAddress} - ${rec.needsRebalancing ? 'low confidence' : 'no rebalancing needed or no decision'}`);
         }
 
         // Wait between vaults to avoid overwhelming the network
@@ -124,7 +108,7 @@ export class SchedulerService {
       }
     }
 
-    console.log(`[${new Date().toISOString()}] Scheduled AI analysis completed`);
+    console.log(`[${new Date().toISOString()}] Scheduled check completed`);
   }
 
   /**

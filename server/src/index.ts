@@ -16,8 +16,9 @@ function calculateSharePrice(totalAssets: bigint, totalSupply: bigint): bigint {
 }
 
 // Helper function to create user balance ID
-function getUserBalanceId(user: string, vault: string): string {
-  return `${user}-${vault}`;
+const lc = (a: `0x${string}`) => a.toLowerCase() as `0x${string}`;
+function getUserBalanceId(user: `0x${string}`, vault: `0x${string}`): string {
+  return `${lc(user)}-${lc(vault)}`;
 }
 
 // Track deposits
@@ -27,9 +28,9 @@ ponder.on("VeyraVault:Deposit", async ({ event, context }) => {
   // Record the deposit event
   await context.db.insert(deposits).values({
     id: `${event.transaction.hash}-${event.log.logIndex}`,
-    vault: event.log.address,
-    sender,
-    owner,
+    vault: lc(event.log.address),
+    sender: lc(sender),
+    owner: lc(owner),
     assets,
     shares,
     blockNumber: event.block.number,
@@ -43,8 +44,8 @@ ponder.on("VeyraVault:Deposit", async ({ event, context }) => {
     .insert(userBalances)
     .values({
       id: userBalanceId,
-      user: owner,
-      vault: event.log.address,
+      user: lc(owner),
+      vault: lc(event.log.address),
       shares,
       updatedAt: event.block.timestamp,
       blockNumber: event.block.number,
@@ -66,10 +67,10 @@ ponder.on("VeyraVault:Withdraw", async ({ event, context }) => {
   // Record the withdrawal event
   await context.db.insert(withdrawals).values({
     id: `${event.transaction.hash}-${event.log.logIndex}`,
-    vault: event.log.address,
-    sender,
-    receiver,
-    owner,
+    vault: lc(event.log.address),
+    sender: lc(sender),
+    receiver: lc(receiver),
+    owner: lc(owner),
     assets,
     shares,
     blockNumber: event.block.number,
@@ -83,8 +84,8 @@ ponder.on("VeyraVault:Withdraw", async ({ event, context }) => {
     .insert(userBalances)
     .values({
       id: userBalanceId,
-      user: owner,
-      vault: event.log.address,
+      user: lc(owner),
+      vault: lc(event.log.address),
       shares: 0n - shares, // This will be negative, but we'll handle it in onConflictDoUpdate
       updatedAt: event.block.timestamp,
       blockNumber: event.block.number,
@@ -105,8 +106,8 @@ ponder.on("VeyraVault:StrategyDeposit", async ({ event, context }) => {
 
   await context.db.insert(strategyEvents).values({
     id: `${event.transaction.hash}-${event.log.logIndex}`,
-    vault: event.log.address,
-    strategy,
+    vault: lc(event.log.address),
+    strategy: lc(strategy),
     eventType: "deposit",
     amount: assets,
     allocation: null,
@@ -122,8 +123,8 @@ ponder.on("VeyraVault:StrategyWithdrawal", async ({ event, context }) => {
 
   await context.db.insert(strategyEvents).values({
     id: `${event.transaction.hash}-${event.log.logIndex}`,
-    vault: event.log.address,
-    strategy,
+    vault: lc(event.log.address),
+    strategy: lc(strategy),
     eventType: "withdrawal",
     amount: assets,
     allocation: null,
@@ -139,8 +140,8 @@ ponder.on("VeyraVault:StrategyAllocationUpdated", async ({ event, context }) => 
 
   await context.db.insert(strategyEvents).values({
     id: `${event.transaction.hash}-${event.log.logIndex}`,
-    vault: event.log.address,
-    strategy,
+    vault: lc(event.log.address),
+    strategy: lc(strategy),
     eventType: "allocation_updated",
     amount: null,
     allocation: bps,
@@ -156,7 +157,7 @@ ponder.on("VeyraVault:RebalanceExecuted", async ({ event, context }) => {
 
   await context.db.insert(rebalances).values({
     id: `${event.transaction.hash}-${event.log.logIndex}`,
-    vault: event.log.address,
+    vault: lc(event.log.address),
     strategies: strategies.map((addr: `0x${string}`) => addr.toLowerCase()),
     allocations: Array.from(allocations),
     blockNumber: event.block.number,
@@ -174,7 +175,7 @@ ponder.on("VeyraVault:YieldHarvested", async ({ event, context }) => {
 
   await context.db.insert(yieldHarvests).values({
     id: `${event.transaction.hash}-${event.log.logIndex}`,
-    vault: event.log.address,
+    vault: lc(event.log.address),
     totalYield,
     blockNumber: event.block.number,
     timestamp: event.block.timestamp,
@@ -188,14 +189,15 @@ ponder.on("VeyraVault:YieldHarvested", async ({ event, context }) => {
 // Update vault metrics on every significant event
 async function updateVaultMetrics(event: any, context: any) {
   // Read current vault state (use event.log.address to support multi-address configs)
+  const vault = lc(event.log.address);
   const totalAssets = await context.client.readContract({
     abi: context.contracts.VeyraVault.abi,
-    address: event.log.address,
+    address: vault,
     functionName: "totalAssets",
   });
   const totalSupply = await context.client.readContract({
     abi: context.contracts.VeyraVault.abi,
-    address: event.log.address,
+    address: vault,
     functionName: "totalSupply",
   });
 
@@ -204,7 +206,7 @@ async function updateVaultMetrics(event: any, context: any) {
   await context.db
     .insert(vaultMetrics)
     .values({
-      id: event.log.address,
+      id: vault,
       totalAssets,
       totalSupply,
       sharePrice,

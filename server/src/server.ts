@@ -2,9 +2,9 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import dotenv from 'dotenv';
 import { vaultRoutes } from './routes/vaults.js';
-import { analyticsRoutes } from './routes/analytics.js';
 import { SchedulerService } from './services/SchedulerService.js';
-import { SettingsStore } from './cache/settings/SettingsStore.js';
+import { InvestmentAgent } from './services/InvestmentAgent.js';
+import { Config } from './config.js';
 
 // Load environment variables from .env file if it exists
 dotenv.config();
@@ -22,16 +22,50 @@ async function start() {
 
   // Initialize AI-powered scheduler (enabled by default; can be toggled via API)
   const scheduler = new SchedulerService();
-  const persisted = SettingsStore.get('scheduler_enabled');
-  const envDefault = process.env.ENABLE_AUTO_REBALANCING; // legacy env; if absent, default to on
-  const shouldStart = persisted !== undefined
-    ? persisted === 'true'
-    : (envDefault === undefined ? true : envDefault === 'true');
+  const envDefault = process.env.ENABLE_AUTO_REBALANCING; // if absent, default to on
+  const shouldStart = envDefault === undefined ? true : envDefault === 'true';
   if (shouldStart) {
     scheduler.start();
     fastify.log.info('AI-powered auto-rebalancing scheduler started');
   } else {
     fastify.log.info('Scheduler is disabled by settings');
+  }
+
+  // Bootstrap: use AI to ensure a fresh recommendation exists for each vault
+  try {
+    const hours = Config.recommendationRefreshHours;
+    const vaults = (process.env.VAULT_ADDRESSES || '')
+      .split(',')
+      .map(v => v.trim())
+      .filter(v => v.length > 0);
+
+    if (!Config.aiEnabled) {
+      fastify.log.warn('AI disabled (no ANTHROPIC_API_KEY). Skipping AI bootstrap.');
+    } else if (vaults.length > 0) {
+      const { Repository } = await import('./services/db/Repository.js');
+      const { VaultService } = await import('./services/VaultService.js');
+      const agent = new InvestmentAgent(new VaultService());
+      fastify.log.info(`Bootstrapping AI recommendations for ${vaults.length} vault(s) (TTL ${hours}h)`);
+      for (const v of vaults) {
+        try {
+          const latest = await Repository.getLatestAgentDecision(v);
+          const isFresh = latest?.createdAt ? ((Date.now() - new Date(latest.createdAt).getTime()) < hours * 3600 * 1000) : false;
+          if (!isFresh) {
+            fastify.log.info(`Generating AI recommendation for ${v}...`);
+            await agent.getOptimalAllocation(v);
+            fastify.log.info(`Stored AI recommendation for ${v}`);
+          } else {
+            fastify.log.info(`Skipping ${v}, recommendation is fresh`);
+          }
+        } catch (err) {
+          fastify.log.error({ err }, `AI bootstrap failed for ${v}`);
+        }
+      }
+    } else {
+      fastify.log.info('No vaults configured for bootstrap (VAULT_ADDRESSES empty)');
+    }
+  } catch (err) {
+    fastify.log.error({ err }, 'Bootstrap AI recommendations failed');
   }
 
   // Enable CORS for frontend
@@ -41,12 +75,12 @@ async function start() {
 
   // Register routes
   await fastify.register(vaultRoutes, { prefix: '/api/vaults' });
-  await fastify.register(analyticsRoutes, { prefix: '/api/analytics' });
+  // Analytics routes removed (deprecated in favor of AI decision history)
 
   // Health check with AI system status
   fastify.get('/health', async () => {
-  const aiStatus = process.env.ANTHROPIC_API_KEY ? 'enabled' : 'disabled';
-  const schedulerStatus = scheduler.getStatus();
+    const aiStatus = process.env.ANTHROPIC_API_KEY ? 'enabled' : 'disabled';
+    const schedulerStatus = scheduler.getStatus();
 
     return {
       status: 'operational',
@@ -58,33 +92,31 @@ async function start() {
   });
 
   // Scheduler management endpoints
-    const verifyAdmin = (req: any, reply: any) => {
-      const adminKey = (req.headers['x-admin-key'] || req.headers['X-Admin-Key']) as string | undefined;
-      if (!process.env.ADMIN_API_KEY || adminKey !== process.env.ADMIN_API_KEY) {
-        reply.status(401).send({ success: false, error: 'Unauthorized' });
-        return false;
-      }
-      return true;
-    };
+  const verifyAdmin = (req: any, reply: any) => {
+    const adminKey = (req.headers['x-admin-key'] || req.headers['X-Admin-Key']) as string | undefined;
+    if (!process.env.ADMIN_API_KEY || adminKey !== process.env.ADMIN_API_KEY) {
+      reply.status(401).send({ success: false, error: 'Unauthorized' });
+      return false;
+    }
+    return true;
+  };
 
-    fastify.get('/admin/scheduler/status', async (req, reply) => {
-      if (!verifyAdmin(req, reply)) return;
-      return { success: true, data: scheduler.getStatus() };
-    });
+  fastify.get('/admin/scheduler/status', async (req, reply) => {
+    if (!verifyAdmin(req, reply)) return;
+    return { success: true, data: scheduler.getStatus() };
+  });
 
-    fastify.post('/admin/scheduler/stop', async (req, reply) => {
-      if (!verifyAdmin(req, reply)) return;
-      scheduler.stop();
-      SettingsStore.set('scheduler_enabled', 'false');
-      return { success: true, message: 'Scheduler stopped' };
-    });
+  fastify.post('/admin/scheduler/stop', async (req, reply) => {
+    if (!verifyAdmin(req, reply)) return;
+    scheduler.stop();
+    return { success: true, message: 'Scheduler stopped' };
+  });
 
-    fastify.post('/admin/scheduler/start', async (req, reply) => {
-      if (!verifyAdmin(req, reply)) return;
-      scheduler.start();
-      SettingsStore.set('scheduler_enabled', 'true');
-      return { success: true, message: 'Scheduler started' };
-    });
+  fastify.post('/admin/scheduler/start', async (req, reply) => {
+    if (!verifyAdmin(req, reply)) return;
+    scheduler.start();
+    return { success: true, message: 'Scheduler started' };
+  });
 
   // Start server
   const port = parseInt(process.env.PORT || '8080', 10);

@@ -1,0 +1,97 @@
+[
+  {
+    "chainId": 146,
+    "vault": "0x7f689a8c1da93c5e54a8bbdd163727b9e2fdae38",
+    "allocations": {
+      "0xA309B3cb8Ca3083cdFE23e689E6f7F8fD14a8102": 10000
+    },
+    "expectedApyBp": 250,
+    "riskScore": 0.05,
+    "confidence": 0.7,
+    "reasoning": "With only one strategy available (UnknownStrategy), allocation must be 100% to this single option. The strategy shows extremely low risk across all metrics (0.00/1.0 for all risk factors) and very low complexity (0.20/1.0), making it essentially risk-free. The 2.50% APY, while modest, is reasonable for a zero-risk strategy. The strategy currently has 0 total assets, suggesting it's newly deployed but operational. Given the complete absence of risk factors and low complexity, this represents a conservative but stable yield opportunity.",
+    "marketContext": "Limited strategy universe constrains diversification opportunities. The single available strategy appears to be a low-risk, low-complexity option suitable for conservative yield generation in current market conditions.",
+    "createdAt": "2025-09-07T22:58:56.974Z"
+  },
+  {
+    "chainId": 146,
+    "vault": "0x7f580106fb62e5e8a593c99fa8150779cc822705",
+    "allocations": {
+      "0x35DAe978788f974099590a36a7Df990BD2450E90": 10000
+    },
+    "expectedApyBp": 0,
+    "riskScore": 0.05,
+    "confidence": 0.3,
+    "reasoning": "Given only one strategy is available (UnknownStrategy at 0x35DAe978788f974099590a36a7Df990BD2450E90), all 10,000 basis points must be allocated to it by default. This strategy shows 0% APY and minimal risk across all factors (0.00/1.0), with low complexity (0.20/1.0). While not ideal for yield generation, the extremely low risk profile makes it the safest option. The strategy appears to be either inactive, newly deployed, or a placeholder strategy with no current yield-generating activities.",
+    "marketContext": "Unable to assess broader market conditions with only one inactive strategy available. The 0% APY suggests either market stress, strategy inactivity, or deployment phase. Low risk metrics indicate conservative positioning appropriate for uncertain market environments.",
+    "createdAt": "2025-09-07T22:58:47.491Z"
+  },
+  {
+    "chainId": 146,
+    "vault": "0xa923a3a4373188d5e907460ab7d7ffe790f2fc7d",
+    "allocations": {
+      "0x1A370802A689a62F591d6F0AA448d24f8044b560": 10000
+    },
+    "expectedApyBp": 425,
+    "riskScore": 0.1,
+    "confidence": 0.6,
+    "reasoning": "With only one strategy available (UnknownStrategy), full allocation is required by default. The strategy shows favorable characteristics: 4.25% APY with extremely low risk profile across all metrics (0.00/1.0 for all risk factors) and low complexity (0.20/1.0). Zero total assets suggests this is a new or unused strategy, but the risk metrics indicate it's conservative. The name 'UnknownStrategy' creates uncertainty, but quantitative metrics suggest safety-first approach with moderate yield.",
+    "marketContext": "Limited strategy universe constrains diversification options. Current allocation represents a conservative approach given the single available strategy with low risk metrics but unknown operational history.",
+    "createdAt": "2025-09-07T22:58:22.892Z"
+  },
+  {
+    "chainId": 146,
+    "vault": "0x260922ced914a74423746af9113fc976a430fd94",
+    "allocations": {
+      "0x302d69ad7B4F7A9c95426c432D4bBb2E22d5046d": 3000,
+      "0x9E89745D0818C9Add072bA4B5c7aF0e5C86Fe636": 4000,
+      "0xb05C5387284C3D509FFCC67d47B79aA6A7328845": 3000
+    },
+    "expectedApyBp": 533,
+    "riskScore": 0.1,
+    "confidence": 0.6,
+    "reasoning": "Given the limited information about these UnknownStrategy contracts, I'm allocating based on risk-adjusted returns while maintaining diversification. Strategy 2 receives the highest allocation (40%) due to its superior 6% APY while maintaining identical low risk metrics. The remaining allocation is split equally between Strategies 1 and 3 (30% each) as they have identical risk-return profiles. All strategies show extremely low complexity (0.20) and zero risk across all factors, making them appear as low-risk yield opportunities. The equal risk profiles suggest these may be simple staking or lending strategies. Without additional context about strategy mechanics or protocol details, this balanced approach maximizes expected returns while maintaining diversification across three separate contracts.",
+    "marketContext": "Operating with limited strategy visibility on Sonic blockchain. All strategies show minimal risk metrics and low complexity, suggesting basic yield farming approaches. The identical risk profiles across strategies indicate either similar underlying mechanisms or incomplete risk assessment data. Market conditions appear stable given the consistent moderate APY ranges without extreme yields that might indicate unsustainable farming incentives.",
+    "createdAt": "2025-09-07T22:58:06.764Z"
+  },
+  {
+    "chainId": 146,
+    "vault": "0x7f580106fb62e5e8a593c99fa8150779cc822705",
+    "allocations": {
+      "0x35DAe978788f974099590a36a7Df990BD2450E90": 10000
+    },
+    "expectedApyBp": 0,
+    "riskScore": 0.1,
+    "confidence": 0.3,
+    "reasoning": "Given only one strategy is available (UnknownStrategy at 0x35DAe978788f974099590a36a7Df990BD2450E90), allocation must be 100% to this strategy by default. The strategy shows 0% APY and minimal risk scores across all categories (liquidation, protocol, smart contract, impermanent loss, and leverage risks all at 0.00/1.0). With a low complexity score of 0.20/1.0 and zero total assets, this appears to be either a newly deployed or inactive strategy. While not ideal for yield generation, the extremely low risk profile makes it the only viable option given the constraint of allocating 10,000 basis points.",
+    "marketContext": "Unable to assess broader market conditions with only one inactive strategy available. The zero APY and assets suggest either market stress, strategy inactivity, or deployment phase.",
+    "createdAt": "2025-09-07T22:56:43.941Z"
+  },
+  {
+    "chainId": 146,
+    "vault": "0xa923a3a4373188d5e907460ab7d7ffe790f2fc7d",
+    "allocations": {
+      "0x1A370802A689a62F591d6F0AA448d24f8044b560": 10000
+    },
+    "expectedApyBp": 425,
+    "riskScore": 0.15,
+    "confidence": 0.6,
+    "reasoning": "With only one strategy available (UnknownStrategy), allocation must be 100% to this single option. The strategy shows favorable characteristics: 4.25% APY with extremely low risk profile across all metrics (0.00/1.0 for all risk factors) and low complexity (0.20/1.0). Zero total assets suggests this is a new strategy, which introduces some uncertainty but the risk metrics indicate conservative design. The name 'UnknownStrategy' is concerning from a transparency perspective, but the quantitative risk assessment shows minimal exposure to liquidation, protocol, smart contract, impermanent loss, and leverage risks.",
+    "marketContext": "Limited strategy universe constrains diversification opportunities. The single available strategy appears conservatively structured with low risk metrics, though the unknown nature and zero TVL suggest early-stage deployment requiring monitoring.",
+    "createdAt": "2025-09-07T22:56:27.703Z"
+  },
+  {
+    "chainId": 146,
+    "vault": "0x260922ced914a74423746af9113fc976a430fd94",
+    "allocations": {
+      "0x302d69ad7B4F7A9c95426c432D4bBb2E22d5046d": 3000,
+      "0x9E89745D0818C9Add072bA4B5c7aF0e5C86Fe636": 4000,
+      "0xb05C5387284C3D509FFCC67d47B79aA6A7328845": 3000
+    },
+    "expectedApyBp": 533,
+    "riskScore": 0.04,
+    "confidence": 0.6,
+    "reasoning": "Given the limited information about these UnknownStrategy contracts, I'm allocating based on risk-adjusted returns while maintaining diversification. Strategy 2 receives the highest allocation (40%) due to its superior 6% APY while maintaining identical low risk metrics. Strategies 1 and 3 receive equal 30% allocations despite lower 5% APYs to ensure diversification across different contract addresses. All strategies show extremely low risk scores (0.2 complexity, 0.0 across all risk factors), suggesting they may be simple, low-risk yield strategies. The equal risk profiles make diversification the primary consideration after yield optimization.",
+    "marketContext": "Limited strategy information available. All strategies appear to be low-complexity, low-risk with minimal assets deployed, suggesting either new strategies or testing phase. Conservative allocation approach warranted given unknown strategy types and lack of historical performance data.",
+    "createdAt": "2025-09-07T22:56:17.947Z"
+  }
+]

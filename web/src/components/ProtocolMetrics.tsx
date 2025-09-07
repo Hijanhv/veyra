@@ -2,15 +2,14 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useVault } from '@/context/VaultContext'
-import { useInsightsQuery } from '@/queries/analytics'
+import { useAgentDecisionsQuery } from '@/queries/analytics'
 import { useStrategyDetailsQuery, useVaultMetricsQuery } from '@/queries/vaults'
-import type { MarketInsights } from '@/types/api'
 
 export function ProtocolMetrics() {
   const { selectedVaultId } = useVault()
   const metricsQ = useVaultMetricsQuery(selectedVaultId || undefined, { enabled: !!selectedVaultId })
   const detailsQ = useStrategyDetailsQuery(selectedVaultId || undefined, { enabled: !!selectedVaultId })
-  const insightsQ = useInsightsQuery(selectedVaultId || undefined, { enabled: !!selectedVaultId })
+  const decisionsQ = useAgentDecisionsQuery(selectedVaultId || undefined, { enabled: !!selectedVaultId })
 
   const allocEntries: Array<{ name: string; value: number }> = (() => {
     if (!metricsQ.data || !('success' in metricsQ.data) || !metricsQ.data.success) return []
@@ -33,7 +32,9 @@ export function ProtocolMetrics() {
     return out.slice(0, 6)
   })()
 
-  const insights: MarketInsights | null = insightsQ.data && insightsQ.data.success ? insightsQ.data.data : null
+  const latestDecision = decisionsQ.data && decisionsQ.data.success && decisionsQ.data.data.length
+    ? decisionsQ.data.data[0]
+    : null
 
   return (
     <div className="space-y-6">
@@ -80,24 +81,34 @@ export function ProtocolMetrics() {
           <CardTitle className="text-[var(--foreground)]">AI Insights</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {!insights ? (
+          {!latestDecision ? (
             <div className="text-[var(--muted)] text-sm">No insights available.</div>
           ) : (
             <>
-              {(insights.topOpportunities || []).slice(0, 3).map((o, idx) => (
-                <div key={idx} className="p-3 rounded-lg bg-white/10">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {Object.entries(latestDecision.allocations_json || {})
+                  .sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))
+                  .slice(0, 3)
+                  .map(([addr, bp]) => (
+                    <div key={addr} className="p-3 rounded-lg bg-white/10">
+                      <p className="text-[var(--foreground)]/85 text-sm">
+                        <strong>{`${addr.slice(0, 6)}…${addr.slice(-4)}`}</strong> — {(Number(bp) / 100).toFixed(2)}%
+                      </p>
+                    </div>
+                  ))}
+              </div>
+              {latestDecision.reasoning && (
+                <div className="p-3 rounded-lg bg-white/10">
                   <p className="text-[var(--foreground)]/85 text-sm">
-                    <strong>Opportunity:</strong> {`${o.strategy.slice(0, 6)}…${o.strategy.slice(-4)}`} at {(o.apy ?? 0).toFixed(2)}% — {o.reasoning}
+                    <strong>Reasoning:</strong> {latestDecision.reasoning}
                   </p>
                 </div>
-              ))}
-              {(insights.riskFactors || []).slice(0, 3).map((r: string, idx: number) => (
-                <div key={`risk-${idx}`} className="p-3 rounded-lg bg-white/10">
-                  <p className="text-[var(--foreground)]/85 text-sm">
-                    <strong>Risk:</strong> {r}
-                  </p>
-                </div>
-              ))}
+              )}
+              <div className="flex flex-wrap gap-4 text-sm text-[var(--foreground)]/90">
+                <span>Expected APY: {(Number(latestDecision.expected_apy_bp || 0) / 100).toFixed(2)}%</span>
+                <span>Risk: {Number(latestDecision.risk_score ?? 0).toFixed(2)}</span>
+                <span>Confidence: {Number(latestDecision.confidence ?? 0).toFixed(2)}</span>
+              </div>
             </>
           )}
         </CardContent>

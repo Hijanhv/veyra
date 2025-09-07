@@ -28,17 +28,7 @@ export interface StrategyDetails {
   underlying: UnderlyingProtocol[]
 }
 
-export interface MarketInsights {
-  marketSentiment: string
-  topOpportunities: Array<{ strategy: Address; apy: number; reasoning: string }>
-  riskFactors: string[]
-  timestamp: string
-}
-
-export interface YieldPredictions {
-  predictions: Record<Address, { nextWeek: number; nextMonth: number; confidence: number }>
-  methodology: string
-}
+// Deprecated: MarketInsights & YieldPredictions removed with analytics endpoints
 
 export interface RecommendedAllocation {
   vaultId: Address
@@ -113,4 +103,16 @@ export interface Paginated<T> {
   items: T[]
   nextOffset: number
   hasMore: boolean
+}
+
+export interface AgentDecisionItem {
+  id: number
+  vault_address: Address
+  allocations_json: Record<Address, number>
+  expected_apy_bp: number
+  risk_score: number
+  confidence: number
+  reasoning: string | null
+  market_context: string | null
+  created_at: string | null
 }

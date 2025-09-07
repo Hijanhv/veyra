@@ -25,6 +25,7 @@ export const Config = {
   // AI
   aiModel: str('AGENT_MODEL', 'claude-sonnet-4-20250514'),
   aiEnabled: Boolean(process.env.ANTHROPIC_API_KEY),
+  chainId: int('CHAIN_ID', 146),
 
   // Rebalancing thresholds
   rebalanceThresholdBp: int('REBALANCE_THRESHOLD_BP', 500), // 5%
@@ -35,9 +36,11 @@ export const Config = {
   schedAnalysisCron: str('SCHED_ANALYSIS_CRON', '0 * * * *'),
   schedMonitorCron: str('SCHED_MONITOR_CRON', '30 * * * *'),
 
+  // Recommendation caching / freshness
+  recommendationRefreshHours: int('RECOMMENDATION_REFRESH_HOURS', 6),
+
   // Guidelines used in AI prompt (purely informational)
   guidelineMaxLeverageBp: int('AGENT_MAX_LEVERAGE_BP', 3000), // 30%
   guidelineMaxComplexBp: int('AGENT_MAX_COMPLEX_BP', 4000), // 40%
   guidelineMinHealthFactor: float('AGENT_MIN_HEALTH_FACTOR', 1.2),
 };
-

@@ -37,12 +37,13 @@ export type RebalanceRow = {
 export async function fetchFlows(vault: string, limit = 50, offset = 0): Promise<FlowRow[]> {
   try {
     const db = client().db
+    const v = vault.toLowerCase()
     const size = Math.max(1, limit + offset)
     // Select deposits
     const deposits = await db.execute(sql`
       SELECT id, vault, 'deposit' as action, sender, owner, NULL as receiver,
              assets::text as assets, shares::text as shares, "blockNumber", timestamp, "transactionHash"
-      FROM deposits WHERE vault = ${vault}
+      FROM deposits WHERE vault = ${v}
       ORDER BY timestamp DESC
       LIMIT ${size} OFFSET 0;
     `)
@@ -50,7 +51,7 @@ export async function fetchFlows(vault: string, limit = 50, offset = 0): Promise
     const withdrawals = await db.execute(sql`
       SELECT id, vault, 'withdrawal' as action, sender, owner, receiver,
              assets::text as assets, shares::text as shares, "blockNumber", timestamp, "transactionHash"
-      FROM withdrawals WHERE vault = ${vault}
+      FROM withdrawals WHERE vault = ${v}
       ORDER BY timestamp DESC
       LIMIT ${size} OFFSET 0;
     `)
@@ -69,9 +70,10 @@ export async function fetchFlows(vault: string, limit = 50, offset = 0): Promise
 export async function fetchRebalances(vault: string, limit = 50, offset = 0): Promise<RebalanceRow[]> {
   try {
     const db = client().db
+    const v = vault.toLowerCase()
     const rows = await db.execute(sql`
       SELECT id, vault, strategies, allocations::text[] as allocations, "blockNumber", timestamp, "transactionHash"
-      FROM rebalances WHERE vault = ${vault}
+      FROM rebalances WHERE vault = ${v}
       ORDER BY timestamp DESC
       LIMIT ${limit} OFFSET ${offset};
     `)
@@ -87,9 +89,10 @@ export async function fetchRebalances(vault: string, limit = 50, offset = 0): Pr
 export async function fetchHarvests(vault: string, limit = 50, offset = 0): Promise<Array<{ id: string; vault: `0x${string}`; totalYield: string; blockNumber: number; timestamp: number; transactionHash: `0x${string}` }>> {
   try {
     const db = client().db
+    const v = vault.toLowerCase()
     const rows = await db.execute(sql`
       SELECT id, vault, "totalYield"::text as "totalYield", "blockNumber", timestamp, "transactionHash"
-      FROM yield_harvests WHERE vault = ${vault}
+      FROM yield_harvests WHERE vault = ${v}
       ORDER BY timestamp DESC
       LIMIT ${limit} OFFSET ${offset};
     `)

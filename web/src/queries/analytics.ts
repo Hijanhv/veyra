@@ -1,21 +1,12 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query'
-import { getInsights, getPredictions } from '@/lib/api'
+import { getAgentDecisions } from '@/lib/api'
 import { qk } from './queryKeys'
-import type { ApiResponse, MarketInsights, YieldPredictions } from '@/types/api'
+import type { ApiResponse, AgentDecisionItem } from '@/types/api'
 
-export function useInsightsQuery(vaultId: string | undefined, options?: Omit<UseQueryOptions<ApiResponse<MarketInsights>>, 'queryKey' | 'queryFn'>) {
-  return useQuery<ApiResponse<MarketInsights>>({
-    queryKey: vaultId ? qk.analytics.insights(vaultId) : ['analytics', 'insights', 'nil'],
-    queryFn: () => getInsights(vaultId!),
-    enabled: !!vaultId && (options?.enabled ?? true),
-    ...options,
-  })
-}
-
-export function usePredictionsQuery(vaultId: string | undefined, options?: Omit<UseQueryOptions<ApiResponse<YieldPredictions>>, 'queryKey' | 'queryFn'>) {
-  return useQuery<ApiResponse<YieldPredictions>>({
-    queryKey: vaultId ? qk.analytics.predictions(vaultId) : ['analytics', 'predictions', 'nil'],
-    queryFn: () => getPredictions(vaultId!),
+export function useAgentDecisionsQuery(vaultId: string | undefined, options?: Omit<UseQueryOptions<ApiResponse<AgentDecisionItem[]>>, 'queryKey' | 'queryFn'>) {
+  return useQuery<ApiResponse<AgentDecisionItem[]>>({
+    queryKey: vaultId ? ['analytics', 'agent-decisions', vaultId] : ['analytics', 'agent-decisions', 'nil'],
+    queryFn: () => getAgentDecisions(vaultId as string),
     enabled: !!vaultId && (options?.enabled ?? true),
     ...options,
   })
