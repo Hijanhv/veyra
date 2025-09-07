@@ -12,10 +12,10 @@ const sonic = defineChain({
   },
   rpcUrls: {
     default: {
-      http: ['https://rpc.sonic.fantom.network/'],
+      http: ['wss://sonic-rpc.publicnode.com'],
     },
     public: {
-      http: ['https://rpc.sonic.fantom.network/'],
+      http: ['wss://sonic-rpc.publicnode.com'],
     },
   },
   blockExplorers: {

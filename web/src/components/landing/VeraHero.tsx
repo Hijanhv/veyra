@@ -24,7 +24,7 @@ export default function VeraHero() {
           </div>
         </div>
       </div>
-      
+
       {/* Hero image positioned to touch bottom, constrained to site container and clipped glow */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0 select-none" aria-hidden>
         <div className="site-container relative">

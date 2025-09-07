@@ -8,15 +8,11 @@ export const qk = {
     predictions: (vaultId: string) => ['analytics', 'predictions', vaultId] as const,
   },
   vaults: {
+    list: ['vaults', 'list'] as const,
     metrics: (vaultId: string) => ['vaults', vaultId, 'metrics'] as const,
     strategy: (vaultId: string) => ['vaults', vaultId, 'strategy'] as const,
     aiRebalance: (vaultId: string) => ['vaults', vaultId, 'ai-rebalance'] as const,
     details: (vaultId: string) => ['vaults', vaultId, 'strategies', 'analysis'] as const,
     overview: (vaultId: string) => ['vaults', vaultId, 'overview'] as const,
-    flows: (vaultId: string) => ['vaults', vaultId, 'flows'] as const,
-    allocHistory: (vaultId: string) => ['vaults', vaultId, 'allocations', 'history'] as const,
-    harvests: (vaultId: string) => ['vaults', vaultId, 'harvests'] as const,
-    agentDecisions: (vaultId: string) => ['vaults', vaultId, 'agent', 'decisions'] as const,
-    positions: (vaultId: string) => ['vaults', vaultId, 'positions'] as const,
   },
 } as const

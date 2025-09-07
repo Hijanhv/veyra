@@ -1,38 +1,38 @@
 'use client'
 
-import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
 import {
   useVaultMetricsQuery,
   useStrategyRecommendationQuery,
   useAIRebalanceQuery,
   useStrategyDetailsQuery,
-  useExecuteRebalanceMutation,
 } from '@/queries/vaults'
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts'
+import { useVault } from '@/context/VaultContext'
+import type { VaultMetrics, RecommendedAllocation, RebalanceRecommendation, StrategyDetails } from '@/types/api'
 
 export default function VaultsPage() {
-  const [vaultId, setVaultId] = useState<string>(process.env.NEXT_PUBLIC_DEFAULT_VAULT_ID || '')
-  const [submitted, setSubmitted] = useState<string | null>(vaultId || null)
+  const { selectedVaultId } = useVault()
 
-  const metricsQ = useVaultMetricsQuery(submitted || undefined, { enabled: !!submitted })
-  const strategyQ = useStrategyRecommendationQuery(submitted || undefined, { enabled: !!submitted })
-  const rebalanceQ = useAIRebalanceQuery(submitted || undefined, { enabled: !!submitted })
-  const detailsQ = useStrategyDetailsQuery(submitted || undefined, { enabled: !!submitted })
+  const metricsQ = useVaultMetricsQuery(selectedVaultId || undefined, { enabled: !!selectedVaultId })
+  const strategyQ = useStrategyRecommendationQuery(selectedVaultId || undefined, { enabled: !!selectedVaultId })
+  const rebalanceQ = useAIRebalanceQuery(selectedVaultId || undefined, { enabled: !!selectedVaultId })
+  const detailsQ = useStrategyDetailsQuery(selectedVaultId || undefined, { enabled: !!selectedVaultId })
 
-  const execRebalance = useExecuteRebalanceMutation()
 
   const loading = metricsQ.isLoading || strategyQ.isLoading || rebalanceQ.isLoading || detailsQ.isLoading
-  const error = (metricsQ.data && 'success' in metricsQ.data && !metricsQ.data.success && (metricsQ.data as any).error)
-    || (strategyQ.data && 'success' in strategyQ.data && !strategyQ.data.success && (strategyQ.data as any).error)
-    || (rebalanceQ.data && 'success' in rebalanceQ.data && !rebalanceQ.data.success && (rebalanceQ.data as any).error)
-    || (detailsQ.data && 'success' in detailsQ.data && !detailsQ.data.success && (detailsQ.data as any).error)
-    || (metricsQ.error as any)?.message
-    || (strategyQ.error as any)?.message
-    || (rebalanceQ.error as any)?.message
-    || (detailsQ.error as any)?.message
+  const metrics: VaultMetrics | undefined = metricsQ.data && metricsQ.data.success ? metricsQ.data.data : undefined
+  const strategyRec: RecommendedAllocation | undefined = strategyQ.data && strategyQ.data.success ? strategyQ.data.data : undefined
+  const rebalance: RebalanceRecommendation | undefined = rebalanceQ.data && rebalanceQ.data.success ? rebalanceQ.data.data : undefined
+  const details: StrategyDetails[] | undefined = detailsQ.data && detailsQ.data.success ? detailsQ.data.data : undefined
+  const error = (metricsQ.data && !metricsQ.data.success && metricsQ.data.error)
+    || (strategyQ.data && !strategyQ.data.success && strategyQ.data.error)
+    || (rebalanceQ.data && !rebalanceQ.data.success && rebalanceQ.data.error)
+    || (detailsQ.data && !detailsQ.data.success && detailsQ.data.error)
+    || (metricsQ.error instanceof Error ? metricsQ.error.message : undefined)
+    || (strategyQ.error instanceof Error ? strategyQ.error.message : undefined)
+    || (rebalanceQ.error instanceof Error ? rebalanceQ.error.message : undefined)
+    || (detailsQ.error instanceof Error ? detailsQ.error.message : undefined)
 
   return (
     <div className="min-h-screen">
@@ -41,12 +41,7 @@ export default function VaultsPage() {
           <div>
             <h1 className="text-3xl font-bold text-[var(--foreground)]">Vaults</h1>
             <p className="text-sm text-[var(--muted)]">Metrics, strategy, and AI rebalancing</p>
-          </div>
-          <div className="flex gap-2">
-            <Input value={vaultId} onChange={e => setVaultId(e.target.value)} placeholder="Vault address" className="min-w-[360px]" />
-            <Button onClick={() => setSubmitted(vaultId)} disabled={!vaultId || loading}>
-              {loading ? 'Loading…' : 'Load'}
-            </Button>
+            <p className="text-xs text-[var(--muted)] mt-1">Selected: {selectedVaultId ? `${selectedVaultId.slice(0, 6)}…${selectedVaultId.slice(-4)}` : '—'}</p>
           </div>
         </div>
 
@@ -58,7 +53,7 @@ export default function VaultsPage() {
               <CardTitle className="text-[var(--foreground)]">Metrics</CardTitle>
             </CardHeader>
             <CardContent>
-              {!metricsQ.data || ('success' in metricsQ.data && !metricsQ.data.success) ? (
+              {!metrics ? (
                 <div className="text-[var(--muted)] text-sm">No data.</div>
               ) : (
                 <div className="space-y-4">
@@ -67,13 +62,13 @@ export default function VaultsPage() {
                       <PieChart>
                         <Pie
                           dataKey="value"
-                          data={Object.entries((metricsQ.data as any).data.strategyAllocation || {}).map(([addr, bp]: any) => ({
+                          data={Object.entries(metrics.strategyAllocation || {}).map(([addr, bp]) => ({
                             name: `${addr.slice(0, 6)}…${addr.slice(-4)}`,
                             value: Number(bp) / 100,
                           }))}
                           label
                         >
-                          {Object.entries((metricsQ.data as any).data.strategyAllocation || {}).map((_, i) => (
+                          {Object.entries(metrics.strategyAllocation || {}).map((_, i) => (
                             <Cell key={i} fill={["#60a5fa", "#34d399", "#f472b6", "#fbbf24", "#a78bfa", "#fb7185"][i % 6]} />
                           ))}
                         </Pie>
@@ -82,7 +77,7 @@ export default function VaultsPage() {
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
-                  <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify((metricsQ.data as any).data, null, 2)}</pre>
+                  <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify(metrics, null, 2)}</pre>
                 </div>
               )}
             </CardContent>
@@ -93,22 +88,19 @@ export default function VaultsPage() {
               <CardTitle className="text-[var(--foreground)]">Strategy Recommendation</CardTitle>
             </CardHeader>
             <CardContent>
-              {!strategyQ.data || ('success' in strategyQ.data && !strategyQ.data.success) ? <div className="text-[var(--muted)] text-sm">No data.</div> : (
-                <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify((strategyQ.data as any).data, null, 2)}</pre>
+              {!strategyRec ? <div className="text-[var(--muted)] text-sm">No data.</div> : (
+                <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify(strategyRec, null, 2)}</pre>
               )}
             </CardContent>
           </Card>
 
           <Card className="backdrop-blur lg:col-span-2">
-            <CardHeader className="flex flex-row items-center justify-between">
+            <CardHeader>
               <CardTitle className="text-[var(--foreground)]">AI Rebalance</CardTitle>
-              <Button variant="outline" onClick={() => submitted && execRebalance.mutate(submitted)} disabled={!submitted || execRebalance.isPending}>
-                {execRebalance.isPending ? 'Executing…' : 'Execute'}
-              </Button>
             </CardHeader>
             <CardContent>
-              {!rebalanceQ.data || ('success' in rebalanceQ.data && !rebalanceQ.data.success) ? <div className="text-[var(--muted)] text-sm">No data.</div> : (
-                <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify((rebalanceQ.data as any).data, null, 2)}</pre>
+              {!rebalance ? <div className="text-[var(--muted)] text-sm">No data.</div> : (
+                <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify(rebalance, null, 2)}</pre>
               )}
             </CardContent>
           </Card>
@@ -118,8 +110,8 @@ export default function VaultsPage() {
               <CardTitle className="text-[var(--foreground)]">Strategy Details</CardTitle>
             </CardHeader>
             <CardContent>
-              {!detailsQ.data || ('success' in detailsQ.data && !detailsQ.data.success) ? <div className="text-[var(--muted)] text-sm">No data.</div> : (
-                <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify((detailsQ.data as any).data, null, 2)}</pre>
+              {!details ? <div className="text-[var(--muted)] text-sm">No data.</div> : (
+                <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify(details, null, 2)}</pre>
               )}
             </CardContent>
           </Card>

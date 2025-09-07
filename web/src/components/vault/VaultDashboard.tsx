@@ -6,22 +6,22 @@ import { TrendingUp, DollarSign, Target, Zap } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
-import { parseUnits, erc20Abi, type Address as ViemAddress } from 'viem'
+import { parseUnits, erc20Abi, type Address as ViemAddress, type Abi } from 'viem'
 import VeyraVaultArtifact from '@/abi/VeyraVault.json'
+import { useVault } from '@/context/VaultContext'
+import { useAIRebalanceQuery, useVaultMetricsQuery } from '@/queries/vaults'
 
 export function VaultDashboard() {
   const [depositAmount, setDepositAmount] = useState('')
   const [withdrawAmount, setWithdrawAmount] = useState('')
 
-  const vaultAddress = useMemo(() => {
-    const a = process.env.NEXT_PUBLIC_DEFAULT_VAULT_ID
-    return a && a.startsWith('0x') ? (a as ViemAddress) : undefined
-  }, [])
+  const { selectedVaultId } = useVault()
+  const vaultAddress = useMemo(() => (selectedVaultId && selectedVaultId.startsWith('0x') ? (selectedVaultId as ViemAddress) : undefined), [selectedVaultId])
   const { address } = useAccount()
 
   const { data: assetAddress } = useReadContract({
     address: vaultAddress as ViemAddress,
-    abi: VeyraVaultArtifact.abi as any,
+    abi: VeyraVaultArtifact.abi as Abi,
     functionName: 'asset',
     query: { enabled: !!vaultAddress },
   })
@@ -30,6 +30,13 @@ export function VaultDashboard() {
     address: assetAddress as ViemAddress,
     abi: erc20Abi,
     functionName: 'decimals',
+    query: { enabled: !!assetAddress },
+  })
+
+  const { data: assetSymbol } = useReadContract({
+    address: assetAddress as ViemAddress,
+    abi: erc20Abi,
+    functionName: 'symbol',
     query: { enabled: !!assetAddress },
   })
 
@@ -52,13 +59,24 @@ export function VaultDashboard() {
     } catch { return true }
   }, [assetDecimals, allowance, depositAmount])
 
-  const performanceData = [
-    { date: '2024-01', yield: 8.2 },
-    { date: '2024-02', yield: 9.1 },
-    { date: '2024-03', yield: 12.4 },
-    { date: '2024-04', yield: 15.6 },
-    { date: '2024-05', yield: 18.3 }
-  ]
+  const metricsQ = useVaultMetricsQuery(vaultAddress)
+  const aiQ = useAIRebalanceQuery(vaultAddress)
+
+  const { data: shareBalance } = useReadContract({
+    address: vaultAddress as ViemAddress,
+    abi: VeyraVaultArtifact.abi as Abi,
+    functionName: 'balanceOf',
+    args: [address as ViemAddress],
+    query: { enabled: !!vaultAddress && !!address },
+  })
+
+  const { data: userAssetBalance } = useReadContract({
+    address: vaultAddress as ViemAddress,
+    abi: VeyraVaultArtifact.abi as Abi,
+    functionName: 'convertToAssets',
+    args: [(shareBalance as bigint) ?? BigInt(0)],
+    query: { enabled: !!vaultAddress && !!shareBalance },
+  })
 
   const onDeposit = async () => {
     if (!vaultAddress || !assetAddress || !assetDecimals || !address || !depositAmount) return
@@ -73,7 +91,7 @@ export function VaultDashboard() {
     }
     await writeContractAsync({
       address: vaultAddress as ViemAddress,
-      abi: VeyraVaultArtifact.abi as any,
+      abi: VeyraVaultArtifact.abi as Abi,
       functionName: 'deposit',
       args: [amount, address as `0x${string}`],
     })
@@ -85,7 +103,7 @@ export function VaultDashboard() {
     const amount = parseUnits(withdrawAmount, assetDecimals as number)
     await writeContractAsync({
       address: vaultAddress as ViemAddress,
-      abi: VeyraVaultArtifact.abi as any,
+      abi: VeyraVaultArtifact.abi as Abi,
       functionName: 'withdraw',
       args: [amount, address as `0x${string}`, address as `0x${string}`],
     })
@@ -101,8 +119,12 @@ export function VaultDashboard() {
             <DollarSign className="h-4 w-4 text-[var(--muted)]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-[var(--foreground)]">$2.4M</div>
-            <p className="text-xs text-[var(--muted)]">+12.5% from last month</p>
+            <div className="text-2xl font-bold text-[var(--foreground)]">
+              {metricsQ.data && 'success' in metricsQ.data && metricsQ.data.success
+                ? `$${(metricsQ.data.data.totalAssets ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
+                : '—'}
+            </div>
+            <p className="text-xs text-[var(--muted)]">Live on-chain</p>
           </CardContent>
         </Card>
 
@@ -112,8 +134,12 @@ export function VaultDashboard() {
             <TrendingUp className="h-4 w-4 text-[var(--muted)]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-[var(--foreground)]">18.3%</div>
-            <p className="text-xs text-[var(--muted)]">AI-optimized yield</p>
+            <div className="text-2xl font-bold text-[var(--foreground)]">
+              {metricsQ.data && 'success' in metricsQ.data && metricsQ.data.success
+                ? `${(metricsQ.data.data.currentApy ?? 0).toFixed(2)}%`
+                : '—'}
+            </div>
+            <p className="text-xs text-[var(--muted)]">Weighted across strategies</p>
           </CardContent>
         </Card>
 
@@ -123,7 +149,11 @@ export function VaultDashboard() {
             <Target className="h-4 w-4 text-[var(--muted)]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-[var(--foreground)]">4</div>
+            <div className="text-2xl font-bold text-[var(--foreground)]">
+              {metricsQ.data && 'success' in metricsQ.data && metricsQ.data.success
+                ? Object.keys(metricsQ.data.data.strategyAllocation || {}).length
+                : '—'}
+            </div>
             <p className="text-xs text-[var(--muted)]">Across protocols</p>
           </CardContent>
         </Card>
@@ -134,8 +164,18 @@ export function VaultDashboard() {
             <Zap className="h-4 w-4 text-[var(--muted)]" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-[var(--foreground)]">Medium</div>
-            <p className="text-xs text-[var(--muted)]">Balanced approach</p>
+            <div className="text-2xl font-bold text-[var(--foreground)]">
+              {aiQ.data && 'success' in aiQ.data && aiQ.data.success
+                ? (() => {
+                  const r = aiQ.data.data.riskScore as number | undefined
+                  if (r === undefined || r === null) return '—'
+                  if (r < 0.3) return 'Low'
+                  if (r < 0.6) return 'Medium'
+                  return 'High'
+                })()
+                : '—'}
+            </div>
+            <p className="text-xs text-[var(--muted)]">AI recommendation</p>
           </CardContent>
         </Card>
       </div>
@@ -158,7 +198,7 @@ export function VaultDashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[var(--muted)]">Deposit Amount (USDC)</label>
+              <label className="text-sm font-medium text-[var(--muted)]">Deposit Amount ({(assetSymbol as string) || 'Token'})</label>
               <Input
                 type="number"
                 placeholder="0.00"
@@ -171,7 +211,7 @@ export function VaultDashboard() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[var(--muted)]">Withdraw Amount (USDC)</label>
+              <label className="text-sm font-medium text-[var(--muted)]">Withdraw Amount ({(assetSymbol as string) || 'Token'})</label>
               <Input
                 type="number"
                 placeholder="0.00"
@@ -186,11 +226,17 @@ export function VaultDashboard() {
             <div className="pt-4">
               <div className="flex justify-between text-sm">
                 <span className="text-[var(--muted)]">Your Balance:</span>
-                <span className="text-[var(--foreground)]">1,234.56 USDC</span>
+                <span className="text-[var(--foreground)]">
+                  {userAssetBalance && assetDecimals !== undefined
+                    ? `${Number(userAssetBalance as bigint) / 10 ** Number(assetDecimals)} ${(assetSymbol as string) || ''}`
+                    : '—'}
+                </span>
               </div>
               <div className="flex justify-between text-sm mt-1">
                 <span className="text-[var(--muted)]">Vault Shares:</span>
-                <span className="text-[var(--foreground)]">1,150.23</span>
+                <span className="text-[var(--foreground)]">
+                  {shareBalance !== undefined ? `${shareBalance?.toString?.()}` : '—'}
+                </span>
               </div>
             </div>
           </CardContent>

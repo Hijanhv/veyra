@@ -17,6 +17,21 @@ export async function vaultRoutes(fastify: FastifyInstance) {
   const agent = new InvestmentAgent(vaultService);
   const rebalancingService = new RebalancingService(agent, vaultService);
 
+  // List configured vaults and default (from env)
+  fastify.get('/', async (_request: FastifyRequest, _reply: FastifyReply) => {
+    try {
+      const list = (process.env.VAULT_ADDRESSES || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+      const def = process.env.DEFAULT_VAULT_ID || null;
+      return { success: true, data: { vaults: list, defaultVaultId: def } };
+    } catch (error) {
+      fastify.log.error(error);
+      return { success: false, error: 'Failed to load vault list' };
+    }
+  });
+
   // Get the key stats for a vault - total funds, average yield, and how money
   // is currently split across strategies. Use the vault's contract address as the ID.
   fastify.get<{ Params: { vaultId: Address } }>('/:vaultId/metrics', async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
@@ -61,39 +76,39 @@ export async function vaultRoutes(fastify: FastifyInstance) {
   fastify.post<{ Params: { vaultId: Address } }>(
     '/:vaultId/ai-rebalance',
     async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
-    // Simple admin auth: require x-admin-key header to match ADMIN_API_KEY
-    const adminKey = (request.headers['x-admin-key'] || request.headers['X-Admin-Key']) as string | undefined;
-    if (!process.env.ADMIN_API_KEY || adminKey !== process.env.ADMIN_API_KEY) {
-      return reply.status(401).send({ success: false, error: 'Unauthorized' });
-    }
-    try {
-      const { vaultId } = request.params;
-      const result = await rebalancingService.executeRebalancing(vaultId);
-      
-      if (result.success) {
-        return { success: true, data: result };
-      } else {
-        reply.status(400).send({ success: false, error: result.error });
+      // Simple admin auth: require x-admin-key header to match ADMIN_API_KEY
+      const adminKey = (request.headers['x-admin-key'] || request.headers['X-Admin-Key']) as string | undefined;
+      if (!process.env.ADMIN_API_KEY || adminKey !== process.env.ADMIN_API_KEY) {
+        return reply.status(401).send({ success: false, error: 'Unauthorized' });
       }
-    } catch (error) {
-      fastify.log.error(error);
-      reply.status(500).send({ success: false, error: 'Failed to execute AI rebalancing' });
-    }
-  });
+      try {
+        const { vaultId } = request.params;
+        const result = await rebalancingService.executeRebalancing(vaultId);
+
+        if (result.success) {
+          return { success: true, data: result };
+        } else {
+          reply.status(400).send({ success: false, error: result.error });
+        }
+      } catch (error) {
+        fastify.log.error(error);
+        reply.status(500).send({ success: false, error: 'Failed to execute AI rebalancing' });
+      }
+    });
 
   // Get detailed strategy analysis for debugging/monitoring
   fastify.get<{ Params: { vaultId: Address } }>(
     '/:vaultId/strategies/analysis',
     async (request: FastifyRequest<{ Params: { vaultId: Address } }>, reply: FastifyReply) => {
-    try {
-      const { vaultId } = request.params;
-      const details = await vaultService.getStrategyDetails(vaultId);
-      return { success: true, data: details };
-    } catch (error) {
-      fastify.log.error(error);
-      reply.status(500).send({ success: false, error: 'Failed to analyze strategies' });
-    }
-  });
+      try {
+        const { vaultId } = request.params;
+        const details = await vaultService.getStrategyDetails(vaultId);
+        return { success: true, data: details };
+      } catch (error) {
+        fastify.log.error(error);
+        reply.status(500).send({ success: false, error: 'Failed to analyze strategies' });
+      }
+    });
 
   // Aggregated vault overview combining on-chain metrics
   fastify.get<{ Params: { vaultId: Address } }>(

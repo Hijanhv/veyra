@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
+import VaultSelector from '@/components/vault/VaultSelector'
 
 export default function AppHeader() {
   const pathname = usePathname()
@@ -25,10 +26,12 @@ export default function AppHeader() {
             {link('/', 'Home')}
             {link('/vaults', 'Vaults')}
             {link('/analytics', 'Analytics')}
-            {link('/admin/scheduler', 'Scheduler')}
           </nav>
         </div>
-        <ConnectButton />
+        <div className="flex items-center gap-3">
+          <VaultSelector />
+          <ConnectButton />
+        </div>
       </div>
     </header>
   )
