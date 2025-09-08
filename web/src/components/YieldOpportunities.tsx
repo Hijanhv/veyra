@@ -35,7 +35,7 @@ export function YieldOpportunities() {
           <div className="text-[var(--muted)] text-sm">No opportunities found.</div>
         ) : (
           <div className="space-y-4">
-            {allocations.map(([addr, bp], index) => (
+            {allocations.map(([addr], index) => (
               <div key={index} className="p-4 rounded-lg bg-[var(--card)] shadow-sm hover:shadow-md transition-all">
                 <div className="flex items-center justify-between mb-3">
                   <div>

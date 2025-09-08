@@ -19,7 +19,10 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
   const [selected, setSelected] = useState<Address | null>(null)
   const listQ = useVaultList()
 
-  const vaults: Address[] = listQ.data && listQ.data.success ? listQ.data.data.vaults : []
+  const vaults: Address[] = useMemo(() => {
+    if (listQ.data && listQ.data.success) return listQ.data.data.vaults
+    return []
+  }, [listQ.data])
   const defaultVaultId: Address | null = listQ.data && listQ.data.success ? (listQ.data.data.defaultVaultId || null) : null
 
   useEffect(() => {

@@ -11,7 +11,7 @@ import {
 } from '@/queries/vaults'
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts'
 import { useVault } from '@/context/VaultContext'
-import type { VaultMetrics, RecommendedAllocation, RebalanceRecommendation, StrategyDetails, VaultFlowItem, VaultRebalanceItem } from '@/types/api'
+import type { VaultMetrics, RebalanceRecommendation, StrategyDetails, VaultFlowItem, VaultRebalanceItem } from '@/types/api'
 
 export default function VaultsPage() {
   const { selectedVaultId } = useVault()
@@ -24,7 +24,6 @@ export default function VaultsPage() {
   const rebalancesQ = useVaultRebalancesQuery(selectedVaultId || undefined, 25, 0, { enabled: !!selectedVaultId })
 
 
-  const loading = metricsQ.isLoading || strategyQ.isLoading || rebalanceQ.isLoading || detailsQ.isLoading || flowsQ.isLoading || rebalancesQ.isLoading
   const metrics: VaultMetrics | undefined = metricsQ.data && metricsQ.data.success ? metricsQ.data.data : undefined
   const strategyRec = strategyQ.data && strategyQ.data.success ? strategyQ.data.data : null
   const rebalance: RebalanceRecommendation | undefined = rebalanceQ.data && rebalanceQ.data.success ? rebalanceQ.data.data : undefined

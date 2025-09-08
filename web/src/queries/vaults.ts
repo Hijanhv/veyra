@@ -1,4 +1,4 @@
-import { useQuery, UseQueryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, UseQueryOptions } from '@tanstack/react-query'
 import { getVaultMetrics, getStrategyRecommendation, getAIRebalance, getStrategyDetails, getVaults, getVaultOverview, getVaultFlows, getVaultRebalances, getVaultHarvests } from '@/lib/api'
 import { qk } from './queryKeys'
 import type { ApiResponse, VaultMetrics, RecommendedAllocation, RebalanceRecommendation, StrategyDetails, VaultOverview, Paginated, VaultFlowItem, VaultRebalanceItem, VaultHarvestItem } from '@/types/api'

@@ -1,6 +1,5 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query'
 import { getAgentDecisions } from '@/lib/api'
-import { qk } from './queryKeys'
 import type { ApiResponse, AgentDecisionItem } from '@/types/api'
 
 export function useAgentDecisionsQuery(vaultId: string | undefined, options?: Omit<UseQueryOptions<ApiResponse<AgentDecisionItem[]>>, 'queryKey' | 'queryFn'>) {
