@@ -64,7 +64,6 @@ Server (`server/.env`) — see `server/.env-example`
 - Supabase (off‑chain decisions): `SUPABASE_PROJECT_REF`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
 
 Web (`web/.env.local`)
-- `NEXT_PUBLIC_API_BASE_URL` (e.g., `http://localhost:8080`)
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
 - `NEXT_PUBLIC_SONIC_RPC_URL`, `NEXT_PUBLIC_SONIC_WS_URL`
 
