@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import cors from '@fastify/cors';
 import dotenv from 'dotenv';
 import { vaultRoutes } from './routes/vaults.js';
 import { analyticsRoutes } from './routes/analytics.js';
@@ -20,6 +21,11 @@ async function start() {
     loggerOptions.transport = { target: 'pino-pretty' };
   }
   const fastify = Fastify({ logger: loggerOptions });
+
+  // Register CORS to allow all websites to connect
+  await fastify.register(cors, {
+    origin: '*'
+  });
 
   // Initialize AI-powered scheduler (enabled by default; can be toggled via API)
   const scheduler = new SchedulerService();
