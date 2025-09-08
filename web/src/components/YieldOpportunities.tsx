@@ -3,16 +3,23 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ExternalLink } from 'lucide-react'
 import { useAgentDecisionsQuery } from '@/queries/analytics'
+import { useStrategyDetailsQuery } from '@/queries/vaults'
 import { useVault } from '@/context/VaultContext'
 
 export function YieldOpportunities() {
   const { selectedVaultId } = useVault()
   const decisionsQ = useAgentDecisionsQuery(selectedVaultId || undefined, { enabled: !!selectedVaultId })
+  const detailsQ = useStrategyDetailsQuery(selectedVaultId || undefined, { enabled: !!selectedVaultId })
   const loading = decisionsQ.isLoading
   const latest = decisionsQ.data && decisionsQ.data.success && decisionsQ.data.data.length
     ? decisionsQ.data.data[0]
     : null
   const allocations = latest ? Object.entries(latest.allocations_json || {}).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0)).slice(0, 3) : []
+  const nameMap: Record<string, string> = (detailsQ.data && detailsQ.data.success
+    ? Object.fromEntries(
+        (detailsQ.data.data || []).map((d) => [d.strategyAddress.toLowerCase(), d.strategyName || d.strategyAddress])
+      )
+    : {})
 
   return (
     <Card className="backdrop-blur">
@@ -39,7 +46,7 @@ export function YieldOpportunities() {
               <div key={index} className="p-4 rounded-lg bg-card shadow-sm hover:shadow-md transition-all">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h4 className="text-[var(--foreground)] font-medium">{addr.slice(0, 10)}…{addr.slice(-6)}</h4>
+                    <h4 className="text-[var(--foreground)] font-medium">{nameMap[addr.toLowerCase()] || `${addr.slice(0, 10)}…${addr.slice(-6)}`}</h4>
                   </div>
                   <ExternalLink className="h-4 w-4 text-foreground/60" />
                 </div>

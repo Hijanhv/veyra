@@ -331,7 +331,9 @@ export class VaultService {
         try {
           const sName = await strategy.name();
           if (sName && typeof sName === 'string') strat.strategyName = sName;
-        } catch { /* optional */ }
+        } catch (err) {
+          console.warn(`Failed to get strategy name for ${stratAddr}:`, err);
+        }
         // For each component, read live metrics and append to report
         for (const c of v2.comps) {
           try {

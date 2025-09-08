@@ -29,6 +29,9 @@ export default function VaultsPage() {
   const strategyRec = strategyQ.data && strategyQ.data.success ? strategyQ.data.data : null
   const rebalance: RebalanceRecommendation | undefined = rebalanceQ.data && rebalanceQ.data.success ? rebalanceQ.data.data : undefined
   const details: StrategyDetails[] | undefined = detailsQ.data && detailsQ.data.success ? detailsQ.data.data : undefined
+  const nameMap: Record<string, string> = details
+    ? Object.fromEntries(details.map((d) => [d.strategyAddress.toLowerCase(), d.strategyName || d.strategyAddress]))
+    : {}
   const error = (metricsQ.data && !metricsQ.data.success && metricsQ.data.error)
     || (strategyQ.data && !strategyQ.data.success && strategyQ.data.error)
     || (rebalanceQ.data && !rebalanceQ.data.success && rebalanceQ.data.error)
@@ -69,7 +72,7 @@ export default function VaultsPage() {
                         <Pie
                           dataKey="value"
                           data={Object.entries(metrics.strategyAllocation || {}).map(([addr, bp]) => ({
-                            name: `${addr.slice(0, 6)}…${addr.slice(-4)}`,
+                            name: (nameMap[addr.toLowerCase()] || `${addr.slice(0, 6)}…${addr.slice(-4)}`),
                             value: Number(bp) / 100,
                           }))}
                           label

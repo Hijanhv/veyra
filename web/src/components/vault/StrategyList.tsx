@@ -38,6 +38,7 @@ function ProtoBadge({ p }: { p: UnderlyingProtocol }) {
 }
 
 export default function StrategyList({ strategies }: { strategies: StrategyDetails[] }) {
+  console.log(strategies)
   if (!strategies?.length) return <div className="text-sm text-foreground/70">No strategies found.</div>
   return (
     <div className="space-y-4">
