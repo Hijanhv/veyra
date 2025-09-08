@@ -1,5 +1,4 @@
 import Fastify from 'fastify';
-import cors from '@fastify/cors';
 import dotenv from 'dotenv';
 import { vaultRoutes } from './routes/vaults.js';
 import { analyticsRoutes } from './routes/analytics.js';
@@ -70,42 +69,6 @@ async function start() {
     fastify.log.error({ err }, 'Bootstrap AI recommendations failed');
   }
 
-  // Enable CORS for frontend
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'https://localhost:3000',
-    'https://www.veyra.finance',
-    'https://veyra.finance',
-    'https://api.veyra.finance'
-  ];
-
-  // Add FRONTEND_URL from env if it exists
-  if (process.env.FRONTEND_URL) {
-    allowedOrigins.push(process.env.FRONTEND_URL);
-  }
-
-  await fastify.register(cors, {
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-
-      // Check if the origin is allowed
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      // For development, allow localhost with any port
-      if (origin.match(/^https?:\/\/localhost(:\d+)?$/)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error('Not allowed by CORS'), false);
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-key', 'X-Admin-Key']
-  });
-
   // Register routes
   await fastify.register(tokenRoutes, { prefix: 'api/tokens' });
   await fastify.register(vaultRoutes, { prefix: '/api/vaults' });
@@ -174,4 +137,4 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   // Don't exit on unhandled rejection, just log it
-});
+}); 

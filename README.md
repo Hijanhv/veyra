@@ -62,7 +62,6 @@ Server (`server/.env`) — see `server/.env-example`
 - Indexer schema strategy: `INDEXER_DEV_SCHEMA`, `INDEXER_SCHEMA_PREFIX`, `INDEXER_VIEWS_SCHEMA`
 - Indexer read (API→Ponder): `PONDER_SQL_URL` (default `http://localhost:42069/sql`)
 - Supabase (off‑chain decisions): `SUPABASE_PROJECT_REF`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
-- Frontend CORS: `FRONTEND_URL`
 
 Web (`web/.env.local`)
 - `NEXT_PUBLIC_API_BASE_URL` (e.g., `http://localhost:8080`)
@@ -140,7 +139,6 @@ Pages
 - Missing broadcast file: ensure `CHAIN_ID` and path `contracts/broadcast/DeployMockSuite.s.sol/<CHAIN_ID>/run-latest.json`
 - Indexer errors: set `PONDER_SQL_URL` and ensure `npm run indexer:dev`/`prod` is running
 - `MULTICALL3_ADDRESS is required`: set correct Multicall3 for Sonic in `server/.env`
-- CORS: set `FRONTEND_URL` to your web origin
 
 ## Contributing
 
