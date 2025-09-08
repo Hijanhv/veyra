@@ -38,7 +38,7 @@ export default function VaultCatalog() {
     const detRes = detailsQ[i]
     const strategies: StrategyDetails[] = detRes.data || []
     const components = new Set<string>()
-    strategies.forEach((s) => s.underlying.forEach((u) => components.add((u as any).label || u.name)))
+    strategies.forEach((s) => s.underlying.forEach((u) => components.add((u).label || u.name)))
     return { address: v, name, strategies, components: Array.from(components) }
   })
 

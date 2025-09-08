@@ -1,7 +1,7 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query'
 import { getVaultMetrics, getStrategyRecommendation, getAIRebalance, getStrategyDetails, getVaults, getVaultOverview } from '@/lib/api'
 import { qk } from './queryKeys'
-import type { ApiResponse, VaultMetrics, RecommendedAllocation, RebalanceRecommendation, StrategyDetails, VaultOverview, Paginated, VaultFlowItem, VaultRebalanceItem, VaultHarvestItem } from '@/types/api'
+import type { ApiResponse, VaultMetrics, RecommendedAllocation, RebalanceRecommendation, StrategyDetails, VaultOverview } from '@/types/api'
 
 export function useVaultList(options?: Omit<UseQueryOptions<ApiResponse<{ vaults: string[]; defaultVaultId: string | null }>>, 'queryKey' | 'queryFn'>) {
   return useQuery<ApiResponse<{ vaults: string[]; defaultVaultId: string | null }>>({

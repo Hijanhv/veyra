@@ -7,7 +7,7 @@ import ExplorerLink from '@/components/ExplorerLink'
 
 function ProtoBadge({ p }: { p: UnderlyingProtocol }) {
   const kind = p.name
-  const label = (p as any).label as string | undefined
+  const label = p.label
   switch (kind) {
     case 'Lending':
     case 'Eggs':
