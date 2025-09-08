@@ -36,7 +36,12 @@ ponder.on("VeyraVault:Deposit", async ({ event, context }) => {
     blockNumber: event.block.number,
     timestamp: event.block.timestamp,
     transactionHash: event.transaction.hash,
-  });
+  }).onConflictDoUpdate(() => ({
+    assets,
+    shares,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+  }));
 
   // Update user balance
   const userBalanceId = getUserBalanceId(owner, event.log.address);
@@ -76,7 +81,12 @@ ponder.on("VeyraVault:Withdraw", async ({ event, context }) => {
     blockNumber: event.block.number,
     timestamp: event.block.timestamp,
     transactionHash: event.transaction.hash,
-  });
+  }).onConflictDoUpdate(() => ({
+    assets,
+    shares,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+  }));
 
   // Update user balance
   const userBalanceId = getUserBalanceId(owner, event.log.address);
@@ -105,7 +115,7 @@ ponder.on("VeyraVault:StrategyDeposit", async ({ event, context }) => {
   const { strategy, assets } = event.args;
 
   await context.db.insert(strategyEvents).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    id: `${event.transaction.hash}-${event.log.logIndex}-deposit`,
     vault: lc(event.log.address),
     strategy: lc(strategy),
     eventType: "deposit",
@@ -114,7 +124,11 @@ ponder.on("VeyraVault:StrategyDeposit", async ({ event, context }) => {
     blockNumber: event.block.number,
     timestamp: event.block.timestamp,
     transactionHash: event.transaction.hash,
-  });
+  }).onConflictDoUpdate(() => ({
+    amount: assets,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+  }));
 });
 
 // Track strategy withdrawals
@@ -122,7 +136,7 @@ ponder.on("VeyraVault:StrategyWithdrawal", async ({ event, context }) => {
   const { strategy, assets } = event.args;
 
   await context.db.insert(strategyEvents).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    id: `${event.transaction.hash}-${event.log.logIndex}-withdrawal`,
     vault: lc(event.log.address),
     strategy: lc(strategy),
     eventType: "withdrawal",
@@ -131,7 +145,11 @@ ponder.on("VeyraVault:StrategyWithdrawal", async ({ event, context }) => {
     blockNumber: event.block.number,
     timestamp: event.block.timestamp,
     transactionHash: event.transaction.hash,
-  });
+  }).onConflictDoUpdate(() => ({
+    amount: assets,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+  }));
 });
 
 // Track strategy allocation updates
@@ -139,7 +157,7 @@ ponder.on("VeyraVault:StrategyAllocationUpdated", async ({ event, context }) => 
   const { strategy, bps } = event.args;
 
   await context.db.insert(strategyEvents).values({
-    id: `${event.transaction.hash}-${event.log.logIndex}`,
+    id: `${event.transaction.hash}-${event.log.logIndex}-allocation_updated`,
     vault: lc(event.log.address),
     strategy: lc(strategy),
     eventType: "allocation_updated",
@@ -148,7 +166,11 @@ ponder.on("VeyraVault:StrategyAllocationUpdated", async ({ event, context }) => 
     blockNumber: event.block.number,
     timestamp: event.block.timestamp,
     transactionHash: event.transaction.hash,
-  });
+  }).onConflictDoUpdate(() => ({
+    allocation: bps,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+  }));
 });
 
 // Track rebalance events
@@ -163,7 +185,12 @@ ponder.on("VeyraVault:RebalanceExecuted", async ({ event, context }) => {
     blockNumber: event.block.number,
     timestamp: event.block.timestamp,
     transactionHash: event.transaction.hash,
-  });
+  }).onConflictDoUpdate(() => ({
+    strategies: strategies.map((addr: `0x${string}`) => addr.toLowerCase()),
+    allocations: Array.from(allocations),
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+  }));
 
   // Update metrics after rebalance
   await updateVaultMetrics(event, context);
@@ -180,7 +207,11 @@ ponder.on("VeyraVault:YieldHarvested", async ({ event, context }) => {
     blockNumber: event.block.number,
     timestamp: event.block.timestamp,
     transactionHash: event.transaction.hash,
-  });
+  }).onConflictDoUpdate(() => ({
+    totalYield,
+    blockNumber: event.block.number,
+    timestamp: event.block.timestamp,
+  }));
 
   // Update metrics after yield harvest
   await updateVaultMetrics(event, context);

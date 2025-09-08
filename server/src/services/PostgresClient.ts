@@ -6,6 +6,9 @@ import * as schema from '../../ponder.schema.js'
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
 })
 
 // Set the database schema based on environment
@@ -60,10 +63,24 @@ export type Paginated<T> = { items: T[]; nextOffset: number; hasMore: boolean }
 // Helper function to handle database errors
 function handleDbError(e: any): never {
   const err = e as Error
+  console.error('Database error:', err.message)
   err.name = 'IndexerUnavailable'
   err.message = 'Failed to query indexer via Drizzle. Ensure Postgres is running and DATABASE_URL is correct.'
   throw err
 }
+
+// Handle pool errors to prevent crashes
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err)
+})
+
+pool.on('connect', (client) => {
+  console.log('Database client connected')
+})
+
+pool.on('remove', (client) => {
+  console.log('Database client removed')
+})
 
 export async function fetchFlows(vault: string, limit = 50, offset = 0): Promise<FlowRow[]> {
   try {
@@ -223,10 +240,24 @@ export async function listStrategyEvents(
 }
 
 // Graceful shutdown
-process.on('SIGTERM', async () => {
-  await pool.end()
-})
+let isShuttingDown = false
 
-process.on('SIGINT', async () => {
-  await pool.end()
-})
+const gracefulShutdown = async (signal: string) => {
+  if (isShuttingDown) return
+  isShuttingDown = true
+  
+  console.log(`Received ${signal}. Gracefully shutting down database pool...`)
+  try {
+    await pool.end()
+    console.log('Database pool closed successfully')
+  } catch (err) {
+    console.error('Error closing database pool:', err)
+  }
+  process.exit(0)
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
+process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+
+// Export pool for cleanup if needed
+export { pool }

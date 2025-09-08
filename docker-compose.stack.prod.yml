@@ -7,6 +7,8 @@ services:
     command: [ "node", "scripts/run-ponder.mjs", "start" ]
     env_file:
       - server/.env
+    ports:
+      - "8080:8080"
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "node", "-e", "require('http').get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))" ]

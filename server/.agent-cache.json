@@ -1,6 +1,60 @@
 [
   {
     "chainId": 146,
+    "vault": "0x32202f6bf3b1ad69a410a80cfa5746864ee597a5",
+    "allocations": {
+      "0x8C6b51c183427894C0AFd843e5AB37e0d39f1f1C": 10000
+    },
+    "expectedApyBp": 250,
+    "riskScore": 0.05,
+    "confidence": 0.85,
+    "reasoning": "Given the current vault context with only one available strategy (Pendle Fixed Yield stS), I'm allocating 100% to this strategy. This allocation is justified by several factors: 1) The strategy has extremely low risk across all metrics (0.00/1.0 for liquidation, protocol, smart contract, impermanent loss, and leverage risks), 2) Low complexity score of 0.20/1.0 makes it suitable for conservative allocation, 3) The 2.50% APY, while modest, provides stable fixed yield with minimal downside risk, 4) As a Pendle fixed yield strategy, it offers predictable returns by selling future earnings upfront, eliminating yield volatility, 5) With no other strategies available and current target allocation already at 100% for this strategy, maintaining this allocation minimizes churn while providing steady returns. The strategy aligns well with risk management guidelines given its minimal risk profile across all categories.",
+    "marketContext": "Current market conditions appear stable with moderate yield opportunities. The Pendle fixed yield strategy provides certainty in an environment where yield volatility could be a concern. With only one strategy available, portfolio diversification is limited, but the extremely low risk profile of the Pendle strategy makes it suitable for conservative capital preservation with modest yield generation.",
+    "createdAt": "2025-09-08T18:58:09.861Z"
+  },
+  {
+    "chainId": 146,
+    "vault": "0xea6e7b84afef989741c57d3d939f618ddff1d87c",
+    "allocations": {
+      "0x243f338Fcc0fec3A27f27bC1b31F2415179cEd07": 10000
+    },
+    "expectedApyBp": 0,
+    "riskScore": 0.2,
+    "confidence": 0.6,
+    "reasoning": "Given the current vault state with only one available strategy (Rings Aave Loop), I must allocate 100% to this strategy. The strategy shows 0% APY currently, which suggests it may be newly deployed or experiencing temporary issues. However, as a leveraged USDC->scUSD loop strategy using established protocols (Rings and Aave), it has the potential to generate meaningful yield once market conditions improve. The strategy has very low risk scores across all categories (0.00/1.0) and low complexity (0.20/1.0), making it relatively safe despite being a leveraged strategy. The current target allocation already suggests 100% allocation to this strategy, so maintaining this allocation minimizes churn while we wait for the strategy to begin generating returns or for additional strategies to become available.",
+    "marketContext": "Early deployment phase with limited strategy options available. The single available strategy shows 0% APY, suggesting either new deployment or temporary market conditions affecting yield generation. Low risk metrics across the board indicate stable underlying protocols despite current lack of yield.",
+    "createdAt": "2025-09-08T18:57:53.734Z"
+  },
+  {
+    "chainId": 146,
+    "vault": "0x4f0fcc23264cdb72d5313e427c77139977611abd",
+    "allocations": {
+      "0xd312313cF407Fec18140802556C9B1949Af07D53": 10000
+    },
+    "expectedApyBp": 425,
+    "riskScore": 0.05,
+    "confidence": 0.85,
+    "reasoning": "Given the current vault context with only one available strategy (Aave Rings Carry), I'm maintaining the full 10,000 basis points allocation to this strategy. The Aave Rings Carry strategy presents an attractive risk-adjusted return profile with a 4.25% APY and exceptionally low risk metrics across all categories (0.00/1.0 for all risk factors). The strategy's low complexity score of 0.20/1.0 makes it suitable for conservative allocation. The strategy uses wS as collateral to borrow USDC and converts to scUSD for yield farming, which is a relatively straightforward carry trade approach. With zero current assets in the vault and this being the only available strategy, maintaining the current target allocation minimizes churn while providing steady yield generation. The risk-free nature of this strategy (based on the provided risk metrics) makes it an ideal foundation for the vault, especially in uncertain market conditions.",
+    "marketContext": "With only one strategy available and zero current assets, the market context suggests a cautious approach is warranted. The Aave Rings Carry strategy's conservative risk profile aligns well with current market uncertainty, providing stable yield without exposure to liquidation, leverage, or impermanent loss risks.",
+    "createdAt": "2025-09-08T18:56:51.421Z"
+  },
+  {
+    "chainId": 146,
+    "vault": "0xe51ff35b3324003f530e2bc4c5e1c2973eb64e67",
+    "allocations": {
+      "0x3F4C2Cb84B6c180DEDb2814b8176FA5D70133672": 3000,
+      "0x525699FC73D28C08E52D829EC58C683D1f3e88E0": 4000,
+      "0xf1c3F3a58128e7B19F96176a2F56aC0646eA9F1b": 3000
+    },
+    "expectedApyBp": 533,
+    "riskScore": 0.15,
+    "confidence": 0.85,
+    "reasoning": "I'm optimizing the allocation to favor the SwapX Managed Range strategy while maintaining diversification. Here's my rationale:\n\n1. **SwapX Managed Range (40%)**: This strategy offers the highest APY at 6.00% with identical risk metrics to the other strategies. The automated range management reduces manual intervention needs while capturing concentrated liquidity premiums. Given the low complexity score (0.20) and zero risk factors, this represents the best risk-adjusted return opportunity.\n\n2. **StS + Beets LP (30%)**: Reducing allocation slightly from current 33.33% to 30% to make room for higher-yielding SwapX. This remains a solid foundation strategy with simple liquidity provision mechanics and proven stability on BEETS DEX.\n\n3. **Eggs x Shadow Loop (30%)**: Maintaining a 30% allocation despite lower 5.00% APY because the strategy provides valuable diversification through its complex leveraged approach using different protocols (Eggs Finance + Shadow DEX). This helps reduce correlation risk with the other two strategies.\n\nThe allocation maintains good diversification across three different strategy types while optimizing for the superior risk-adjusted returns of SwapX. All strategies show identical risk profiles with zero liquidation, protocol, smart contract, impermanent loss, and leverage risks, making the decision primarily APY-driven while respecting diversification principles.",
+    "marketContext": "Market conditions appear stable with low volatility given the zero risk scores across all strategies. The Sonic blockchain ecosystem seems mature enough to support these sophisticated yield strategies without significant protocol risks. Current yield opportunities are moderate but consistent, with concentrated liquidity strategies (SwapX) showing premium returns over simple LP strategies.",
+    "createdAt": "2025-09-08T18:56:08.780Z"
+  },
+  {
+    "chainId": 146,
     "vault": "0x7f689a8c1da93c5e54a8bbdd163727b9e2fdae38",
     "allocations": {
       "0xA309B3cb8Ca3083cdFE23e689E6f7F8fD14a8102": 10000

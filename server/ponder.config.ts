@@ -11,7 +11,12 @@ const database = process.env.DATABASE_URL
   ? {
     kind: "postgres" as const,
     connectionString: process.env.DATABASE_URL,
-    schema: process.env.INDEXER_DEV_SCHEMA
+    schema: process.env.INDEXER_DEV_SCHEMA,
+    poolConfig: {
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    }
   }
   : undefined;
 

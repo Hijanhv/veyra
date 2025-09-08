@@ -68,3 +68,47 @@ export const getStrategyEvents = (
   const q = qp.toString()
   return http<ApiResponse<Paginated<StrategyEventItem>>>(`/api/analytics/${vaultId}/strategy-events${q ? `?${q}` : ''}`)
 }
+
+// Token minting
+export interface TokenInfo {
+  address: Address
+  name: string
+  symbol: string
+  decimals: number
+}
+
+export interface MintTokenRequest {
+  to: Address
+  amount: string
+  tokenAddress?: Address
+}
+
+export interface MintAllTokensRequest {
+  to: Address
+  amount?: string
+}
+
+export interface MintResult {
+  success: boolean
+  tokenAddress?: Address
+  name?: string
+  symbol?: string
+  txHash?: string
+  amount?: string
+  blockNumber?: number
+  error?: string
+}
+
+export const getTokens = () => http<ApiResponse<TokenInfo[]>>('/api/tokens')
+export const getTokenBalance = (tokenAddress: Address, wallet: Address) =>
+  http<ApiResponse<{ address: Address; wallet: Address; balance: string }>>(`/api/tokens/${tokenAddress}/balance/${wallet}`)
+export const mintToken = (data: MintTokenRequest) =>
+  http<ApiResponse<{ txHash: string; tokenAddress: Address; to: Address; amount: string; blockNumber: number }>>('/api/tokens/mint', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })
+export const mintAllTokens = (data: MintAllTokensRequest) =>
+  http<ApiResponse<{ to: Address; amount: string; results: MintResult[]; summary: { total: number; successful: number; failed: number } }>>('/api/tokens/mint-all', {
+    method: 'POST',
+    body: JSON.stringify(data)
+  })

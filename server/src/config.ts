@@ -37,7 +37,7 @@ export const Config = {
   schedMonitorCron: str('SCHED_MONITOR_CRON', '30 * * * *'),
 
   // Recommendation caching / freshness
-  recommendationRefreshHours: int('RECOMMENDATION_REFRESH_HOURS', 6),
+  recommendationRefreshHours: int('RECOMMENDATION_REFRESH_HOURS', 1),
 
   // Guidelines used in AI prompt (purely informational)
   guidelineMaxLeverageBp: int('AGENT_MAX_LEVERAGE_BP', 3000), // 30%

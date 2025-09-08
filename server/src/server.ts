@@ -3,6 +3,7 @@ import cors from '@fastify/cors';
 import dotenv from 'dotenv';
 import { vaultRoutes } from './routes/vaults.js';
 import { analyticsRoutes } from './routes/analytics.js';
+import { tokenRoutes } from './routes/tokens.js';
 import { SchedulerService } from './services/SchedulerService.js';
 import { InvestmentAgent } from './services/InvestmentAgent.js';
 import { Config } from './config.js';
@@ -80,8 +81,10 @@ async function start() {
   });
 
   // Register routes
+  await fastify.register(tokenRoutes, { prefix: 'api/tokens' });
   await fastify.register(vaultRoutes, { prefix: '/api/vaults' });
   await fastify.register(analyticsRoutes, { prefix: '/api/analytics' });
+
 
   // b check with AI system status
   fastify.get('/health', async () => {
@@ -132,6 +135,17 @@ async function start() {
 
 // Start server with error handling
 start().catch((err) => {
-  console.error(err);
+  console.error('Failed to start server:', err);
   process.exit(1);
+});
+
+// Handle uncaught exceptions and unhandled rejections
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Don't exit on unhandled rejection, just log it
 });
