@@ -46,7 +46,7 @@ export function TokenMinting() {
       const response = await mintToken({
         to: address,
         amount: mintAmount,
-        tokenAddress: tokenAddress as any
+        tokenAddress: tokenAddress
       })
 
       if (response.success) {
@@ -54,7 +54,7 @@ export function TokenMinting() {
         const token = tokens.find(t => t.address === tokenAddress)
         const newResult: MintResult = {
           success: true,
-          tokenAddress: tokenAddress as any,
+          tokenAddress: tokenAddress,
           name: token?.name,
           symbol: token?.symbol,
           txHash: response.data.txHash,
@@ -63,15 +63,15 @@ export function TokenMinting() {
         }
         setResults(prev => [...prev, newResult])
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Add failed result
       const token = tokens.find(t => t.address === tokenAddress)
       const newResult: MintResult = {
         success: false,
-        tokenAddress: tokenAddress as any,
+        tokenAddress: tokenAddress,
         name: token?.name,
         symbol: token?.symbol,
-        error: error.message || 'Minting failed'
+        error: error instanceof Error ? error.message : 'Minting failed'
       }
       setResults(prev => [...prev, newResult])
     } finally {
