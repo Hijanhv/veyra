@@ -1,4 +1,3 @@
-export const API_BASE = ''
 import type {
   ApiResponse,
   Address,
@@ -28,7 +27,7 @@ function normalizeHeaders(h?: HeadersInit): Record<string, string> {
 
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = { 'Content-Type': 'application/json', ...normalizeHeaders(init?.headers) }
-  const res = await fetch(`${API_BASE}${path}`, { ...init, headers, cache: 'no-store' })
+  const res = await fetch(`${path}`, { ...init, headers, cache: 'no-store' })
   if (!res.ok) throw new Error(await res.text())
   return res.json() as Promise<T>
 }

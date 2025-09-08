@@ -6,18 +6,20 @@ const nextConfig: NextConfig = {
     return config;
   },
   async rewrites() {
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
+    if (process.env.NODE_ENV === "development") {
+      return [
+        {
+          source: "/api/:path*",
+          destination: `${process.env.NEXT_PUBLIC_LOCAL_BACKEND_URL}/api/:path*`,
+        },
+      ];
+    }
 
+    // Production rewrites
     return [
-      // Rewrite all API calls to backend server
       {
-        source: '/api/:path*',
-        destination: `${backendUrl}/api/:path*`,
-      },
-      // Rewrite health check
-      {
-        source: '/health',
-        destination: `${backendUrl}/health`,
+        source: "/api/:path*",
+        destination: `${process.env.NEXT_PUBLIC_PROD_BACKEND_URL}/api/:path*`,
       },
     ];
   },
