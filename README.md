@@ -1,205 +1,153 @@
 # Veyra Protocol
 
-AI-powered yield strategies on Sonic. Vaults allocate capital across modular strategy components (lending, DEX, staking, etc.), and off-chain services read a unified components-based introspection to report metrics.
+AI‑powered yield strategies on Sonic. ERC‑4626 vaults allocate capital across modular strategies (lending, DEX, staking, derivatives). A Fastify API, an on‑chain indexer (Ponder), and a Next.js frontend power analytics and AI‑assisted rebalancing.
 
-## Features
-- ERC-4626 vaults with multiple strategies
-- Components-based strategy introspection (`components()`)
-- Sonic integrations: Aave (lending), Rings, Eggs, Shadow, BEETS, SwapX, Pendle
-- Optional analytics/indexing and rebalancing services
+## Sonic Hackathon: S Tier University Edition
 
-## 🏗️ Architecture
+This project is built specifically for the Sonic Hackathon: S Tier University Edition as a full, end‑to‑end showcase:
+- Smart contracts: ERC‑4626 VeyraVault + six production‑style strategies (Aave/Rings carry, Rings/Aave loop, Eggs/Shadow loop, stS+BEETS, SwapX managed range, Pendle fixed yield on stS)
+- Indexer: Ponder with SQL gateway for flows, rebalances, harvests, and vault metrics
+- Server: Fastify API with AI‑assisted rebalancing, scheduler, and Supabase persistence
+- Frontend: Next.js dashboard with RainbowKit/wagmi on Sonic
+- Monetization: Sonic FeeM registration baked into contracts and deploy script
 
-### Backend (`/server`)
-- Fastify TypeScript API
-- Reads `IStrategyIntrospection.components()` and queries adapters for metrics
-- Optional analytics and rebalancing services
+Participant: Janhavi Chavada — B.Tech student, Ajeenkya DY Patil University, Pune
 
-### Smart Contracts (`/contracts`)
-- VeyraVault: ERC-4626 vault with strategy management
-- Strategies implementing `IStrategyIntrospection.components()`
-- Adapter interfaces for lending/DEX/staking protocols
+## Highlights
+- ERC‑4626 vault with multiple strategies and dynamic allocations
+- Components‑based strategy introspection (`components()`) for unified analytics
+- Sonic integrations: Aave, Rings, Eggs, Shadow, BEETS, SwapX, Pendle
+- Ponder indexer + SQL API for on‑chain flows, rebalances, harvests
+- Supabase for AI decision storage (off‑chain only)
+- Sonic FeeM support: contracts expose `registerMe(uint256)` for monetization
 
-### Frontend (`/web`)
-- **Next.js** React application with modern UI/UX
-- **RainbowKit** wallet integration for Sonic network
-- **Real-time Dashboard**: Live yield tracking, portfolio metrics, and analytics
-- **Strategy Insights**: AI-generated market insights and recommendations
+## Monorepo Overview
+- `contracts/`: Solidity sources, Foundry scripts, mocks, tests
+- `server/`: Fastify API (TypeScript), Ponder indexer, scheduler, AI agent
+- `web/`: Next.js 15 app with RainbowKit/wagmi on Sonic
+- `supabase/`: SQL migrations and CLI config for hosted/local
+- `scripts/`: Repo‑level helpers (deploy, ABI sync)
 
 ## Quick Start
 
-### Prerequisites
+Prerequisites
+- Node.js 18+
+- Foundry (`forge`/`cast`)
+- Supabase CLI (optional, for DB/types)
 
-- Node.js 18+ and npm/yarn
-- Foundry for smart contract development
-- Git for version control
+Install
+- `cd server && npm install`
+- `cd ../web && npm install`
+- `cd ../contracts && forge install`
 
-### Installation
+Sync ABIs (after any contract change)
+- From repo root: `node scripts/refresh-contracts.mjs`
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd veyra
-   ```
+## Environment
 
-2. **Install Backend Dependencies**
-   ```bash
-   cd server
-   npm install
-   ```
+Contracts (`contracts/.env`)
+- `SONIC_RPC_URL`: Sonic RPC (http or wss)
+- `PRIVATE_KEY`: deployer EOA
+- `CHAIN_ID`: chain id (default 146)
+- `STRATEGY_MANAGER` (optional): manager EOA (defaults to deployer)
+- `FEEM_PROJECT_ID` (optional): Sonic FeeM project id for auto‑registration
 
-3. **Install Frontend Dependencies**
-   ```bash
-   cd ../web
-   npm install
-   ```
+Server (`server/.env`) — see `server/.env-example`
+- Core: `PORT`, `SONIC_RPC_URL`, `CHAIN_ID`, `MULTICALL3_ADDRESS`
+- Vaults: `VAULT_ADDRESSES` (comma‑sep), `DEFAULT_VAULT_ID`
+- Admin: `ADMIN_API_KEY` (protects scheduler/rebalance)
+- AI (optional): `ANTHROPIC_API_KEY`, `ENABLE_AUTO_REBALANCING`
+- Scheduler/agent tuning: `REBALANCE_THRESHOLD_BP`, `REBALANCE_MIN_CONFIDENCE`, `REBALANCE_GAS_LIMIT`, `SCHED_ANALYSIS_CRON`, `SCHED_MONITOR_CRON`
+- Indexer write: `DATABASE_URL` (Postgres for Ponder), optional `DATABASE_SCHEMA`
+- Indexer schema strategy: `INDEXER_DEV_SCHEMA`, `INDEXER_SCHEMA_PREFIX`, `INDEXER_VIEWS_SCHEMA`
+- Indexer read (API→Ponder): `PONDER_SQL_URL` (default `http://localhost:42069/sql`)
+- Supabase (off‑chain decisions): `SUPABASE_PROJECT_REF`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+- Frontend CORS: `FRONTEND_URL`
 
-4. **Install Smart Contract Dependencies**
-   ```bash
-   cd ../contracts
-   forge install
-   # This installs dependencies locally to contracts/lib/
-   # All dependencies are self-contained within the contracts/ directory
-   ```
+Web (`web/.env.local`)
+- `NEXT_PUBLIC_API_BASE_URL` (e.g., `http://localhost:8080`)
+- `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
+- `NEXT_PUBLIC_SONIC_RPC_URL`, `NEXT_PUBLIC_SONIC_WS_URL`
 
-### Environment Setup
+## Contracts
 
-1. Backend env (`server/.env`)
-   ```env
-   PORT=8080
-   FRONTEND_URL=http://localhost:3000
-   SONIC_RPC_URL=wss://sonic-rpc.publicnode.com
-   ```
+- Build: `cd contracts && forge build`
+- Test: `forge test`
+- Mock deploy (Foundry): see `contracts/README.md`
 
-2. Frontend env (`web/.env.local`)
-   ```env
-   NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id_here
-   NEXT_PUBLIC_API_URL=http://localhost:8080
-   ```
+Deploy Mock Suite (one command)
+- From repo root: `SONIC_RPC_URL=... PRIVATE_KEY=0x... CHAIN_ID=146 node scripts/deploy-mock.mjs`
+- Writes latest addresses to `contracts/DEPLOYED_ADDRESSES.md`
+- Upserts `VAULT_ADDRESSES`, `DEFAULT_VAULT_ID`, `CHAIN_ID` in `server/.env`
+- If `FEEM_PROJECT_ID` set, auto‑calls `registerMe(projectId)` on vaults + strategies
+- Syncs ABIs to `server/src/abi` and `web/src/abi`
 
-3. Contracts env (`contracts/.env`)
-   ```env
-   SONIC_RPC_URL=wss://sonic-rpc.publicnode.com
-   PRIVATE_KEY=your_private_key_here
-   ```
+Sonic FeeM (optional)
+- Contracts expose `registerMe(uint256)` and default to Sonic FeeM registry `0xDC2B0D2Dd2b7759D97D50db4eabDC36973110830`
+- Set `FEEM_PROJECT_ID` and use the one‑command deploy to register automatically
 
-### Development
+## Indexer (Ponder)
 
-1. **Start Backend Server**
-   ```bash
-   cd server
-   npm run dev
-   ```
+- Config: `server/ponder.config.ts` (reads `VAULT_ADDRESSES`, `CHAIN_ID`, `SONIC_RPC_URL`)
+- Dev: `cd server && npm run indexer:dev` (stable schema via `INDEXER_DEV_SCHEMA`)
+- Prod: `npm run indexer:prod` (unique schema + published views)
+- Read from API via SQL gateway: set `PONDER_SQL_URL` (default `http://localhost:42069/sql`)
 
-2. **Start Frontend Development Server**
-   ```bash
-   cd web
-   npm run dev
-   ```
+Tracked tables
+- `deposits`, `withdrawals`, `rebalances`, `yield_harvests`, `user_balances`, `vault_metrics`
 
-3. **Compile Smart Contracts**
-   ```bash
-   cd contracts
-   forge build
-   ```
+## API Server
 
-4. **Run Tests**
-   ```bash
-   # Backend tests
-   cd server && npm test
-   
-   # Contract tests
-   cd contracts && forge test
-   
-   # Frontend tests
-   cd web && npm test
-   ```
+- Dev: `cd server && npm run dev`
+- Prod: `npm run build && npm start`
 
-### Deployment
-- Contracts: see `contracts/README.md` (includes a one-command deploy + address update helper)
-- Server: `npm run build && npm start`
-- Web: `npm run build && npm start`
+Key endpoints
+- `GET /api/vaults` — list configured vaults
+- `GET /api/vaults/:vaultId/metrics` — live metrics
+- `GET /api/vaults/:vaultId/strategy` — latest AI recommendation (from Supabase)
+- `GET /api/vaults/:vaultId/ai-rebalance` — detailed recommendation
+- `POST /api/vaults/:vaultId/ai-rebalance` — execute rebalance (requires `x-admin-key`)
+- `GET /api/vaults/:vaultId/flows|rebalances|harvests` — indexed events (Ponder SQL)
+- `GET /health` — server/indexer/AI status
 
-## Deploy Mock Suite (one command)
+## Frontend (web)
 
-- Prerequisites: `forge` and `cast` installed, a funded deployer key on Sonic, and Node.js.
-- The helper script deploys the full mock stack (tokens, adapters, vaults, strategies), updates addresses, and syncs ABIs.
+- Dev: `cd web && npm run dev` (Next.js 15 + RainbowKit/wagmi)
+- Prod: `npm run build && npm start`
 
-Usage from repo root:
+Pages
+- `/` — overview and hero
+- `/vaults` — vault selector + dashboard
+- `/analytics` — protocol metrics
 
-- Set required env (can be in `contracts/.env` or exported):
-  - `SONIC_RPC_URL`: RPC URL for Sonic (wss/http ok)
-  - `PRIVATE_KEY`: Deployer private key (0x...)
-  - `CHAIN_ID`: Chain id (e.g., `146`)
-  - Optional: `STRATEGY_MANAGER` (defaults to deployer EOA)
-  - Optional: `FEEM_PROJECT_ID` to auto-register contracts with Sonic FeeM
+## Supabase
 
-Example:
+- Migrations: `supabase/migrations/*.sql`
+- CLI quick start: see `supabase/README.md`
+- Generate types (from server/): `npm run db:types` → `src/types/supabase.generated.ts`
+- Only off‑chain tables are stored (e.g., `agent_decisions`); on‑chain is from Ponder
 
-`SONIC_RPC_URL=$SONIC_RPC_URL PRIVATE_KEY=0x... CHAIN_ID=146 node scripts/deploy-mock.mjs`
+## Docker
 
-What it does:
+- Dev stack (API + Indexer): `docker compose -f docker-compose.stack.dev.yml up --build`
+- Prod stack (API + Indexer): `docker compose -f docker-compose.stack.prod.yml up -d --build`
+- Ensure `server/.env` has: `SONIC_RPC_URL`, `MULTICALL3_ADDRESS`, `VAULT_ADDRESSES`, DB settings
 
-- Runs `forge script` to deploy the mock suite to Sonic with broadcast.
-- Parses the broadcast JSON and writes latest addresses to `contracts/DEPLOYED_ADDRESSES.md`.
-- Upserts `VAULT_ADDRESSES`, `DEFAULT_VAULT_ID`, and `CHAIN_ID` into `server/.env`.
-- If `FEEM_PROJECT_ID` is set, calls `registerMe(uint256)` on each vault and strategy via `cast`.
-- Syncs ABIs to `server/` and `web/` via `scripts/refresh-contracts.mjs`.
+## Troubleshooting
 
-Troubleshooting:
+- `Compiling... No files changed, compilation skipped`: cache hit; run `forge clean` to force rebuild
+- `History restored`: Foundry broadcast info; new txs still send
+- Missing broadcast file: ensure `CHAIN_ID` and path `contracts/broadcast/DeployMockSuite.s.sol/<CHAIN_ID>/run-latest.json`
+- Indexer errors: set `PONDER_SQL_URL` and ensure `npm run indexer:dev`/`prod` is running
+- `MULTICALL3_ADDRESS is required`: set correct Multicall3 for Sonic in `server/.env`
+- CORS: set `FRONTEND_URL` to your web origin
 
-- `Compiling... No files changed, compilation skipped`: Foundry cache detected no Solidity changes since last build. The deploy still runs. To force a rebuild, run `forge clean` in `contracts/` before rerunning.
-- `History restored`: Foundry picked up prior broadcast history; this is informational. New deployments will still be sent unless you comment out `vm.startBroadcast`.
+## Contributing
 
-See also: `contracts/README.md` → Mock Deployment on Sonic.
+- Fork → branch → PR. Keep changes focused and documented.
 
-## Supported Protocols (Sonic)
-- Lending: Aave (via adapter)
-- DEX: Shadow, BEETS, SwapX
-- Yield/Derivatives: Rings, Eggs, Pendle
+## License & Disclaimer
 
-## 📊 API Endpoints
+- MIT. Experimental software — use at your own risk.
 
-### Protocol Data
-- `GET /api/protocols/opportunities` - Get all yield opportunities
-- `GET /api/protocols/{protocol}` - Get specific protocol data
-
-### Vault Management
-- `GET /api/vaults/{vaultId}/metrics` - Vault performance metrics
-- `GET /api/vaults/{vaultId}/strategy` - AI strategy recommendations
-
-### Analytics
-- `GET /api/analytics/insights` - Market insights and trends
-- `GET /api/analytics/predictions` - Yield predictions
-
-## 🔒 Security
-
-- **Smart Contract Audits**: All contracts undergo thorough security reviews
-- **Multi-signature Controls**: Critical functions require multiple approvals
-- **Emergency Pause**: Circuit breaker for emergency situations
-- **Risk Assessment**: Continuous monitoring of protocol and market risks
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🌐 Links
-
-- **Website**: [Coming Soon]
-- **Documentation**: [Coming Soon]
-
-## ⚠️ Disclaimer
-
-Veyra Protocol is experimental software. Use at your own risk. DeFi investments carry inherent risks including smart contract vulnerabilities, market volatility, and potential loss of funds. Always do your own research and never invest more than you can afford to lose.
-
----
-
-**Built with ❤️ for the Sonic ecosystem**
+— Built with ❤️ for the Sonic ecosystem
