@@ -70,7 +70,12 @@ async function start() {
 
   // Enable CORS for frontend
   await fastify.register(cors, {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000'
+    origin: [
+      'http://localhost:3000',
+      'https://veyra.finance',
+      ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [])
+    ],
+    credentials: true
   });
 
   // Register routes
