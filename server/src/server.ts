@@ -20,7 +20,7 @@ async function start() {
   if (process.env.PRETTY_LOGS === 'true') {
     loggerOptions.transport = { target: 'pino-pretty' };
   }
-  const fastify = Fastify({ logger: loggerOptions });
+  const fastify = Fastify({ logger: loggerOptions, trustProxy: true });
 
   // Register CORS to allow all websites to connect
   await fastify.register(cors, {
