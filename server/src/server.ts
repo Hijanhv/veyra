@@ -71,11 +71,39 @@ async function start() {
   }
 
   // Enable CORS for frontend
+  const allowedOrigins = [
+    'http://localhost:3000',
+    'https://localhost:3000',
+    'https://www.veyra.finance',
+    'https://veyra.finance',
+    'https://api.veyra.finance'
+  ];
+
+  // Add FRONTEND_URL from env if it exists
+  if (process.env.FRONTEND_URL) {
+    allowedOrigins.push(process.env.FRONTEND_URL);
+  }
+
   await fastify.register(cors, {
-    origin: process.env.FRONTEND_URL
-      ? [process.env.FRONTEND_URL]
-      : ['http://localhost:3000'],
-    credentials: true
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+
+      // Check if the origin is allowed
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // For development, allow localhost with any port
+      if (origin.match(/^https?:\/\/localhost(:\d+)?$/)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error('Not allowed by CORS'), false);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-admin-key', 'X-Admin-Key']
   });
 
   // Register routes

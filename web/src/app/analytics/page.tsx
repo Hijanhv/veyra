@@ -1,4 +1,5 @@
 'use client'
+
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAgentDecisionsQuery, useStrategyEventsQuery, useVaultFlowsQuery, useVaultRebalancesQuery, useVaultHarvestsQuery } from '@/queries/analytics'
