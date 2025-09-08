@@ -24,11 +24,10 @@ async function start() {
 
   await fastify.register(cors, {
     origin: ['https://www.veyra.finance'],
-    credentials: false,                      // set true only if you use cookies/Authorization in browser
+    credentials: true,                      // set true only if you use cookies/Authorization in browser
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     exposedHeaders: [],
-
     // Preflight tuning
     maxAge: 86400,
     preflight: true,              // default, but be explicit
