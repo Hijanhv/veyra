@@ -7,6 +7,7 @@ import { useVault } from '@/context/VaultContext'
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext } from '@/components/ui/pagination'
 import VaultToolbar from '@/components/vault/VaultToolbar'
 import ExplorerLink from '@/components/ExplorerLink'
+import ReactMarkdown from 'react-markdown'
 
 export default function AnalyticsPage() {
   const { selectedVaultId } = useVault()
@@ -104,7 +105,24 @@ export default function AnalyticsPage() {
                           <td className="py-2 pr-4 text-[var(--foreground)]">{(d.expected_apy_bp / 100).toFixed(2)}%</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{d.risk_score.toFixed(2)}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{d.confidence.toFixed(2)}</td>
-                          <td className="py-2 pr-4 text-foreground/70">{d.reasoning || '—'}</td>
+                          <td className="py-2 pr-4 text-foreground/70">
+                            {d.reasoning ? (
+                              <div className="prose prose-sm prose-invert max-w-none text-foreground/70">
+                                <ReactMarkdown
+                                  components={{
+                                    p: ({ children }) => <span>{children}</span>,
+                                    code: ({ children }) => <code className="bg-gray-800 px-1 py-0.5 rounded text-xs">{children}</code>,
+                                    strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                                    em: ({ children }) => <em className="italic">{children}</em>
+                                  }}
+                                >
+                                  {d.reasoning}
+                                </ReactMarkdown>
+                              </div>
+                            ) : (
+                              '—'
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
