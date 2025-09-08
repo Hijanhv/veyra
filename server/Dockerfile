@@ -39,5 +39,9 @@ COPY --from=build /app/scripts ./scripts
 
 EXPOSE 8080 42069
 
+# Health check for API server
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
+
 # Default command runs the API server. Compose overrides the command for the indexer service.
 CMD ["node", "dist/server.js"]
