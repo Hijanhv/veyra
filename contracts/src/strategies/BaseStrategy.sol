@@ -13,6 +13,9 @@ abstract contract BaseStrategy is IYieldStrategy, ReentrancyGuard, Ownable {
     IERC20 public immutable ASSET; // the token the vault holds
     address public immutable VAULT; // the vault contract
 
+    // Sonic FeeM registry contract
+    address private constant _FEEM = address(0xDC2B0D2Dd2b7759D97D50db4eabDC36973110830);
+
     modifier onlyVault() {
         require(msg.sender == VAULT, "Only vault");
         _;
@@ -22,6 +25,14 @@ abstract contract BaseStrategy is IYieldStrategy, ReentrancyGuard, Ownable {
         require(_asset != address(0) && _vault != address(0), "zero addr");
         ASSET = IERC20(_asset);
         VAULT = _vault;
+    }
+
+    /// @dev Register this strategy contract on Sonic FeeM under given project ID
+    function registerMe(uint256 projectId) external onlyOwner {
+        (bool _success, ) = _FEEM.call(
+            abi.encodeWithSignature("selfRegister(uint256)", projectId)
+        );
+        require(_success, "FeeM registration failed");
     }
 
     // helper functions for safe transfers

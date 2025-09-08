@@ -101,6 +101,26 @@ It will:
 Notes:
 - The script loads env from `contracts/.env` and `server/.env` if present. It uses `SONIC_RPC_URL` for the RPC endpoint.
 
+#### Optional: automatic Sonic FeeM registration
+
+- Contracts include a `registerMe(uint256)` function (vaults + base strategies) that registers them with Sonic’s FeeM program.
+- If you set `FEEM_PROJECT_ID` in your environment, the script post-calls `registerMe(projectId)` on every deployed vault and strategy using `cast`.
+
+Example:
+
+```bash
+SONIC_RPC_URL=$SONIC_RPC_URL \
+PRIVATE_KEY=0x... \
+CHAIN_ID=146 \
+FEEM_PROJECT_ID=123 \  # your FeeM project id
+node scripts/deploy-mock.mjs
+```
+
+Troubleshooting:
+
+- `Compiling... No files changed, compilation skipped`: expected when sources are unchanged; to force rebuild run `forge clean` in `contracts/`.
+- `History restored`: informational from Foundry broadcast; new txs will still be broadcast.
+
 ## Testing
 
 Comprehensive test suite with mock contracts for each protocol:

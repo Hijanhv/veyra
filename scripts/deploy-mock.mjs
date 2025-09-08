@@ -8,6 +8,9 @@
 //   CHAIN_ID      - Numeric chain id (e.g., 146)
 // Optional:
 //   STRATEGY_MANAGER - Manager address for vaults (falls back to deployer)
+//   FEEM_PROJECT_ID  - Sonic FeeM project ID. If set, the script will
+//                      post-register the deployed vault + strategies by calling
+//                      their registerMe(uint256) function.
 
 import { readFileSync, writeFileSync, existsSync, mkdirSync, copyFileSync } from 'fs';
 import path from 'path';
@@ -45,6 +48,7 @@ tryLoadEnv(path.join(root, 'server', '.env'));
 const RPC_URL = process.env.SONIC_RPC_URL;
 const PRIVATE_KEY = process.env.PRIVATE_KEY;
 const CHAIN_ID = process.env.CHAIN_ID || process.env.chainId || process.env.chain_id || '146';
+const FEEM_PROJECT_ID = process.env.FEEM_PROJECT_ID
 if (!RPC_URL || !PRIVATE_KEY) {
   console.error('Usage: set SONIC_RPC_URL, PRIVATE_KEY, and CHAIN_ID. Example:\nSONIC_RPC_URL=... PRIVATE_KEY=0x... CHAIN_ID=146 node scripts/deploy-mock.mjs');
   process.exit(1);
@@ -88,6 +92,9 @@ if (deployments.length === 0) {
   process.exit(1);
 }
 const vaults = deployments.filter((d) => d.name === 'VeyraVault').map((d) => d.address);
+const strategies = deployments
+  .filter((d) => /Strategy$/.test(d.name))
+  .map((d) => d.address);
 
 // 3) Write contracts/DEPLOYED_ADDRESSES.md with ONLY the latest deployment
 const deployedMdPath = path.join(contractsDir, 'DEPLOYED_ADDRESSES.md');
@@ -135,7 +142,28 @@ envText = upsertEnv(envText, kv);
 writeFileSync(serverEnvPath, envText, 'utf8');
 console.log(`Updated ${path.relative(root, serverEnvPath)} (VAULT_ADDRESSES, DEFAULT_VAULT_ID, CHAIN_ID)`);
 
-// 5) Build contracts (no-op if unchanged) and sync ABIs to server and web after deploy
+// 5) If FEEM_PROJECT_ID is provided, call registerMe(projectId) on each target
+if (FEEM_PROJECT_ID) {
+  const targets = [...vaults, ...strategies];
+  if (targets.length === 0) {
+    console.warn('FEEM_PROJECT_ID set but no targets (vault/strategies) found to register.');
+  } else {
+    console.log(`Registering ${targets.length} contracts with Sonic FeeM (project ${FEEM_PROJECT_ID})...`);
+    for (const addr of targets) {
+      try {
+        const cmd = `cast send ${addr} "registerMe(uint256)" ${FEEM_PROJECT_ID} --rpc-url "${RPC_URL}" --private-key "${PRIVATE_KEY}"`;
+        execSync(cmd, { stdio: 'inherit', cwd: contractsDir });
+      } catch (e) {
+        console.error(`FeeM register failed for ${addr}`);
+        throw e;
+      }
+    }
+  }
+} else {
+  console.log('FEEM_PROJECT_ID not set — skipping FeeM registration');
+}
+
+// 6) Build contracts (no-op if unchanged) and sync ABIs to server and web after deploy
 try {
   execSync('node scripts/refresh-contracts.mjs', { stdio: 'inherit', cwd: root });
 } catch { /* ignore sync errors here */ }

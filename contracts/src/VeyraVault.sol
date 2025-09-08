@@ -52,6 +52,9 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
     /// @notice Emergency pause state
     bool public emergencyPaused;
 
+    // Sonic FeeM registry contract
+    address private constant _FEEM = address(0xDC2B0D2Dd2b7759D97D50db4eabDC36973110830);
+
     /*//////////////////////////////////////////////////////////////
                                MODIFIERS
     //////////////////////////////////////////////////////////////*/
@@ -80,6 +83,14 @@ contract VeyraVault is ERC4626, ReentrancyGuard, Ownable {
         address _strategyManager
     ) ERC4626(_asset) ERC20(_name, _symbol) Ownable(msg.sender) {
         strategyManager = _strategyManager;
+    }
+
+    /// @dev Register this vault contract on Sonic FeeM under given project ID
+    function registerMe(uint256 projectId) external onlyOwner {
+        (bool _success, ) = _FEEM.call(
+            abi.encodeWithSignature("selfRegister(uint256)", projectId)
+        );
+        require(_success, "FeeM registration failed");
     }
 
     /*//////////////////////////////////////////////////////////////

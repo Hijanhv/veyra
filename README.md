@@ -120,6 +120,39 @@ AI-powered yield strategies on Sonic. Vaults allocate capital across modular str
 - Server: `npm run build && npm start`
 - Web: `npm run build && npm start`
 
+## Deploy Mock Suite (one command)
+
+- Prerequisites: `forge` and `cast` installed, a funded deployer key on Sonic, and Node.js.
+- The helper script deploys the full mock stack (tokens, adapters, vaults, strategies), updates addresses, and syncs ABIs.
+
+Usage from repo root:
+
+- Set required env (can be in `contracts/.env` or exported):
+  - `SONIC_RPC_URL`: RPC URL for Sonic (wss/http ok)
+  - `PRIVATE_KEY`: Deployer private key (0x...)
+  - `CHAIN_ID`: Chain id (e.g., `146`)
+  - Optional: `STRATEGY_MANAGER` (defaults to deployer EOA)
+  - Optional: `FEEM_PROJECT_ID` to auto-register contracts with Sonic FeeM
+
+Example:
+
+`SONIC_RPC_URL=$SONIC_RPC_URL PRIVATE_KEY=0x... CHAIN_ID=146 node scripts/deploy-mock.mjs`
+
+What it does:
+
+- Runs `forge script` to deploy the mock suite to Sonic with broadcast.
+- Parses the broadcast JSON and writes latest addresses to `contracts/DEPLOYED_ADDRESSES.md`.
+- Upserts `VAULT_ADDRESSES`, `DEFAULT_VAULT_ID`, and `CHAIN_ID` into `server/.env`.
+- If `FEEM_PROJECT_ID` is set, calls `registerMe(uint256)` on each vault and strategy via `cast`.
+- Syncs ABIs to `server/` and `web/` via `scripts/refresh-contracts.mjs`.
+
+Troubleshooting:
+
+- `Compiling... No files changed, compilation skipped`: Foundry cache detected no Solidity changes since last build. The deploy still runs. To force a rebuild, run `forge clean` in `contracts/` before rerunning.
+- `History restored`: Foundry picked up prior broadcast history; this is informational. New deployments will still be sent unless you comment out `vm.startBroadcast`.
+
+See also: `contracts/README.md` → Mock Deployment on Sonic.
+
 ## Supported Protocols (Sonic)
 - Lending: Aave (via adapter)
 - DEX: Shadow, BEETS, SwapX
