@@ -24,7 +24,7 @@ async function start() {
 
   // Register CORS to allow all websites to connect
   await fastify.register(cors, {
-    origin: '*',
+    origin: true,
     methods: ['GET', 'PUT', 'POST', 'DELETE'],
     allowedHeaders: [
       'content-type',
