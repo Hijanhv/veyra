@@ -22,16 +22,21 @@ async function start() {
   }
   const fastify = Fastify({ logger: loggerOptions, trustProxy: true });
 
-  // Register CORS to allow all websites to connect
   await fastify.register(cors, {
-    origin: true,
-    methods: ['GET', 'PUT', 'POST', 'DELETE'],
-    allowedHeaders: [
-      'content-type',
-      'accept',
-      'authorization'
-    ]
+    origin: ['https://www.veyra.finance'],
+    credentials: false,                      // set true only if you use cookies/Authorization in browser
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: [],
+
+    // Preflight tuning
+    maxAge: 86400,
+    preflight: true,              // default, but be explicit
+    strictPreflight: false,       // don't 400 if headers don't perfectly match
+    optionsSuccessStatus: 204,
+    hook: 'onRequest',
   });
+
 
   // Initialize AI-powered scheduler (enabled by default; can be toggled via API)
   const scheduler = new SchedulerService();
