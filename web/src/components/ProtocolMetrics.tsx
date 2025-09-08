@@ -44,12 +44,12 @@ export function ProtocolMetrics() {
         </CardHeader>
         <CardContent>
           {!allocEntries.length ? (
-            <div className="h-16 flex items-center justify-center text-[var(--muted)]">No allocation data.</div>
+            <div className="h-16 flex items-center justify-center text-foreground/70">No allocation data.</div>
           ) : (
             <div className="space-y-2">
               {allocEntries.map((item, idx) => (
                 <div key={idx} className="flex items-center justify-between">
-                  <span className="text-[var(--muted)] text-sm">{item.name}</span>
+                  <span className="text-foreground/70 text-sm">{item.name}</span>
                   <span className="text-[var(--foreground)] font-medium">{item.value.toFixed(2)}%</span>
                 </div>
               ))}
@@ -64,11 +64,11 @@ export function ProtocolMetrics() {
         </CardHeader>
         <CardContent className="space-y-3">
           {!underlyingItems.length ? (
-            <div className="text-[var(--muted)] text-sm">No underlying protocol metrics.</div>
+            <div className="text-foreground/70 text-sm">No underlying protocol metrics.</div>
           ) : (
             underlyingItems.map((i, idx) => (
-              <div key={idx} className="p-3 rounded-lg bg-[var(--card)] flex items-center justify-between">
-                <span className="text-[var(--foreground)]/90 text-sm">{i.label}</span>
+              <div key={idx} className="p-3 rounded-lg bg-card flex items-center justify-between">
+                <span className="text-foreground/90 text-sm">{i.label}</span>
                 <span className="text-[var(--foreground)] text-sm font-medium">{i.metric}</span>
               </div>
             ))
@@ -82,7 +82,7 @@ export function ProtocolMetrics() {
         </CardHeader>
         <CardContent className="space-y-3">
           {!latestDecision ? (
-            <div className="text-[var(--muted)] text-sm">No insights available.</div>
+            <div className="text-foreground/70 text-sm">No insights available.</div>
           ) : (
             <>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -90,21 +90,21 @@ export function ProtocolMetrics() {
                   .sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))
                   .slice(0, 3)
                   .map(([addr, bp]) => (
-                    <div key={addr} className="p-3 rounded-lg bg-white/10">
-                      <p className="text-[var(--foreground)]/85 text-sm">
+                    <div key={addr} className="p-3 rounded-lg bg-secondary">
+                      <p className="text-foreground/85 text-sm">
                         <strong>{`${addr.slice(0, 6)}…${addr.slice(-4)}`}</strong> — {(Number(bp) / 100).toFixed(2)}%
                       </p>
                     </div>
                   ))}
               </div>
               {latestDecision.reasoning && (
-                <div className="p-3 rounded-lg bg-white/10">
-                  <p className="text-[var(--foreground)]/85 text-sm">
+                <div className="p-3 rounded-lg bg-secondary">
+                  <p className="text-foreground/85 text-sm">
                     <strong>Reasoning:</strong> {latestDecision.reasoning}
                   </p>
                 </div>
               )}
-              <div className="flex flex-wrap gap-4 text-sm text-[var(--foreground)]/90">
+              <div className="flex flex-wrap gap-4 text-sm text-foreground/90">
                 <span>Expected APY: {(Number(latestDecision.expected_apy_bp || 0) / 100).toFixed(2)}%</span>
                 <span>Risk: {Number(latestDecision.risk_score ?? 0).toFixed(2)}</span>
                 <span>Confidence: {Number(latestDecision.confidence ?? 0).toFixed(2)}</span>

@@ -3,17 +3,17 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-      target: deps
+      target: prod
     working_dir: /app
     command: [ "npm", "run", "indexer:dev" ]
     env_file:
       - server/.env
     ports:
-      - "42069:42069"
       - "8080:8080"
     volumes:
-      - ./server:/app
-      - /app/node_modules
+      - ./server/ponder.config.ts:/app/ponder.config.ts
+      - ./server/ponder.schema.ts:/app/ponder.schema.ts
+      - ./server/ponder-env.d.ts:/app/ponder-env.d.ts
     healthcheck:
       test: [ "CMD", "node", "-e", "require('http').get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))" ]
       interval: 30s

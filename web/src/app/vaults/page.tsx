@@ -6,11 +6,11 @@ import {
   useStrategyRecommendationQuery,
   useAIRebalanceQuery,
   useStrategyDetailsQuery,
-  useVaultFlowsQuery,
-  useVaultRebalancesQuery,
 } from '@/queries/vaults'
+import { useVaultFlowsQuery, useVaultRebalancesQuery } from '@/queries/analytics'
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts'
 import { useVault } from '@/context/VaultContext'
+import VaultToolbar from '@/components/vault/VaultToolbar'
 import type { VaultMetrics, RebalanceRecommendation, StrategyDetails, VaultFlowItem, VaultRebalanceItem } from '@/types/api'
 
 export default function VaultsPage() {
@@ -42,15 +42,15 @@ export default function VaultsPage() {
   return (
     <div className="min-h-screen">
       <div className="site-container max-w-6xl py-10">
-        <div className="flex items-end justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-[var(--foreground)]">Vaults</h1>
-            <p className="text-sm text-[var(--muted)]">Metrics, strategy, and AI rebalancing</p>
-            <p className="text-xs text-[var(--muted)] mt-1">Selected: {selectedVaultId ? `${selectedVaultId.slice(0, 6)}…${selectedVaultId.slice(-4)}` : '—'}</p>
-          </div>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-foreground mb-2">Vaults</h1>
+          <p className="text-sm text-foreground/70">Metrics, strategy, and AI rebalancing</p>
+        </div>
+        <div className="mb-8">
+          <VaultToolbar />
         </div>
 
-        {error && <div className="mb-6 text-sm text-rose-300">{error}</div>}
+        {error && <div className="mb-6 text-sm text-rose-400">{error}</div>}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="backdrop-blur">
@@ -59,7 +59,7 @@ export default function VaultsPage() {
             </CardHeader>
             <CardContent>
               {!metrics ? (
-                <div className="text-[var(--muted)] text-sm">No data.</div>
+                <div className="text-foreground/70 text-sm">No data.</div>
               ) : (
                 <div className="space-y-4">
                   <div className="h-64">
@@ -93,7 +93,7 @@ export default function VaultsPage() {
               <CardTitle className="text-[var(--foreground)]">Strategy Recommendation</CardTitle>
             </CardHeader>
             <CardContent>
-              {!strategyRec ? <div className="text-[var(--muted)] text-sm">No data.</div> : (
+              {!strategyRec ? <div className="text-foreground/70 text-sm">No data.</div> : (
                 <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify(strategyRec, null, 2)}</pre>
               )}
             </CardContent>
@@ -104,7 +104,7 @@ export default function VaultsPage() {
               <CardTitle className="text-[var(--foreground)]">AI Rebalance</CardTitle>
             </CardHeader>
             <CardContent>
-              {!rebalance ? <div className="text-[var(--muted)] text-sm">No data.</div> : (
+              {!rebalance ? <div className="text-foreground/70 text-sm">No data.</div> : (
                 <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify(rebalance, null, 2)}</pre>
               )}
             </CardContent>
@@ -115,7 +115,7 @@ export default function VaultsPage() {
               <CardTitle className="text-[var(--foreground)]">Strategy Details</CardTitle>
             </CardHeader>
             <CardContent>
-              {!details ? <div className="text-[var(--muted)] text-sm">No data.</div> : (
+              {!details ? <div className="text-foreground/70 text-sm">No data.</div> : (
                 <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify(details, null, 2)}</pre>
               )}
             </CardContent>
@@ -127,7 +127,7 @@ export default function VaultsPage() {
             </CardHeader>
             <CardContent>
               {!flowsQ.data || !('success' in flowsQ.data) || !flowsQ.data.success || flowsQ.data.data.items.length === 0 ? (
-                <div className="text-[var(--muted)] text-sm">No flows.</div>
+                <div className="text-foreground/70 text-sm">No flows.</div>
               ) : (
                 <ul className="text-xs space-y-2">
                   {flowsQ.data.data.items.slice(0, 10).map((f: VaultFlowItem) => (
@@ -147,7 +147,7 @@ export default function VaultsPage() {
             </CardHeader>
             <CardContent>
               {!rebalancesQ.data || !('success' in rebalancesQ.data) || !rebalancesQ.data.success || rebalancesQ.data.data.items.length === 0 ? (
-                <div className="text-[var(--muted)] text-sm">No rebalances.</div>
+                <div className="text-foreground/70 text-sm">No rebalances.</div>
               ) : (
                 <ul className="text-xs space-y-2">
                   {rebalancesQ.data.data.items.slice(0, 10).map((r: VaultRebalanceItem) => (

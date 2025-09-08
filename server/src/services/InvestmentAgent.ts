@@ -1,4 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { generateObject } from 'ai';
+import { anthropic } from '@ai-sdk/anthropic';
 import { z } from 'zod';
 import { VaultService } from './VaultService.js';
 import dotenv from 'dotenv';
@@ -16,13 +17,13 @@ dotenv.config();
  * using Claude Sonnet 4 to analyze DeFi strategies and market conditions
  */
 export class InvestmentAgent {
-  private client: Anthropic;
+  private model: ReturnType<typeof anthropic>;
 
   constructor(private readonly vaultService: VaultService) {
     if (!process.env.ANTHROPIC_API_KEY) {
       throw new Error('ANTHROPIC_API_KEY is required for AI decision making');
     }
-    this.client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    this.model = anthropic(Config.aiModel);
   }
 
   /**
@@ -137,26 +138,14 @@ export class InvestmentAgent {
     });
 
     const prompt = this.buildAllocationPrompt(strategies);
-    const msg = await this.client.messages.create({
-      model: Config.aiModel,
-      max_tokens: 1024,
+    const { object: parsed } = await generateObject({
+      model: this.model,
+      schema: allocationSchema,
+      system: 'You are a precise portfolio construction assistant specializing in DeFi yield strategies.',
+      prompt,
+      maxRetries: 2,
       temperature: 0.2,
-      system: 'You are a precise portfolio construction assistant. Return only valid JSON matching the requested schema.',
-      messages: [
-        { role: 'user', content: `${prompt}\n\nReturn only valid minified JSON.` }
-      ]
     });
-
-    const text = (msg.content?.[0] as any)?.text ?? '';
-    let parsed: z.infer<typeof allocationSchema>;
-    try {
-      parsed = allocationSchema.parse(JSON.parse(text));
-    } catch (e) {
-      // Try to extract JSON substring
-      const match = text.match(/\{[\s\S]*\}/);
-      if (!match) throw e;
-      parsed = allocationSchema.parse(JSON.parse(match[0]!));
-    }
 
     // ensure 10,000 bps total
     const allocations = { ...parsed.allocations } as Record<string, number>;
@@ -248,7 +237,7 @@ export class InvestmentAgent {
     prompt += `5. Balance complexity - don't put more than 40% in highly complex strategies\n`;
     prompt += `6. Consider protocol risks and smart contract maturity\n`;
     prompt += `7. Factor in current market conditions and volatility\n\n`;
-    prompt += `Return a JSON object with:\n`;
+    prompt += `Provide:\n`;
     prompt += `- allocations: Record<strategy_address, basis_points> (must sum to 10000)\n`;
     prompt += `- reasoning: Detailed explanation of allocation decisions\n`;
     prompt += `- confidence: Your confidence in this allocation (0-1)\n`;

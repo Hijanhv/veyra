@@ -1,4 +1,5 @@
-import { createClient, sql } from '@ponder/client'
+import { createClient, eq, desc } from '@ponder/client'
+import * as schema from '../../ponder.schema.js'
 
 const SQL_BASE = process.env.PONDER_SQL_URL || 'http://localhost:42069/sql'
 
@@ -6,7 +7,8 @@ const SQL_BASE = process.env.PONDER_SQL_URL || 'http://localhost:42069/sql'
 let _client: ReturnType<typeof createClient> | null = null
 
 function client() {
-  if (!_client) _client = createClient(SQL_BASE)
+  // Enable Drizzle query builder by passing the schema
+  if (!_client) _client = createClient(SQL_BASE, { schema })
   return _client
 }
 
@@ -37,26 +39,55 @@ export type RebalanceRow = {
 export async function fetchFlows(vault: string, limit = 50, offset = 0): Promise<FlowRow[]> {
   try {
     const db = client().db
-    const v = vault.toLowerCase()
+    const v = vault.toLowerCase() as `0x${string}`
     const size = Math.max(1, limit + offset)
-    // Select deposits
-    const deposits = await db.execute(sql`
-      SELECT id, vault, 'deposit' as action, sender, owner, NULL as receiver,
-             assets::text as assets, shares::text as shares, "blockNumber", timestamp, "transactionHash"
-      FROM deposits WHERE vault = ${v}
-      ORDER BY timestamp DESC
-      LIMIT ${size} OFFSET 0;
-    `)
-    // Select withdrawals
-    const withdrawals = await db.execute(sql`
-      SELECT id, vault, 'withdrawal' as action, sender, owner, receiver,
-             assets::text as assets, shares::text as shares, "blockNumber", timestamp, "transactionHash"
-      FROM withdrawals WHERE vault = ${v}
-      ORDER BY timestamp DESC
-      LIMIT ${size} OFFSET 0;
-    `)
-    // Merge and sort by timestamp desc
-    const merged = [...(deposits as any[]), ...(withdrawals as any[])] as FlowRow[]
+
+    // Typed Drizzle queries
+    const depRows = await db
+      .select()
+      .from(schema.deposits)
+      .where(eq(schema.deposits.vault, v))
+      .orderBy(desc(schema.deposits.timestamp))
+      .limit(size)
+
+    const wdrRows = await db
+      .select()
+      .from(schema.withdrawals)
+      .where(eq(schema.withdrawals.vault, v))
+      .orderBy(desc(schema.withdrawals.timestamp))
+      .limit(size)
+
+    // Map to unified flow items with stringified bigint fields for JSON safety
+    const depositsMapped: FlowRow[] = depRows.map((r) => ({
+      id: r.id,
+      vault: r.vault,
+      action: 'deposit',
+      sender: r.sender,
+      owner: r.owner,
+      receiver: undefined,
+      assets: r.assets.toString(),
+      shares: r.shares.toString(),
+      blockNumber: Number(r.blockNumber),
+      timestamp: Number(r.timestamp),
+      transactionHash: r.transactionHash,
+    }))
+
+    const withdrawalsMapped: FlowRow[] = wdrRows.map((r) => ({
+      id: r.id,
+      vault: r.vault,
+      action: 'withdrawal',
+      sender: r.sender,
+      owner: r.owner,
+      receiver: r.receiver,
+      assets: r.assets.toString(),
+      shares: r.shares.toString(),
+      blockNumber: Number(r.blockNumber),
+      timestamp: Number(r.timestamp),
+      transactionHash: r.transactionHash,
+    }))
+
+    // Merge, sort by timestamp desc, and paginate
+    const merged = [...depositsMapped, ...withdrawalsMapped]
     merged.sort((a, b) => Number(b.timestamp) - Number(a.timestamp))
     return merged.slice(offset, offset + limit)
   } catch (e) {
@@ -70,14 +101,25 @@ export async function fetchFlows(vault: string, limit = 50, offset = 0): Promise
 export async function fetchRebalances(vault: string, limit = 50, offset = 0): Promise<RebalanceRow[]> {
   try {
     const db = client().db
-    const v = vault.toLowerCase()
-    const rows = await db.execute(sql`
-      SELECT id, vault, strategies, allocations::text[] as allocations, "blockNumber", timestamp, "transactionHash"
-      FROM rebalances WHERE vault = ${v}
-      ORDER BY timestamp DESC
-      LIMIT ${limit} OFFSET ${offset};
-    `)
-    return rows as unknown as RebalanceRow[]
+    const v = vault.toLowerCase() as `0x${string}`
+    const rows = await db
+      .select()
+      .from(schema.rebalances)
+      .where(eq(schema.rebalances.vault, v))
+      .orderBy(desc(schema.rebalances.timestamp))
+      .limit(limit)
+      .offset(offset)
+
+    const mapped: RebalanceRow[] = rows.map((r) => ({
+      id: r.id,
+      vault: r.vault,
+      strategies: r.strategies,
+      allocations: r.allocations.map((a) => a.toString()),
+      blockNumber: Number(r.blockNumber),
+      timestamp: Number(r.timestamp),
+      transactionHash: r.transactionHash,
+    }))
+    return mapped
   } catch (e) {
     const err = e as Error
     err.name = 'IndexerUnavailable'
@@ -89,14 +131,23 @@ export async function fetchRebalances(vault: string, limit = 50, offset = 0): Pr
 export async function fetchHarvests(vault: string, limit = 50, offset = 0): Promise<Array<{ id: string; vault: `0x${string}`; totalYield: string; blockNumber: number; timestamp: number; transactionHash: `0x${string}` }>> {
   try {
     const db = client().db
-    const v = vault.toLowerCase()
-    const rows = await db.execute(sql`
-      SELECT id, vault, "totalYield"::text as "totalYield", "blockNumber", timestamp, "transactionHash"
-      FROM yield_harvests WHERE vault = ${v}
-      ORDER BY timestamp DESC
-      LIMIT ${limit} OFFSET ${offset};
-    `)
-    return rows as any
+    const v = vault.toLowerCase() as `0x${string}`
+    const rows = await db
+      .select()
+      .from(schema.yieldHarvests)
+      .where(eq(schema.yieldHarvests.vault, v))
+      .orderBy(desc(schema.yieldHarvests.timestamp))
+      .limit(limit)
+      .offset(offset)
+
+    return rows.map((r) => ({
+      id: r.id,
+      vault: r.vault,
+      totalYield: r.totalYield.toString(),
+      blockNumber: Number(r.blockNumber),
+      timestamp: Number(r.timestamp),
+      transactionHash: r.transactionHash,
+    })) as any
   } catch (e) {
     const err = e as Error
     err.name = 'IndexerUnavailable'

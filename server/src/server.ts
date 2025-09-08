@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import dotenv from 'dotenv';
 import { vaultRoutes } from './routes/vaults.js';
+import { analyticsRoutes } from './routes/analytics.js';
 import { SchedulerService } from './services/SchedulerService.js';
 import { InvestmentAgent } from './services/InvestmentAgent.js';
 import { Config } from './config.js';
@@ -80,7 +81,7 @@ async function start() {
 
   // Register routes
   await fastify.register(vaultRoutes, { prefix: '/api/vaults' });
-  // Analytics routes removed (deprecated in favor of AI decision history)
+  await fastify.register(analyticsRoutes, { prefix: '/api/analytics' });
 
   // b check with AI system status
   fastify.get('/health', async () => {

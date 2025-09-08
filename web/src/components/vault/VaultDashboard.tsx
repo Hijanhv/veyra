@@ -115,8 +115,8 @@ export function VaultDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="backdrop-blur">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[var(--muted)]">Total Value Locked</CardTitle>
-            <DollarSign className="h-4 w-4 text-[var(--muted)]" />
+            <CardTitle className="text-sm font-medium text-foreground/70">Total Value Locked</CardTitle>
+            <DollarSign className="h-4 w-4 text-foreground/60" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-[var(--foreground)]">
@@ -124,14 +124,14 @@ export function VaultDashboard() {
                 ? `$${(metricsQ.data.data.totalAssets ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
                 : '—'}
             </div>
-            <p className="text-xs text-[var(--muted)]">Live on-chain</p>
+            <p className="text-xs text-foreground/70">Live on-chain</p>
           </CardContent>
         </Card>
 
         <Card className="backdrop-blur">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[var(--muted)]">Current APY</CardTitle>
-            <TrendingUp className="h-4 w-4 text-[var(--muted)]" />
+            <CardTitle className="text-sm font-medium text-foreground/70">Current APY</CardTitle>
+            <TrendingUp className="h-4 w-4 text-foreground/60" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-[var(--foreground)]">
@@ -139,14 +139,14 @@ export function VaultDashboard() {
                 ? `${(metricsQ.data.data.currentApy ?? 0).toFixed(2)}%`
                 : '—'}
             </div>
-            <p className="text-xs text-[var(--muted)]">Weighted across strategies</p>
+            <p className="text-xs text-foreground/70">Weighted across strategies</p>
           </CardContent>
         </Card>
 
         <Card className="backdrop-blur">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[var(--muted)]">Active Strategies</CardTitle>
-            <Target className="h-4 w-4 text-[var(--muted)]" />
+            <CardTitle className="text-sm font-medium text-foreground/70">Active Strategies</CardTitle>
+            <Target className="h-4 w-4 text-foreground/60" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-[var(--foreground)]">
@@ -154,14 +154,14 @@ export function VaultDashboard() {
                 ? Object.keys(metricsQ.data.data.strategyAllocation || {}).length
                 : '—'}
             </div>
-            <p className="text-xs text-[var(--muted)]">Across protocols</p>
+            <p className="text-xs text-foreground/70">Across protocols</p>
           </CardContent>
         </Card>
 
         <Card className="backdrop-blur">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-[var(--muted)]">Risk Score</CardTitle>
-            <Zap className="h-4 w-4 text-[var(--muted)]" />
+            <CardTitle className="text-sm font-medium text-foreground/70">Risk Score</CardTitle>
+            <Zap className="h-4 w-4 text-foreground/60" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-[var(--foreground)]">
@@ -175,7 +175,7 @@ export function VaultDashboard() {
                 })()
                 : '—'}
             </div>
-            <p className="text-xs text-[var(--muted)]">AI recommendation</p>
+            <p className="text-xs text-foreground/70">AI recommendation</p>
           </CardContent>
         </Card>
       </div>
@@ -186,7 +186,7 @@ export function VaultDashboard() {
             <CardTitle className="text-[var(--foreground)]">Yield Performance</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64 flex items-center justify-center text-[var(--muted)]">
+            <div className="h-64 flex items-center justify-center text-foreground/70">
               Performance chart will be displayed here
             </div>
           </CardContent>
@@ -198,7 +198,7 @@ export function VaultDashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[var(--muted)]">Deposit Amount ({(assetSymbol as string) || 'Token'})</label>
+              <label className="text-sm font-medium text-foreground/70">Deposit Amount ({(assetSymbol as string) || 'Token'})</label>
               <Input
                 type="number"
                 placeholder="0.00"
@@ -211,7 +211,7 @@ export function VaultDashboard() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-[var(--muted)]">Withdraw Amount ({(assetSymbol as string) || 'Token'})</label>
+              <label className="text-sm font-medium text-foreground/70">Withdraw Amount ({(assetSymbol as string) || 'Token'})</label>
               <Input
                 type="number"
                 placeholder="0.00"
@@ -225,7 +225,7 @@ export function VaultDashboard() {
 
             <div className="pt-4">
               <div className="flex justify-between text-sm">
-                <span className="text-[var(--muted)]">Your Balance:</span>
+                <span className="text-foreground/70">Your Balance:</span>
                 <span className="text-[var(--foreground)]">
                   {userAssetBalance && assetDecimals !== undefined
                     ? `${Number(userAssetBalance as bigint) / 10 ** Number(assetDecimals)} ${(assetSymbol as string) || ''}`
@@ -233,7 +233,7 @@ export function VaultDashboard() {
                 </span>
               </div>
               <div className="flex justify-between text-sm mt-1">
-                <span className="text-[var(--muted)]">Vault Shares:</span>
+                <span className="text-foreground/70">Vault Shares:</span>
                 <span className="text-[var(--foreground)]">
                   {shareBalance !== undefined ? `${shareBalance?.toString?.()}` : '—'}
                 </span>

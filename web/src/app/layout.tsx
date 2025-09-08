@@ -9,6 +9,7 @@ import { config } from '@/lib/wagmi'
 import '@rainbow-me/rainbowkit/styles.css'
 import AppHeader from '@/components/layout/AppHeader'
 import { VaultProvider } from '@/context/VaultContext'
+import { ThemeProvider } from 'next-themes'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,18 +29,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
-        <WagmiConfig config={config}>
-          <QueryClientProvider client={queryClient}>
-            <RainbowKitProvider>
-              <VaultProvider>
-                <AppHeader />
-                {children}
-              </VaultProvider>
-            </RainbowKitProvider>
-          </QueryClientProvider>
-        </WagmiConfig>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <WagmiConfig config={config}>
+            <QueryClientProvider client={queryClient}>
+              <RainbowKitProvider>
+                <VaultProvider>
+                  <AppHeader />
+                  {children}
+                </VaultProvider>
+              </RainbowKitProvider>
+            </QueryClientProvider>
+          </WagmiConfig>
+        </ThemeProvider>
       </body>
     </html>
   );

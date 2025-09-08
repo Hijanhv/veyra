@@ -99,6 +99,18 @@ export interface VaultHarvestItem {
   txHash: Address
 }
 
+export interface StrategyEventItem {
+  id: string
+  vault: Address
+  strategy: Address
+  eventType: 'deposit' | 'withdrawal' | 'allocation_updated'
+  amount?: string | null
+  allocation?: string | null
+  blockNumber: number
+  timestamp: number
+  txHash: Address
+}
+
 export interface Paginated<T> {
   items: T[]
   nextOffset: number

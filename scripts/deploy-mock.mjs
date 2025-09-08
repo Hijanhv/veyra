@@ -96,6 +96,81 @@ const strategies = deployments
   .filter((d) => /Strategy$/.test(d.name))
   .map((d) => d.address);
 
+// 2b) Optionally mint initial balances of core mock tokens to a recipient (default: deployer)
+//     Tokens created by DeployMockSuite are: S, stS, wS, USDC (all 18 decimals in mocks).
+//     Control with env:
+//       MINT_TO        - address to receive tokens (default: deployer EOA from PRIVATE_KEY)
+//       MINT_AMOUNT    - uint amount in wei to mint to each token (default: 1000000e18)
+//       MINT_DISABLED  - set to '1' to skip minting
+if (process.env.MINT_DISABLED !== '1') {
+  try {
+    const mockErcs = deployments.filter((d) => d.name === 'MockERC20').map((d) => d.address);
+    const wantedNames = new Set(['S', 'stS', 'wS', 'USDC']);
+    const nameOf = (addr) => {
+      try {
+        const out = execSync(`cast call ${addr} "name()(string)" --rpc-url "${RPC_URL}"`, { cwd: contractsDir });
+        return String(out).trim();
+      } catch {
+        return '';
+      }
+    };
+    const symbolOf = (addr) => {
+      try {
+        const out = execSync(`cast call ${addr} "symbol()(string)" --rpc-url "${RPC_URL}"`, { cwd: contractsDir });
+        return String(out).trim();
+      } catch {
+        return '';
+      }
+    };
+
+    // Resolve deployer (default MINT_TO) from private key
+    let recipient = (process.env.MINT_TO || '').trim();
+    if (!recipient) {
+      try {
+        const out = execSync(`cast wallet address --private-key "${PRIVATE_KEY}"`, { cwd: contractsDir });
+        recipient = String(out).trim();
+      } catch {}
+    }
+    if (!recipient) {
+      throw new Error('Failed to resolve MINT_TO or deployer address');
+    }
+
+    const defaultAmount = '1000000000000000000000000'; // 1,000,000e18
+    const amount = (process.env.MINT_AMOUNT || defaultAmount).trim();
+
+    // Identify core tokens among MockERC20s by name
+    const core = [];
+    for (const addr of mockErcs) {
+      const nm = nameOf(addr);
+      if (wantedNames.has(nm)) {
+        const sym = symbolOf(addr);
+        core.push({ addr, name: nm, symbol: sym || nm });
+      }
+    }
+
+    if (core.length > 0) {
+      console.log(`Minting initial balances to ${recipient} ...`);
+      for (const t of core) {
+        try {
+          const cmd = `cast send ${t.addr} "mint(address,uint256)" ${recipient} ${amount} --rpc-url "${RPC_URL}" --private-key "${PRIVATE_KEY}"`;
+          console.log(`  ${t.symbol} @ ${t.addr} -> ${recipient} amount ${amount}`);
+          execSync(cmd, { stdio: 'inherit', cwd: contractsDir });
+        } catch (e) {
+          console.error(`Mint failed for ${t.symbol} (${t.addr})`);
+          throw e;
+        }
+      }
+    } else {
+      console.warn('No core MockERC20 tokens (S, stS, wS, USDC) identified for minting.');
+    }
+  } catch (e) {
+    console.error('Initial mint step failed:', e.message || e);
+    process.exit(1);
+  }
+} else {
+  console.log('MINT_DISABLED=1 — skipping initial token mint.');
+}
+
 // 3) Write contracts/DEPLOYED_ADDRESSES.md with ONLY the latest deployment
 const deployedMdPath = path.join(contractsDir, 'DEPLOYED_ADDRESSES.md');
 const now = new Date().toISOString();

@@ -11,6 +11,7 @@ import type {
   VaultFlowItem,
   VaultRebalanceItem,
   VaultHarvestItem,
+  StrategyEventItem,
   AgentDecisionItem,
 } from '@/types/api'
 
@@ -38,8 +39,6 @@ export const getHealth = () => http('/health')
 // Vault catalog
 export const getVaults = () => http<ApiResponse<{ vaults: Address[]; defaultVaultId: Address | null }>>('/api/vaults')
 
-// Analytics (deprecated): removed server endpoints
-
 // Vaults
 export const getVaultMetrics = (vaultId: Address) => http<ApiResponse<VaultMetrics>>(`/api/vaults/${vaultId}/metrics`)
 export const getStrategyRecommendation = (vaultId: Address) => http<ApiResponse<RecommendedAllocation>>(`/api/vaults/${vaultId}/strategy`)
@@ -48,11 +47,24 @@ export const getStrategyDetails = (vaultId: Address) => http<ApiResponse<Strateg
 export const getVaultOverview = (vaultId: Address) => http<ApiResponse<VaultOverview>>(`/api/vaults/${vaultId}/overview`)
 // Indexed (via backend)
 export const getVaultFlows = (vaultId: Address, limit = 50, offset = 0) =>
-  http<ApiResponse<Paginated<VaultFlowItem>>>(`/api/vaults/${vaultId}/flows?limit=${limit}&offset=${offset}`)
+  http<ApiResponse<Paginated<VaultFlowItem>>>(`/api/analytics/${vaultId}/flows?limit=${limit}&offset=${offset}`)
 export const getVaultRebalances = (vaultId: Address, limit = 50, offset = 0) =>
-  http<ApiResponse<Paginated<VaultRebalanceItem>>>(`/api/vaults/${vaultId}/rebalances?limit=${limit}&offset=${offset}`)
+  http<ApiResponse<Paginated<VaultRebalanceItem>>>(`/api/analytics/${vaultId}/rebalances?limit=${limit}&offset=${offset}`)
 export const getVaultHarvests = (vaultId: Address, limit = 50, offset = 0) =>
-  http<ApiResponse<Paginated<VaultHarvestItem>>>(`/api/vaults/${vaultId}/harvests?limit=${limit}&offset=${offset}`)
+  http<ApiResponse<Paginated<VaultHarvestItem>>>(`/api/analytics/${vaultId}/harvests?limit=${limit}&offset=${offset}`)
 
 // Agent decisions
 export const getAgentDecisions = (vaultId: Address) => http<ApiResponse<AgentDecisionItem[]>>(`/api/vaults/${vaultId}/agent/decisions`)
+
+// Analytics (Ponder-backed)
+export const getStrategyEvents = (
+  vaultId: Address,
+  params?: { type?: 'deposit' | 'withdrawal' | 'allocation_updated'; limit?: number; offset?: number }
+) => {
+  const qp = new URLSearchParams()
+  if (params?.type) qp.set('type', params.type)
+  if (params?.limit !== undefined) qp.set('limit', String(params.limit))
+  if (params?.offset !== undefined) qp.set('offset', String(params.offset))
+  const q = qp.toString()
+  return http<ApiResponse<Paginated<StrategyEventItem>>>(`/api/analytics/${vaultId}/strategy-events${q ? `?${q}` : ''}`)
+}

@@ -10,10 +10,10 @@ export default function VeraHero() {
       <div className="site-container py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center h-full">
         <div>
           <h1 className="text-5xl sm:text-6xl font-black tracking-tight leading-tight animate-fade-in-up">
-            <span className="text-white">VEYRA</span>
-            <span className="block text-white/90 mt-2">AI Yield Strategist</span>
+            <span className="text-foreground">VEYRA</span>
+            <span className="block text-foreground/90 mt-2">AI Yield Strategist</span>
           </h1>
-          <p className="mt-6 text-lg text-gray-300 max-w-xl animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <p className="mt-6 text-lg text-foreground/70 max-w-xl animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
             Autonomous, risk-aware rebalancing across Sonic EVM strategies. Minimal, precise, and fast.
           </p>
           <div className="mt-8 flex items-center gap-3 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
@@ -29,7 +29,7 @@ export default function VeraHero() {
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0 select-none" aria-hidden>
         <div className="site-container relative">
           <div className="absolute right-0 bottom-0 w-[320px] h-[320px] sm:w-[400px] sm:h-[400px] lg:w-[480px] lg:h-[480px] overflow-hidden">
-            <div className="absolute inset-0 blur-2xl bg-[radial-gradient(closest-side,rgba(139,92,246,0.25),transparent_70%)]" />
+            <div className="absolute inset-0 blur-2xl bg-[radial-gradient(closest-side,rgba(160,160,160,0.25),transparent_70%)]" />
             <Image
               src="/hero.png"
               alt="Veyra hero"
