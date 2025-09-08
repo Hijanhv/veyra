@@ -25,9 +25,13 @@ function normalizeHeaders(h?: HeadersInit): Record<string, string> {
   return { ...(h as Record<string, string>) }
 }
 
+const API_BASE = process.env.NODE_ENV === 'production' 
+  ? process.env.NEXT_PUBLIC_PROD_BACKEND_URL || ''
+  : process.env.NEXT_PUBLIC_LOCAL_BACKEND_URL || ''
+
 async function http<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = { 'Content-Type': 'application/json', ...normalizeHeaders(init?.headers) }
-  const res = await fetch(`${path}`, { ...init, headers, cache: 'no-store' })
+  const res = await fetch(`${API_BASE}${path}`, { ...init, headers, cache: 'no-store' })
   if (!res.ok) throw new Error(await res.text())
   return res.json() as Promise<T>
 }
