@@ -77,7 +77,7 @@ async function start() {
   await fastify.register(vaultRoutes, { prefix: '/api/vaults' });
   // Analytics routes removed (deprecated in favor of AI decision history)
 
-  // Health check with AI system status
+  // b check with AI system status
   fastify.get('/health', async () => {
     const aiStatus = process.env.ANTHROPIC_API_KEY ? 'enabled' : 'disabled';
     const schedulerStatus = scheduler.getStatus();

@@ -7,9 +7,6 @@ services:
     command: [ "node", "scripts/run-ponder.mjs", "start" ]
     env_file:
       - server/.env
-    ports:
-      - "42069:42069"
-      - "8080:8080"
     restart: unless-stopped
     healthcheck:
       test: [ "CMD", "node", "-e", "require('http').get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))" ]
@@ -17,3 +14,20 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    networks:
+      - app-network
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    restart: unless-stopped
+    depends_on:
+      - indexer
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
