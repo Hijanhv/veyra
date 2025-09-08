@@ -20,8 +20,8 @@ services:
   cloudflared:
     image: cloudflare/cloudflared:latest
     command: tunnel run
-    environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+    env_file:
+      - server/.env
     restart: unless-stopped
     depends_on:
       - indexer
