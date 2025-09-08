@@ -1,22 +1,8 @@
 import { Contract, Interface, AbstractProvider } from 'ethers';
 
 /**
- * Multicall3 Utilities - Making Blockchain Calls Super Efficient! 🚀
+ * Multicall3 Utilities 
  * ===================================================================
- * 
- * PROBLEM: Imagine you want to check the APY of 5 different strategies.
- * Without multicall, you'd make 5 separate blockchain calls:
- * - Call strategy1.apy() → wait for response
- * - Call strategy2.apy() → wait for response  
- * - Call strategy3.apy() → wait for response
- * - Call strategy4.apy() → wait for response
- * - Call strategy5.apy() → wait for response
- * Total time: 5 x network delay = SLOW! 😴
- *
- * SOLUTION: Multicall3 lets us bundle all 5 calls into ONE blockchain request:
- * - Send [strategy1.apy(), strategy2.apy(), strategy3.apy(), strategy4.apy(), strategy5.apy()]
- * - Get back [result1, result2, result3, result4, result5] in one response
- * Total time: 1 x network delay = FAST! ⚡
  *
  * HOW IT WORKS:
  * 1. We prepare each function call by encoding it into raw bytes (like packing a suitcase)
@@ -24,7 +10,7 @@ import { Contract, Interface, AbstractProvider } from 'ethers';
  * 3. Multicall3 executes each call and collects all the results
  * 4. We unpack the results and convert them back into readable values
  *
- * This is especially useful for our vault service because we need to check:
+ * This is especially useful for the vault service because we need to check:
  * - Multiple strategy APYs
  * - Multiple strategy allocations  
  * - Multiple adapter states
