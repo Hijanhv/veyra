@@ -7,14 +7,14 @@ import Image from 'next/image'
 export default function VeraHero() {
   return (
     <section className="relative overflow-hidden min-h-[460px] sm:min-h-[560px] lg:min-h-[700px]">
-      <div className="site-container py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center h-full">
+        <div className="site-container py-16 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center h-full">
         <div>
           <h1 className="text-5xl sm:text-6xl font-black tracking-tight leading-tight animate-fade-in-up">
             <span className="text-foreground">VEYRA</span>
             <span className="block text-foreground/90 mt-2">AI Yield Strategist</span>
           </h1>
           <p className="mt-6 text-lg text-foreground/70 max-w-xl animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-            Autonomous, risk-aware rebalancing across Sonic EVM strategies. Minimal, precise, and fast.
+            Autonomous, risk-aware rebalancing across Aave, Rings, EEGS, Shadow, Pendle, STS, Beets, SwapX on Sonic EVM.
           </p>
           <div className="mt-8 flex items-center gap-3 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             <ConnectButton />

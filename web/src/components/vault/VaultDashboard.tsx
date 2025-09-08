@@ -191,19 +191,7 @@ export function VaultDashboard() {
             </Card>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card className="backdrop-blur">
-              <CardHeader>
-                <CardTitle className="text-foreground">Yield Performance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64 flex items-center justify-center text-foreground/70">
-                  Performance chart will be displayed here
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="backdrop-blur">
+          <Card className="backdrop-blur">
               <CardHeader>
                 <CardTitle className="text-foreground">Vault Actions</CardTitle>
               </CardHeader>
@@ -288,7 +276,6 @@ export function VaultDashboard() {
                 </div>
               </CardContent>
             </Card>
-          </div>
         </TabsContent>
 
         <TabsContent value="tokens">

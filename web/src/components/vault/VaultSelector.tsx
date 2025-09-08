@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react'
 import { useVault } from '@/context/VaultContext'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import VeyraVaultArtifact from '@/abi/VeyraVault.json'
 import { useReadContracts } from 'wagmi'
 import type { Abi } from 'viem'
@@ -37,17 +36,20 @@ export default function VaultSelector() {
   if (!vaults.length) return null
 
   return (
-    <Select value={selectedVaultId ?? ''} onValueChange={(v) => setSelectedVaultId(v)}>
-      <SelectTrigger className="w-[260px]">
-        <SelectValue placeholder="Select a vault…" />
-      </SelectTrigger>
-      <SelectContent>
-        {vaults.map((v) => (
-          <SelectItem key={v} value={v}>
-            {labels[v]}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex flex-wrap gap-2">
+      {vaults.map((v) => (
+        <button
+          key={v}
+          onClick={() => setSelectedVaultId(v)}
+          className={`px-3 py-2 rounded text-sm ${
+            selectedVaultId === v
+              ? 'bg-primary text-primary-foreground'
+              : 'text-foreground/70 hover:text-foreground'
+          }`}
+        >
+          {labels[v]}
+        </button>
+      ))}
+    </div>
   )
 }
