@@ -1,4 +1,4 @@
-import { createClient, eq, desc } from '@ponder/client'
+import { createClient, eq, desc, and } from '@ponder/client'
 import * as schema from '../../ponder.schema.js'
 
 const SQL_BASE = process.env.PONDER_SQL_URL || 'http://localhost:42069/sql'
@@ -35,6 +35,20 @@ export type RebalanceRow = {
   timestamp: number
   transactionHash: `0x${string}`
 }
+
+export type StrategyEventItem = {
+  id: string
+  vault: `0x${string}`
+  strategy: `0x${string}`
+  eventType: 'deposit' | 'withdrawal' | 'allocation_updated'
+  amount?: string | null
+  allocation?: string | null
+  blockNumber: number
+  timestamp: number
+  transactionHash: `0x${string}`
+}
+
+export type Paginated<T> = { items: T[]; nextOffset: number; hasMore: boolean }
 
 export async function fetchFlows(vault: string, limit = 50, offset = 0): Promise<FlowRow[]> {
   try {
@@ -148,6 +162,50 @@ export async function fetchHarvests(vault: string, limit = 50, offset = 0): Prom
       timestamp: Number(r.timestamp),
       transactionHash: r.transactionHash,
     })) as any
+  } catch (e) {
+    const err = e as Error
+    err.name = 'IndexerUnavailable'
+    err.message = 'Failed to query indexer via Ponder SQL. Ensure Ponder is running and PONDER_SQL_URL is correct.'
+    throw err
+  }
+}
+
+export async function listStrategyEvents(
+  vault: string,
+  limit = 50,
+  offset = 0,
+  type?: StrategyEventItem['eventType']
+): Promise<Paginated<StrategyEventItem>> {
+  try {
+    const db = client().db
+    const v = vault.toLowerCase() as `0x${string}`
+
+    const whereExpr = type
+      ? and(eq(schema.strategyEvents.vault, v), eq(schema.strategyEvents.eventType, type))
+      : eq(schema.strategyEvents.vault, v)
+
+    const rows = await db
+      .select()
+      .from(schema.strategyEvents)
+      .where(whereExpr)
+      .orderBy(desc(schema.strategyEvents.timestamp))
+      .limit(limit + 1)
+      .offset(offset)
+
+    const items: StrategyEventItem[] = rows.slice(0, limit).map((r: typeof schema.strategyEvents.$inferSelect) => ({
+      id: r.id,
+      vault: r.vault,
+      strategy: r.strategy,
+      eventType: r.eventType as StrategyEventItem['eventType'],
+      amount: r.amount !== null && r.amount !== undefined ? r.amount.toString() : null,
+      allocation: r.allocation !== null && r.allocation !== undefined ? r.allocation.toString() : null,
+      blockNumber: Number(r.blockNumber),
+      timestamp: Number(r.timestamp),
+      transactionHash: r.transactionHash,
+    }))
+
+    const hasMore = rows.length > limit
+    return { items, nextOffset: offset + items.length, hasMore }
   } catch (e) {
     const err = e as Error
     err.name = 'IndexerUnavailable'

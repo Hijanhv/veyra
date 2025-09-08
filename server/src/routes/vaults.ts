@@ -3,12 +3,9 @@ import { RebalancingService } from '../services/RebalancingService.js';
 import { Repository } from '../services/db/Repository.js';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Address } from '../types/index.js';
-// Ponder-backed endpoints moved to /api/analytics routes
 
 /**
  * API routes for working with Veyra vaults.
- * Two main endpoints: vault stats and allocation recommendations.
- * Additional endpoints can be added for operations like triggering rebalances.
  */
 export async function vaultRoutes(fastify: FastifyInstance) {
   // Set up our services once and reuse them for all requests.

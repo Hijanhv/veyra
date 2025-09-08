@@ -1,7 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import type { Address } from '../types/index.js'
-import { listStrategyEvents } from '../services/ponder/AnalyticsPonderService.js'
-import { fetchFlows, fetchRebalances, fetchHarvests } from '../services/PonderClient.js'
+import { listStrategyEvents, fetchFlows, fetchRebalances, fetchHarvests } from '../services/PonderClient.js'
 
 export async function analyticsRoutes(fastify: FastifyInstance) {
   // Strategy events (deposit/withdrawal/allocation_updated) via Ponder, paginated
