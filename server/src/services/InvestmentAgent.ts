@@ -50,6 +50,7 @@ export class InvestmentAgent {
 
     return {
       strategyAddress: strategy.strategyAddress,
+      strategyName: strategy.strategyName,
       strategyType,
       totalAssets: strategy.totalAssets,
       apy: strategy.apy,
@@ -62,11 +63,10 @@ export class InvestmentAgent {
   private identifyStrategyType(strategy: StrategyDetails): string {
     const protocols = strategy.underlying.map((u) => u.name.toLowerCase());
     if (protocols.includes('lending') && protocols.includes('rings')) return 'AaveRingsCarryStrategy';
-    if (protocols.includes('eggs') && protocols.includes('shadow')) return 'EggsShadowLoopStrategy';
+    if (protocols.includes('eggs') && protocols.includes('dex')) return 'EggsShadowLoopStrategy';
     if (protocols.includes('pendle')) return 'PendleFixedYieldStrategy';
-    if (protocols.includes('rings') && protocols.includes('lending')) return 'RingsAaveLoopStrategy';
-    if (protocols.includes('beets')) return 'StSBeetsStrategy';
-    if (protocols.includes('swapx')) return 'SwapXManagedRangeStrategy';
+    if (protocols.includes('sts') && protocols.includes('dex')) return 'StSBeetsStrategy';
+    if (protocols.includes('dex')) return 'SwapXManagedRangeStrategy';
     return 'UnknownStrategy';
   }
 
@@ -94,6 +94,7 @@ export class InvestmentAgent {
         case 'shadow':
         case 'beets':
         case 'swapx':
+        case 'dex':
           impermanentLossRisk += 0.4; smartContractRisk += 0.2; break;
         case 'rings':
         case 'lending':
@@ -137,7 +138,17 @@ export class InvestmentAgent {
       marketContext: z.string()
     });
 
-    const prompt = this.buildAllocationPrompt(strategies);
+    // Enrich AI prompt with current vault context
+    let context: { currentAllocations?: Record<Address, number>; vault?: { totalAssets?: number; currentApy?: number } } | undefined = undefined;
+    try {
+      const [allocs, metrics] = await Promise.all([
+        this.vaultService.getStrategyAllocations(vaultId),
+        this.vaultService.getVaultMetrics(vaultId)
+      ]);
+      context = { currentAllocations: allocs, vault: { totalAssets: metrics.totalAssets, currentApy: metrics.currentApy } };
+    } catch { /* optional */ }
+
+    const prompt = this.buildAllocationPrompt(strategies, context);
     const { object: parsed } = await generateObject({
       model: this.model,
       schema: allocationSchema,
@@ -194,12 +205,17 @@ export class InvestmentAgent {
     return response;
   }
 
-  private buildAllocationPrompt(strategies: StrategyAnalysis[]): string {
+  private buildAllocationPrompt(strategies: StrategyAnalysis[], context?: { currentAllocations?: Record<Address, number>; vault?: { totalAssets?: number; currentApy?: number; asset?: Address } }): string {
     const currentDate = new Date().toISOString().split('T')[0];
     let prompt = `You are an expert DeFi yield strategist managing a vault allocation across sophisticated yield strategies on Sonic blockchain. Today is ${currentDate}.\n\n`;
+    if (context?.vault) {
+      const { totalAssets, currentApy, asset } = context.vault;
+      prompt += `Vault context: totalAssets=${totalAssets ?? 'n/a'}, currentApy=${currentApy ?? 'n/a'}%, asset=${asset ?? 'n/a'}\n\n`;
+    }
     prompt += 'Your task is to optimally allocate 10,000 basis points (100%) across these strategies:\n\n';
     strategies.forEach((strategy, index) => {
-      prompt += `Strategy ${index + 1}: ${strategy.strategyType} (${strategy.strategyAddress})\n`;
+      const displayName = strategy.strategyName || strategy.strategyType;
+      prompt += `Strategy ${index + 1}: ${displayName} (${strategy.strategyAddress})\n`;
       prompt += `- Current APY: ${strategy.apy} basis points (${(strategy.apy / 100).toFixed(2)}%)\n`;
       prompt += `- Total Assets: ${strategy.totalAssets.toFixed(4)} tokens\n`;
       prompt += `- Complexity Score: ${strategy.complexityScore.toFixed(2)}/1.0\n`;
@@ -212,16 +228,25 @@ export class InvestmentAgent {
       if (strategy.underlying.length > 0) {
         prompt += `- Underlying Protocols:\n`;
         strategy.underlying.forEach(protocol => {
-          prompt += `  * ${protocol.name}`;
+          const label = (protocol as any).label as string | undefined;
+          prompt += `  * ${label || protocol.name}`;
           if ('supplyApy' in protocol && protocol.supplyApy) prompt += ` (Supply: ${protocol.supplyApy}bp)`;
           if ('borrowApy' in protocol && protocol.borrowApy) prompt += ` (Borrow: ${protocol.borrowApy}bp)`;
           if ('healthFactor' in protocol && protocol.healthFactor) prompt += ` (Health: ${(protocol.healthFactor as number).toFixed(2)})`;
           if ('apr' in protocol && protocol.apr) prompt += ` (APR: ${protocol.apr}bp)`;
+          if ('pool' in protocol && protocol.pool) prompt += ` (Pool: ${protocol.pool})`;
           prompt += `\n`;
         });
       }
       prompt += `\n`;
     });
+    if (context?.currentAllocations) {
+      prompt += `Current vault target allocations (bps):\n`;
+      Object.entries(context.currentAllocations).forEach(([addr, bps]) => {
+        prompt += `- ${addr}: ${bps}\n`;
+      });
+      prompt += `\nNote: You may deviate from current targets, but prefer minimizing unnecessary churn unless expected APY gain justifies it.\n\n`;
+    }
     prompt += `Strategy Descriptions:\n`;
     prompt += `- AaveRingsCarryStrategy: Uses wS as collateral to borrow USDC, converts to scUSD for yield farming\n`;
     prompt += `- EggsShadowLoopStrategy: Complex leveraged strategy using Eggs Finance and Shadow DEX with multiple loops\n`;

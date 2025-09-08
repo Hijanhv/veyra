@@ -11,7 +11,7 @@ const database = process.env.DATABASE_URL
   ? {
     kind: "postgres" as const,
     connectionString: process.env.DATABASE_URL,
-    schema: process.env.DATABASE_SCHEMA || "public"
+    schema: process.env.INDEXER_DEV_SCHEMA
   }
   : undefined;
 
@@ -33,7 +33,8 @@ export default createConfig({
         ((process.env.VEYRA_VAULT_ADDRESS as `0x${string}`) ??
           "0x0000000000000000000000000000000000000000"),
       startBlock: Number(
-        process.env.INDEXER_START_BLOCK ?? process.env.VEYRA_VAULT_START_BLOCK ?? 0
+        process.env.INDEXER_START_BLOCK ??
+        46156930
       ),
     },
   },

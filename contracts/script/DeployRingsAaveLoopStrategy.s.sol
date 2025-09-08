@@ -26,7 +26,8 @@ contract DeployRingsAaveLoopStrategy is Script {
             ringsAdapter,
             lendingAdapter,
             targetHf,
-            maxIterations
+            maxIterations,
+            "Rings Aave Loop"
         );
 
         vm.stopBroadcast();

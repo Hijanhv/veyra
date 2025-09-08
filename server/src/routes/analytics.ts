@@ -1,9 +1,9 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
 import type { Address } from '../types/index.js'
-import { listStrategyEvents, fetchFlows, fetchRebalances, fetchHarvests } from '../services/PonderClient.js'
+import { listStrategyEvents, fetchFlows, fetchRebalances, fetchHarvests } from '../services/PostgresClient.js'
 
 export async function analyticsRoutes(fastify: FastifyInstance) {
-  // Strategy events (deposit/withdrawal/allocation_updated) via Ponder, paginated
+  // Strategy events (deposit/withdrawal/allocation_updated) via direct SQL, paginated
   fastify.get<{
     Params: { vaultId: Address }
     Querystring: { limit?: string; offset?: string; type?: 'deposit' | 'withdrawal' | 'allocation_updated' }
@@ -39,14 +39,14 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
         fastify.log.error(error)
         const e = error as unknown as { name?: string }
         if (e && e.name === 'IndexerUnavailable') {
-          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Start Ponder dev and set PONDER_SQL_URL.' })
+          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Ensure DATABASE_URL is configured correctly.' })
         }
         reply.status(500).send({ success: false, error: 'Failed to fetch strategy events' })
       }
     }
   )
 
-  // Indexed flows (deposits & withdrawals) via Ponder, paginated
+  // Indexed flows (deposits & withdrawals) via direct SQL, paginated
   fastify.get<{
     Params: { vaultId: Address },
     Querystring: { limit?: string; offset?: string }
@@ -80,14 +80,14 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
         fastify.log.error(error)
         const e = error as unknown as { name?: string }
         if (e && e.name === 'IndexerUnavailable') {
-          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Start Ponder dev and set PONDER_SQL_URL.' })
+          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Ensure DATABASE_URL is configured correctly.' })
         }
         reply.status(500).send({ success: false, error: 'Failed to fetch flows' })
       }
     }
   )
 
-  // Indexed rebalances via Ponder, paginated
+  // Indexed rebalances via direct SQL, paginated
   fastify.get<{
     Params: { vaultId: Address },
     Querystring: { limit?: string; offset?: string }
@@ -117,14 +117,14 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
         fastify.log.error(error)
         const e = error as unknown as { name?: string }
         if (e && e.name === 'IndexerUnavailable') {
-          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Start Ponder dev and set PONDER_SQL_URL.' })
+          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Ensure DATABASE_URL is configured correctly.' })
         }
         reply.status(500).send({ success: false, error: 'Failed to fetch rebalances' })
       }
     }
   )
 
-  // Indexed yield harvests via Ponder, paginated
+  // Indexed yield harvests via direct SQL, paginated
   fastify.get<{
     Params: { vaultId: Address },
     Querystring: { limit?: string; offset?: string }
@@ -153,7 +153,7 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
         fastify.log.error(error)
         const e = error as unknown as { name?: string }
         if (e && e.name === 'IndexerUnavailable') {
-          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Start Ponder dev and set PONDER_SQL_URL.' })
+          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Ensure DATABASE_URL is configured correctly.' })
         }
         reply.status(500).send({ success: false, error: 'Failed to fetch harvests' })
       }

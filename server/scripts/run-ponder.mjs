@@ -24,7 +24,6 @@ let schema
 if (mode === 'dev') {
   // Stable dev schema to avoid reindexing every restart
   schema = process.env.INDEXER_DEV_SCHEMA
-    || process.env.DATABASE_SCHEMA
     || `veyra_dev_${sanitize(process.env.USER || process.env.USERNAME || 'local')}`
 } else {
   // Unique per deploy for zero-downtime with views schema

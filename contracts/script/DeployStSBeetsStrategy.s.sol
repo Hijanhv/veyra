@@ -24,7 +24,8 @@ contract DeployStSBeetsStrategy is Script {
             vault,
             stsAdapter,
             beetsAdapter,
-            pool
+            pool,
+            "StS + Beets LP"
         );
 
         vm.stopBroadcast();

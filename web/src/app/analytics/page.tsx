@@ -5,6 +5,7 @@ import { useAgentDecisionsQuery, useStrategyEventsQuery, useVaultFlowsQuery, use
 import { useVault } from '@/context/VaultContext'
 import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, PaginationNext } from '@/components/ui/pagination'
 import VaultToolbar from '@/components/vault/VaultToolbar'
+import ExplorerLink from '@/components/ExplorerLink'
 
 export default function AnalyticsPage() {
   const { selectedVaultId } = useVault()
@@ -156,10 +157,14 @@ export default function AnalyticsPage() {
                         <tr key={e.id} className="border-t border-[var(--border)]">
                           <td className="py-2 pr-4 text-[var(--foreground)]">{new Date(e.timestamp * 1000).toLocaleString()}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{e.eventType}</td>
-                          <td className="py-2 pr-4 text-[var(--foreground)]">{`${e.strategy.slice(0, 6)}…${e.strategy.slice(-4)}`}</td>
+                          <td className="py-2 pr-4 text-[var(--foreground)]">
+                            {`${e.strategy.slice(0, 6)}…${e.strategy.slice(-4)}`} <ExplorerLink address={e.strategy} label="" />
+                          </td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{e.amount ?? '—'}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{e.allocation ?? '—'}</td>
-                          <td className="py-2 pr-4 text-foreground/70">{`${e.txHash.slice(0, 10)}…`}</td>
+                          <td className="py-2 pr-4 text-foreground/70">
+                            <ExplorerLink tx={e.txHash} label={`${e.txHash.slice(0, 10)}…`} />
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -200,7 +205,9 @@ export default function AnalyticsPage() {
                           <td className="py-2 pr-4 text-[var(--foreground)]">{f.type}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{f.assetsWei}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{f.sharesWei}</td>
-                          <td className="py-2 pr-4 text-foreground/70">{`${f.txHash.slice(0, 10)}…`}</td>
+                          <td className="py-2 pr-4 text-foreground/70">
+                            <ExplorerLink tx={f.txHash} label={`${f.txHash.slice(0, 10)}…`} />
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -239,7 +246,9 @@ export default function AnalyticsPage() {
                           <td className="py-2 pr-4 text-[var(--foreground)]">{new Date(r.timestamp * 1000).toLocaleString()}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{r.strategies.length}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{r.allocations.join(', ')}</td>
-                          <td className="py-2 pr-4 text-foreground/70">{`${r.txHash.slice(0, 10)}…`}</td>
+                          <td className="py-2 pr-4 text-foreground/70">
+                            <ExplorerLink tx={r.txHash} label={`${r.txHash.slice(0, 10)}…`} />
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -276,7 +285,9 @@ export default function AnalyticsPage() {
                         <tr key={h.id} className="border-t border-[var(--border)]">
                           <td className="py-2 pr-4 text-[var(--foreground)]">{new Date(h.timestamp * 1000).toLocaleString()}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{h.totalYieldWei}</td>
-                          <td className="py-2 pr-4 text-foreground/70">{`${h.txHash.slice(0, 10)}…`}</td>
+                          <td className="py-2 pr-4 text-foreground/70">
+                            <ExplorerLink tx={h.txHash} label={`${h.txHash.slice(0, 10)}…`} />
+                          </td>
                         </tr>
                       ))}
                     </tbody>

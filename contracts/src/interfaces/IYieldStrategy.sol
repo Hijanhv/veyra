@@ -2,6 +2,9 @@
 pragma solidity ^0.8.19;
 
 interface IYieldStrategy {
+    /// @notice Human-readable strategy name for UI/debugging
+    function name() external view returns (string memory);
+
     function deposit(uint256 amount) external;
 
     function withdraw(uint256 amount) external;

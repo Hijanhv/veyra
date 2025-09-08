@@ -14,21 +14,20 @@ export interface VaultMetrics {
 }
 
 export type UnderlyingProtocol =
-  | { name: 'Lending'; adapter: Address; supplyApy: number; borrowApy: number; healthFactor: number | null }
-  | { name: 'Eggs'; adapter: Address; supplyApy: number; borrowApy: number; healthFactor: number | null }
-  | { name: 'Rings'; adapter: Address; apr: number }
-  | { name: 'Shadow' | 'Beets' | 'SwapX' | 'Dex'; adapter: Address; pool: Address | null; apr: number }
-  | { name: 'StS'; adapter: Address; rate: number }
-  | { name: 'Pendle'; adapter: Address; stableToken: Address | null }
+  | { name: 'Lending'; label?: string; adapter: Address; supplyApy: number; borrowApy: number; healthFactor: number | null }
+  | { name: 'Eggs'; label?: string; adapter: Address; supplyApy: number; borrowApy: number; healthFactor: number | null }
+  | { name: 'Rings'; label?: string; adapter: Address; apr: number }
+  | { name: 'Shadow' | 'Beets' | 'SwapX' | 'Dex'; label?: string; adapter: Address; pool: Address | null; apr: number }
+  | { name: 'StS'; label?: string; adapter: Address; rate: number }
+  | { name: 'Pendle'; label?: string; adapter: Address; stableToken: Address | null }
 
 export interface StrategyDetails {
   strategyAddress: Address
+  strategyName?: string
   totalAssets: number
   apy: number // bp
   underlying: UnderlyingProtocol[]
 }
-
-// Deprecated: MarketInsights & YieldPredictions removed with analytics endpoints
 
 export interface RecommendedAllocation {
   vaultId: Address

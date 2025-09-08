@@ -14,61 +14,71 @@ export interface VaultMetrics {
 
 export type UnderlyingProtocol =
   | {
-      name: 'Lending';
-      adapter: Address;
-      supplyApy: number; // bp
-      borrowApy: number; // bp
-      healthFactor: number | null; // scaled
-    }
+    name: 'Lending';
+    label?: string; // Component name from introspection
+    adapter: Address;
+    supplyApy: number; // bp
+    borrowApy: number; // bp
+    healthFactor: number | null; // scaled
+  }
   | {
-      name: 'Eggs';
-      adapter: Address;
-      supplyApy: number; // bp
-      borrowApy: number; // bp
-      healthFactor: number | null; // scaled
-    }
+    name: 'Eggs';
+    label?: string;
+    adapter: Address;
+    supplyApy: number; // bp
+    borrowApy: number; // bp
+    healthFactor: number | null; // scaled
+  }
   | {
-      name: 'Rings';
-      adapter: Address;
-      apr: number; // bp
-    }
+    name: 'Rings';
+    label?: string;
+    adapter: Address;
+    apr: number; // bp
+  }
   | {
-      name: 'Shadow';
-      adapter: Address;
-      pool: Address | null;
-      apr: number; // bp
-    }
+    name: 'Shadow';
+    label?: string;
+    adapter: Address;
+    pool: Address | null;
+    apr: number; // bp
+  }
   | {
     name: 'Beets';
+    label?: string;
     adapter: Address;
     pool: Address | null;
     apr: number; // bp
   }
   | {
     name: 'SwapX';
+    label?: string;
     adapter: Address;
     pool: Address | null;
     apr: number; // bp
   }
   | {
     name: 'Dex';
+    label?: string;
     adapter: Address;
     pool: Address | null;
     apr: number; // bp
   }
   | {
     name: 'StS';
+    label?: string;
     adapter: Address;
     rate: number; // scaled to bp-like
   }
   | {
     name: 'Pendle';
+    label?: string;
     adapter: Address;
     stableToken: Address | null;
   };
 
 export interface StrategyDetails {
   strategyAddress: Address;
+  strategyName?: string; // from IYieldStrategy.name()
   totalAssets: number; // formatted
   apy: number;         // basis points
   underlying: UnderlyingProtocol[];

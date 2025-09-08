@@ -28,6 +28,7 @@ interface IStrategyIntrospection {
         address pool; // pool address/identifier (if any)
         address gauge; // staking gauge (if any)
         bytes extra; // free-form extra data
+        string name; // short human label for UI (e.g., "Beets", "SwapX")
     }
 
     /// @notice Return the base asset, schema version and all components.

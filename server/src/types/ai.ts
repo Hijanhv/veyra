@@ -13,6 +13,7 @@ export interface RecommendedAllocation {
 
 export interface StrategyAnalysis {
   strategyAddress: Address;
+  strategyName?: string;
   strategyType: string;
   totalAssets: number;
   apy: number; // bp
@@ -26,4 +27,3 @@ export interface StrategyAnalysis {
   };
   complexityScore: number; // 0..1
 }
-

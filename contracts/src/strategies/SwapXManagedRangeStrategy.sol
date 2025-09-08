@@ -49,8 +49,9 @@ contract SwapXManagedRangeStrategy is BaseStrategy, IStrategyIntrospection {
         address _swapXAdapter,
         address _stsAdapter,
         address _pool,
-        address _gauge
-    ) BaseStrategy(_sToken, _vault) {
+        address _gauge,
+        string memory _name
+    ) BaseStrategy(_sToken, _vault, _name) {
         require(
             _swapXAdapter != address(0) && _stsAdapter != address(0),
             "bad adapters"
@@ -184,7 +185,8 @@ contract SwapXManagedRangeStrategy is BaseStrategy, IStrategyIntrospection {
             token1: address(0),
             pool: address(0),
             gauge: address(0),
-            extra: ""
+            extra: "",
+            name: "StS"
         });
         // SwapX DEX
         comps[1] = IStrategyIntrospection.Component({
@@ -194,7 +196,8 @@ contract SwapXManagedRangeStrategy is BaseStrategy, IStrategyIntrospection {
             token1: STS_TOKEN,
             pool: POOL,
             gauge: GAUGE,
-            extra: ""
+            extra: "",
+            name: "SwapX"
         });
     }
 }

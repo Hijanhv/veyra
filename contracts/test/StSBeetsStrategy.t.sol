@@ -30,7 +30,8 @@ contract StSBeetsStrategyTest is Test {
             vault,
             address(stsAdapter),
             address(beetsAdapter),
-            address(0xBEEF) // fake pool for testing
+            address(0xBEEF), // fake pool for testing
+            "StS + Beets LP Test"
         );
         // give vault some S tokens
         sToken.mint(vault, 1_000 ether);

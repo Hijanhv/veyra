@@ -26,7 +26,8 @@ contract DeployAaveRingsCarryStrategy is Script {
             lendingAdapter,
             ringsAdapter,
             usdc,
-            borrowRatio
+            borrowRatio,
+            "Aave Rings Carry"
         );
 
         vm.stopBroadcast();

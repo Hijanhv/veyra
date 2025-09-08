@@ -48,8 +48,9 @@ contract PendleFixedYieldStSStrategy is BaseStrategy, IStrategyIntrospection {
         address _stS,
         address _vault,
         address _pendleAdapter,
-        address _lendingAdapter
-    ) BaseStrategy(_stS, _vault) {
+        address _lendingAdapter,
+        string memory _name
+    ) BaseStrategy(_stS, _vault, _name) {
         require(
             _pendleAdapter != address(0) && _lendingAdapter != address(0),
             "bad adapters"
@@ -201,7 +202,8 @@ contract PendleFixedYieldStSStrategy is BaseStrategy, IStrategyIntrospection {
             token1: address(0),
             pool: address(0),
             gauge: address(0),
-            extra: ""
+            extra: "",
+            name: "Pendle"
         });
         // Lending on stable coin
         comps[1] = IStrategyIntrospection.Component({
@@ -211,7 +213,8 @@ contract PendleFixedYieldStSStrategy is BaseStrategy, IStrategyIntrospection {
             token1: address(0), // borrow token (none)
             pool: address(0),
             gauge: address(0),
-            extra: ""
+            extra: "",
+            name: "Lending"
         });
     }
 }

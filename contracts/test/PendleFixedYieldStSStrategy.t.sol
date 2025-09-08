@@ -28,7 +28,8 @@ contract PendleFixedYieldStSStrategyTest is Test {
             address(stS),
             vault,
             address(pendle),
-            address(lending)
+            address(lending),
+            "Pendle Fixed Yield Test"
         );
         // Give the vault some stS tokens
         stS.mint(vault, 1_000 ether);

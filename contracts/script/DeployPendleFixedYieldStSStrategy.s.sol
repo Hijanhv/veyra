@@ -25,7 +25,8 @@ contract DeployPendleFixedYieldStSStrategy is Script {
             stSToken,
             vault,
             pendleAdapter,
-            lendingAdapter
+            lendingAdapter,
+            "Pendle Fixed Yield (stS)"
         );
 
         vm.stopBroadcast();

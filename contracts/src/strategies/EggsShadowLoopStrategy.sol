@@ -60,8 +60,9 @@ contract EggsShadowLoopStrategy is BaseStrategy, IStrategyIntrospection {
         address _gauge,
         uint256 _borrowRatio,
         uint256 _targetHf,
-        uint256 _maxIter
-    ) BaseStrategy(_sToken, _vault) {
+        uint256 _maxIter,
+        string memory _name
+    ) BaseStrategy(_sToken, _vault, _name) {
         require(
             _eggsAdapter != address(0) &&
                 _shadowAdapter != address(0) &&
@@ -282,7 +283,8 @@ contract EggsShadowLoopStrategy is BaseStrategy, IStrategyIntrospection {
             token1: address(0),
             pool: address(0),
             gauge: address(0),
-            extra: ""
+            extra: "",
+            name: "Eggs"
         });
         // StS
         comps[1] = IStrategyIntrospection.Component({
@@ -292,7 +294,8 @@ contract EggsShadowLoopStrategy is BaseStrategy, IStrategyIntrospection {
             token1: address(0),
             pool: address(0),
             gauge: address(0),
-            extra: ""
+            extra: "",
+            name: "StS"
         });
         // Shadow DEX
         comps[2] = IStrategyIntrospection.Component({
@@ -302,7 +305,8 @@ contract EggsShadowLoopStrategy is BaseStrategy, IStrategyIntrospection {
             token1: STS_TOKEN,
             pool: POOL,
             gauge: GAUGE,
-            extra: ""
+            extra: "",
+            name: "Shadow"
         });
     }
 }

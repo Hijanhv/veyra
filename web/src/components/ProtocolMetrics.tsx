@@ -99,7 +99,7 @@ export function ProtocolMetrics() {
               </div>
               {latestDecision.reasoning && (
                 <div className="p-3 rounded-lg bg-secondary">
-                  <p className="text-foreground/85 text-sm">
+                  <p className="text-foreground/85 text-sm break-words overflow-wrap-anywhere">
                     <strong>Reasoning:</strong> {latestDecision.reasoning}
                   </p>
                 </div>

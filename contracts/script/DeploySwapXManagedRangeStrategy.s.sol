@@ -27,7 +27,8 @@ contract DeploySwapXManagedRangeStrategy is Script {
             swapxAdapter,
             stsAdapter,
             pool,
-            gauge
+            gauge,
+            "SwapX Managed Range"
         );
         vm.stopBroadcast();
 

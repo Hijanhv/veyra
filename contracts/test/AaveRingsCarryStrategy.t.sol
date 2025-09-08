@@ -30,7 +30,8 @@ contract AaveRingsCarryStrategyTest is Test {
             address(lend),
             address(rings),
             address(usdc),
-            5000
+            5000,
+            "Aave Rings Carry Test"
         );
         // Give the vault some tokens and approve the strategy to spend them
         wS.mint(vault, 1000 ether);

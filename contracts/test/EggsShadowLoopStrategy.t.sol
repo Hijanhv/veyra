@@ -37,7 +37,8 @@ contract EggsShadowLoopStrategyTest is Test {
             address(0xBEEF), // gauge
             5000,
             15e17, // 1.5e18
-            0
+            0,
+            "Eggs x Shadow Loop Test"
         );
         // Give the vault some S tokens
         sToken.mint(vault, 1_000 ether);

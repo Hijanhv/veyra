@@ -132,7 +132,8 @@ contract DeployMockSuite is Script {
             address(vaultS),
             address(stsAdapter),
             address(beetsAdapter),
-            beetsPool
+            beetsPool,
+            "StS + Beets LP"
         );
 
         // SwapX managed range (pool + gauge placeholders)
@@ -144,7 +145,8 @@ contract DeployMockSuite is Script {
             address(swapxAdapter),
             address(stsAdapter),
             swapxPool,
-            swapxGauge
+            swapxGauge,
+            "SwapX Managed Range"
         );
 
         // Eggs + Shadow loop on S
@@ -160,7 +162,8 @@ contract DeployMockSuite is Script {
             shadowGauge,
             borrowRatio,
             targetHf,
-            0 // no extra leverage loops beyond initial step
+            0, // no extra leverage loops beyond initial step
+            "Eggs x Shadow Loop"
         );
 
         // 4b) wS: Aave + Rings carry
@@ -170,7 +173,8 @@ contract DeployMockSuite is Script {
             address(lendingAdapter),
             address(ringsAdapter),
             address(usdc),
-            borrowRatio
+            borrowRatio,
+            "Aave Rings Carry"
         );
 
         // 4c) USDC: Rings + Aave loop
@@ -180,7 +184,8 @@ contract DeployMockSuite is Script {
             address(ringsAdapter),
             address(lendingAdapter),
             targetHf,
-            maxIter
+            maxIter,
+            "Rings Aave Loop"
         );
 
         // 4d) stS: Pendle fixed yield
@@ -188,7 +193,8 @@ contract DeployMockSuite is Script {
             address(stSToken),
             address(vaultStS),
             address(pendleAdapter),
-            address(lendingAdapter)
+            address(lendingAdapter),
+            "Pendle Fixed Yield (stS)"
         );
 
         console2.log("Strategies:");

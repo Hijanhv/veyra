@@ -41,8 +41,9 @@ contract StSBeetsStrategy is BaseStrategy, IStrategyIntrospection {
         address _vault,
         address _stsAdapter,
         address _beetsAdapter,
-        address _pool
-    ) BaseStrategy(_sToken, _vault) {
+        address _pool,
+        string memory _name
+    ) BaseStrategy(_sToken, _vault, _name) {
         require(
             _stsAdapter != address(0) && _beetsAdapter != address(0),
             "bad adapters"
@@ -184,7 +185,8 @@ contract StSBeetsStrategy is BaseStrategy, IStrategyIntrospection {
             token1: address(0),
             pool: address(0),
             gauge: address(0),
-            extra: ""
+            extra: "",
+            name: "StS"
         });
         // BEETS DEX
         comps[1] = IStrategyIntrospection.Component({
@@ -194,7 +196,8 @@ contract StSBeetsStrategy is BaseStrategy, IStrategyIntrospection {
             token1: STS_TOKEN,
             pool: POOL,
             gauge: BEETS.getPoolGauge(POOL),
-            extra: ""
+            extra: "",
+            name: "Beets"
         });
     }
 }

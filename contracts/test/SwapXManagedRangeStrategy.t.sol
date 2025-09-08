@@ -31,7 +31,8 @@ contract SwapXManagedRangeStrategyTest is Test {
             address(swapx),
             address(stsAdapter),
             address(0xDEAD), // fake pool for testing
-            address(0xBEEF) // fake gauge for testing
+            address(0xBEEF), // fake gauge for testing
+            "SwapX Managed Range Test"
         );
         // give vault some S tokens
         sToken.mint(vault, 1_000 ether);

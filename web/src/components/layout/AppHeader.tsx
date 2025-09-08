@@ -25,6 +25,7 @@ export default function AppHeader() {
           <nav className="hidden md:flex items-center gap-1">
             {link('/', 'Home')}
             {link('/vaults', 'Vaults')}
+            {link('/catalog', 'Catalog')}
             {link('/analytics', 'Analytics')}
           </nav>
         </div>

@@ -16,7 +16,7 @@ contract HoldStrategy is BaseStrategy {
 
     uint256 private _bal;
 
-    constructor(address asset_, address vault_) BaseStrategy(asset_, vault_) {}
+    constructor(address asset_, address vault_, string memory name_) BaseStrategy(asset_, vault_, name_) {}
 
     function deposit(uint256 amount) external override onlyVault nonReentrant {
         require(ASSET.balanceOf(address(this)) >= amount, "need funds");
@@ -70,8 +70,8 @@ contract VeyraVaultRebalanceTest is Test {
         );
 
         // Deploy two simple hold strategies
-        stratA = new HoldStrategy(address(asset), address(vault));
-        stratB = new HoldStrategy(address(asset), address(vault));
+        stratA = new HoldStrategy(address(asset), address(vault), "Hold A");
+        stratB = new HoldStrategy(address(asset), address(vault), "Hold B");
 
         // Owner is this test contract by default; add strategies with initial allocations 70% / 30%
         vault.addStrategy(stratA, 7000);

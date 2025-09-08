@@ -45,7 +45,8 @@ contract DeployAllStrategies is Script {
             vault,
             stsAdapter,
             beetsAdapter,
-            beetsPool
+            beetsPool,
+            "StS + Beets LP"
         );
         console2.log(
             "   StSBeetsStrategy deployed at:",
@@ -61,7 +62,8 @@ contract DeployAllStrategies is Script {
             lendingAdapter,
             ringsAdapter,
             usdc,
-            borrowRatio
+            borrowRatio,
+            "Aave Rings Carry"
         );
         console2.log(
             "   AaveRingsCarryStrategy deployed at:",
@@ -77,7 +79,8 @@ contract DeployAllStrategies is Script {
             ringsAdapter,
             lendingAdapter,
             targetHf,
-            maxIterations
+            maxIterations,
+            "Rings Aave Loop"
         );
         console2.log(
             "   RingsAaveLoopStrategy deployed at:",

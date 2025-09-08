@@ -12,6 +12,7 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recha
 import { useVault } from '@/context/VaultContext'
 import VaultToolbar from '@/components/vault/VaultToolbar'
 import type { VaultMetrics, RebalanceRecommendation, StrategyDetails, VaultFlowItem, VaultRebalanceItem } from '@/types/api'
+import StrategyList from '@/components/vault/StrategyList'
 
 export default function VaultsPage() {
   const { selectedVaultId } = useVault()
@@ -112,11 +113,13 @@ export default function VaultsPage() {
 
           <Card className="backdrop-blur lg:col-span-2">
             <CardHeader>
-              <CardTitle className="text-[var(--foreground)]">Strategy Details</CardTitle>
+              <CardTitle className="text-[var(--foreground)]">Strategies & Components</CardTitle>
             </CardHeader>
             <CardContent>
-              {!details ? <div className="text-foreground/70 text-sm">No data.</div> : (
-                <pre className="text-xs text-[var(--foreground)]/90 whitespace-pre-wrap break-words">{JSON.stringify(details, null, 2)}</pre>
+              {!details ? (
+                <div className="text-foreground/70 text-sm">No data.</div>
+              ) : (
+                <StrategyList strategies={details} />
               )}
             </CardContent>
           </Card>

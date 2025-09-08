@@ -18,6 +18,8 @@ const lendingAbiJson = requireJson('../abi/ILendingAdapter.json');
 const eggsAbiJson = requireJson('../abi/IEggsAdapter.json');
 const ringsAbiJson = requireJson('../abi/IRingsAdapter.json');
 const beetsAbiJson = requireJson('../abi/IBeetsAdapter.json');
+const shadowAbiJson = requireJson('../abi/IShadowAdapter.json');
+const swapxAbiJson = requireJson('../abi/ISwapXAdapter.json');
 const stsAbiJson = requireJson('../abi/IStSAdapter.json');
 const pendleAbiJson = requireJson('../abi/IPendleAdapter.json');
 const stdIntrospectAbiJson = requireJson('../abi/IStrategyIntrospection.json');
@@ -47,6 +49,7 @@ type V2Component = {
   pool: Address;
   gauge: Address;
   extra: string; // bytes as hex string
+  name: string;  // component label from strategy
 };
 
 type V2Introspection = {
@@ -66,7 +69,7 @@ const BEETS_ABI = beetsAbiJson.abi as InterfaceAbi;
 const STS_ABI = stsAbiJson.abi as InterfaceAbi;
 const PENDLE_ABI = pendleAbiJson.abi as InterfaceAbi;
 
-// Minimal vault read interface
+// Vault read interface
 type VeyraVaultRead = {
   strategies(index: number | bigint): Promise<Address>; // Get strategy address at slot [index]
   totalAssets(): Promise<bigint>; // Get total value locked in the vault
@@ -74,10 +77,11 @@ type VeyraVaultRead = {
   asset(): Promise<Address>; // Get the base token address (e.g., wS, USDC)
 };
 
-// Minimal strategy read interface
+// Strategy read interface
 type YieldStrategyRead = {
   apy(): Promise<bigint>; // Current APY this strategy is earning (in basis points)
   totalAssets(): Promise<bigint>; // Total value deployed in this strategy
+  name(): Promise<string>; // strategy name
 };
 
 type LendingAdapterRead = {
@@ -313,7 +317,7 @@ export class VaultService {
     const strategyAddresses = await this.fetchStrategies(vault);
     const details: StrategyDetails[] = [];
     for (const stratAddr of strategyAddresses) {
-      const strat: StrategyDetails = { strategyAddress: stratAddr, totalAssets: 0, apy: 0, underlying: [] };
+      const strat: StrategyDetails = { strategyAddress: stratAddr, strategyName: undefined, totalAssets: 0, apy: 0, underlying: [] };
       try {
         const strategy = this.getStrategyContract(stratAddr);
         const v2 = await this.tryComponents(stratAddr);
@@ -324,6 +328,10 @@ export class VaultService {
         strat.totalAssets = Number(ethers.formatUnits(ta, assetDecimals));
         const apyBn = await strategy.apy();
         strat.apy = Number(apyBn);
+        try {
+          const sName = await strategy.name();
+          if (sName && typeof sName === 'string') strat.strategyName = sName;
+        } catch { /* optional */ }
         // For each component, read live metrics and append to report
         for (const c of v2.comps) {
           try {
@@ -333,7 +341,7 @@ export class VaultService {
                 const supplyApy = this.isNonZeroAddress(c.token0) ? Number(await lending.getSupplyApy(c.token0)) : 0;
                 const borrowApy = this.isNonZeroAddress(c.token1) ? Number(await lending.getBorrowApy(c.token1)) : 0;
                 const hf = Number(await lending.healthFactor(stratAddr)) / 1e18;
-                strat.underlying.push({ name: 'Lending', adapter: c.adapter, supplyApy, borrowApy, healthFactor: hf } as UnderlyingProtocol);
+                strat.underlying.push({ name: 'Lending', label: c.name, adapter: c.adapter, supplyApy, borrowApy, healthFactor: hf } as UnderlyingProtocol);
                 break;
               }
               case ComponentKind.Eggs: {
@@ -341,37 +349,37 @@ export class VaultService {
                 const supplyApy = Number(await eggs.getSupplyApy());
                 const borrowApy = Number(await eggs.getBorrowApy());
                 const hf = Number(await eggs.healthFactor(stratAddr)) / 1e18;
-                strat.underlying.push({ name: 'Eggs', adapter: c.adapter, supplyApy, borrowApy, healthFactor: hf } as UnderlyingProtocol);
+                strat.underlying.push({ name: 'Eggs', label: c.name, adapter: c.adapter, supplyApy, borrowApy, healthFactor: hf } as UnderlyingProtocol);
                 break;
               }
               case ComponentKind.Rings: {
                 const rings = new ethers.Contract(c.adapter, RINGS_ABI, this.provider) as unknown as RingsAdapterRead;
                 const apr = Number(await rings.getApy());
-                strat.underlying.push({ name: 'Rings', adapter: c.adapter, apr } as UnderlyingProtocol);
+                strat.underlying.push({ name: 'Rings', label: c.name, adapter: c.adapter, apr } as UnderlyingProtocol);
                 break;
               }
               case ComponentKind.StS: {
                 const sts = new ethers.Contract(c.adapter, STS_ABI, this.provider) as unknown as StSAdapterRead;
                 const rateRaw = await sts.rate();
                 const rate = Number(rateRaw) / 1e14;
-                strat.underlying.push({ name: 'StS', adapter: c.adapter, rate } as UnderlyingProtocol);
+                strat.underlying.push({ name: 'StS', label: c.name, adapter: c.adapter, rate } as UnderlyingProtocol);
                 break;
               }
               case ComponentKind.Dex: {
                 if (this.isNonZeroAddress(c.adapter) && this.isNonZeroAddress(c.pool)) {
-                  // All DEX adapters share getPoolApr; BEETS_ABI fits the signature
-                  const dex = new ethers.Contract(c.adapter, BEETS_ABI, this.provider) as unknown as DexAdapterRead;
-                  const aprRaw = await dex.getPoolApr(c.pool);
+                  // All DEX adapters share getPoolApr signature
+                  const dexGeneric = new ethers.Contract(c.adapter, BEETS_ABI, this.provider) as unknown as DexAdapterRead;
+                  const aprRaw = await dexGeneric.getPoolApr(c.pool);
                   const apr = Number(aprRaw) / 1e14;
-                  // Use a generic Dex label here (UI may remap labels)
-                  strat.underlying.push({ name: 'Dex', adapter: c.adapter, pool: c.pool ?? null, apr } as UnderlyingProtocol);
+                  // trust on-chain component label from introspection
+                  strat.underlying.push({ name: 'Dex', label: c.name, adapter: c.adapter, pool: c.pool ?? null, apr } as UnderlyingProtocol);
                 }
                 break;
               }
               case ComponentKind.Pendle: {
                 const pendle = new ethers.Contract(c.adapter, PENDLE_ABI, this.provider) as unknown as PendleAdapterRead;
                 const stable = await pendle.stableToken();
-                strat.underlying.push({ name: 'Pendle', adapter: c.adapter, stableToken: (stable && ethers.isAddress(stable)) ? (stable as Address) : null } as UnderlyingProtocol);
+                strat.underlying.push({ name: 'Pendle', label: c.name, adapter: c.adapter, stableToken: (stable && ethers.isAddress(stable)) ? (stable as Address) : null } as UnderlyingProtocol);
                 break;
               }
               default:

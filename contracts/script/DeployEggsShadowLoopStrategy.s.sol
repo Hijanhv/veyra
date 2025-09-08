@@ -35,7 +35,8 @@ contract DeployEggsShadowLoopStrategy is Script {
             gauge,
             borrowRatio,
             targetHf,
-            maxIter
+            maxIter,
+            "Eggs x Shadow Loop"
         );
 
         vm.stopBroadcast();

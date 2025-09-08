@@ -30,7 +30,8 @@ contract RingsAaveLoopStrategyTest is Test {
             address(rings),
             address(lending),
             15e17, // 1.5e18
-            3
+            3,
+            "Rings Aave Loop Test"
         );
         // Give vault some USDC and approve all contracts
         usdc.mint(vault, 1_000 ether);

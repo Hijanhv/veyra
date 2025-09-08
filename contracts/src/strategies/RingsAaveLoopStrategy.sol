@@ -38,8 +38,9 @@ contract RingsAaveLoopStrategy is BaseStrategy, IStrategyIntrospection {
         address _ringsAdapter,
         address _lendingAdapter,
         uint256 _targetHf,
-        uint256 _maxIter
-    ) BaseStrategy(_usdc, _vault) {
+        uint256 _maxIter,
+        string memory _name
+    ) BaseStrategy(_usdc, _vault, _name) {
         require(
             _ringsAdapter != address(0) && _lendingAdapter != address(0),
             "bad adapters"
@@ -163,7 +164,8 @@ contract RingsAaveLoopStrategy is BaseStrategy, IStrategyIntrospection {
             token1: USDC,
             pool: address(0),
             gauge: address(0),
-            extra: ""
+            extra: "",
+            name: "Lending"
         });
         // Rings
         comps[1] = IStrategyIntrospection.Component({
@@ -173,7 +175,8 @@ contract RingsAaveLoopStrategy is BaseStrategy, IStrategyIntrospection {
             token1: address(0),
             pool: address(0),
             gauge: address(0),
-            extra: ""
+            extra: "",
+            name: "Rings"
         });
     }
 }

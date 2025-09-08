@@ -12,6 +12,7 @@ abstract contract BaseStrategy is IYieldStrategy, ReentrancyGuard, Ownable {
 
     IERC20 public immutable ASSET; // the token the vault holds
     address public immutable VAULT; // the vault contract
+    string private _name; // human-readable name
 
     // Sonic FeeM registry contract
     address private constant _FEEM = address(0xDC2B0D2Dd2b7759D97D50db4eabDC36973110830);
@@ -21,10 +22,16 @@ abstract contract BaseStrategy is IYieldStrategy, ReentrancyGuard, Ownable {
         _;
     }
 
-    constructor(address _asset, address _vault) Ownable(msg.sender) {
+    constructor(address _asset, address _vault, string memory name_) Ownable(msg.sender) {
         require(_asset != address(0) && _vault != address(0), "zero addr");
         ASSET = IERC20(_asset);
         VAULT = _vault;
+        _name = name_;
+    }
+
+    /// @inheritdoc IYieldStrategy
+    function name() external view returns (string memory) {
+        return _name;
     }
 
     /// @dev Register this strategy contract on Sonic FeeM under given project ID
