@@ -24,7 +24,13 @@ async function start() {
 
   // Register CORS to allow all websites to connect
   await fastify.register(cors, {
-    origin: '*'
+    origin: '*',
+    methods: ['GET', 'PUT', 'POST', 'DELETE'],
+    allowedHeaders: [
+      'content-type',
+      'accept',
+      'authorization'
+    ]
   });
 
   // Initialize AI-powered scheduler (enabled by default; can be toggled via API)
@@ -76,7 +82,7 @@ async function start() {
   }
 
   // Register routes
-  await fastify.register(tokenRoutes, { prefix: 'api/tokens' });
+  await fastify.register(tokenRoutes, { prefix: '/api/tokens' });
   await fastify.register(vaultRoutes, { prefix: '/api/vaults' });
   await fastify.register(analyticsRoutes, { prefix: '/api/analytics' });
 
