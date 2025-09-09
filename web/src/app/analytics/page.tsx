@@ -95,6 +95,7 @@ export default function AnalyticsPage() {
                         <th className="text-left py-2 pr-4">Exp. APY</th>
                         <th className="text-left py-2 pr-4">Risk</th>
                         <th className="text-left py-2 pr-4">Confidence</th>
+                        <th className="text-left py-2 pr-4">Strategies</th>
                         <th className="text-left py-2 pr-4">Reasoning</th>
                       </tr>
                     </thead>
@@ -177,7 +178,7 @@ export default function AnalyticsPage() {
                           <td className="py-2 pr-4 text-[var(--foreground)]">{new Date(e.timestamp * 1000).toLocaleString()}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{e.eventType}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">
-                            {`${e.strategy.slice(0, 6)}…${e.strategy.slice(-4)}`} <ExplorerLink address={e.strategy} label="" />
+                            <ExplorerLink address={e.strategy} label={`${e.strategy.slice(0, 6)}…${e.strategy.slice(-4)}`} />
                           </td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{e.amount ?? '—'}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{e.allocation ?? '—'}</td>
