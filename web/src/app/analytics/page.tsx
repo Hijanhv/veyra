@@ -95,7 +95,6 @@ export default function AnalyticsPage() {
                         <th className="text-left py-2 pr-4">Exp. APY</th>
                         <th className="text-left py-2 pr-4">Risk</th>
                         <th className="text-left py-2 pr-4">Confidence</th>
-                        <th className="text-left py-2 pr-4">Strategies</th>
                         <th className="text-left py-2 pr-4">Reasoning</th>
                       </tr>
                     </thead>
