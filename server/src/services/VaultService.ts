@@ -18,13 +18,11 @@ const lendingAbiJson = requireJson('../abi/ILendingAdapter.json');
 const eggsAbiJson = requireJson('../abi/IEggsAdapter.json');
 const ringsAbiJson = requireJson('../abi/IRingsAdapter.json');
 const beetsAbiJson = requireJson('../abi/IBeetsAdapter.json');
-const shadowAbiJson = requireJson('../abi/IShadowAdapter.json');
-const swapxAbiJson = requireJson('../abi/ISwapXAdapter.json');
 const stsAbiJson = requireJson('../abi/IStSAdapter.json');
 const pendleAbiJson = requireJson('../abi/IPendleAdapter.json');
 const stdIntrospectAbiJson = requireJson('../abi/IStrategyIntrospection.json');
 const introspectInterfaceAbi = stdIntrospectAbiJson.abi as InterfaceAbi;
-import type { Address, BasisPoints } from '../types/index.js';
+import type { Address, BasisPoints } from '../types/common.js';
 import type { VaultMetrics, StrategyDetails, UnderlyingProtocol } from '../types/index.js';
 import { buildCalls, tryAggregate as multicallTryAggregate, decodeResult } from '../utils/multicall3.js';
 

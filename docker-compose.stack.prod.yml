@@ -1,15 +1,18 @@
 services:
-  indexer:
+  server:
     build:
       context: ./server
       dockerfile: Dockerfile
       target: prod
-    command: [ "node", "scripts/run-ponder.mjs", "start" ]
+    command: [ "npm", "start" ]
     env_file:
       - server/.env
     ports:
       - "8080:8080"
     restart: unless-stopped
+    depends_on:
+      indexer:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD", "node", "-e", "require('http').get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))" ]
       interval: 30s
@@ -19,14 +22,33 @@ services:
     networks:
       - app-network
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    command: tunnel run
+  indexer:
+    build:
+      context: ./ponder
+      dockerfile: Dockerfile
+    command: [ "npm", "start" ]
     env_file:
-      - server/.env
+      - ponder/.env
+    ports:
+      - "42069:42069"
     restart: unless-stopped
-    depends_on:
-      - indexer
+    healthcheck:
+      test: [ "CMD", "node", "-e", "require('http').get('http://localhost:42069/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - app-network
+
+  indexer-autoheal:
+    image: willfarrell/autoheal:latest
+    container_name: autoheal
+    restart: unless-stopped
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=all
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - app-network
 

@@ -44,7 +44,7 @@ export function YieldOpportunities() {
         ) : (
           <div className="space-y-4">
             {allocations.map(([addr], index) => (
-              <div key={index} className="p-4 rounded-lg bg-card transition-all">
+              <div key={index} className="p-4 rounded-lg bg-card natransition-all">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h4 className="text-[var(--foreground)] font-medium">{nameMap[addr.toLowerCase()] || `${addr.slice(0, 10)}…${addr.slice(-6)}`}</h4>

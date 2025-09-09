@@ -9,11 +9,8 @@
     "postbuild": "cp -R src/abi dist/abi || true",
     "start": "node dist/server.js",
     "abis:sync": "node ../scripts/refresh-contracts.mjs",
-    "contracts:build": "node ../scripts/refresh-contracts.mjs",
     "db:types": "sh -c 'supabase gen types typescript --schema public --project-id \"${SUPABASE_PROJECT_REF:-iyrqtchhttmpyopfvipl}\" > src/types/supabase.generated.ts'",
-    "db:reset": "node scripts/reset-schema.js",
-    "indexer:dev": "node scripts/run-ponder.mjs dev",
-    "indexer:prod": "node scripts/run-ponder.mjs start"
+    "db:reset": "node scripts/reset-schema.js"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^2.0.13",

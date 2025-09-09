@@ -8,6 +8,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationPrevious, Pagi
 import VaultToolbar from '@/components/vault/VaultToolbar'
 import ExplorerLink from '@/components/ExplorerLink'
 import ReactMarkdown from 'react-markdown'
+import { format } from 'date-fns'
 
 export default function AnalyticsPage() {
   const { selectedVaultId } = useVault()
@@ -101,7 +102,14 @@ export default function AnalyticsPage() {
                     <tbody>
                       {decisionsQ.data.data.map((d) => (
                         <tr key={d.id} className="border-t border-[var(--border)]">
-                          <td className="py-2 pr-4 text-[var(--foreground)]">{d.created_at ? new Date(d.created_at).toLocaleString() : '—'}</td>
+                          <td className="py-2 pr-4 text-[var(--foreground)]">
+                            {d.created_at ? (
+                              <div className="flex flex-col">
+                                <span>{format(new Date(d.created_at), 'MMM d, yyyy')}</span>
+                                <span className="text-xs text-foreground/60">{format(new Date(d.created_at), 'h:mm a')}</span>
+                              </div>
+                            ) : '—'}
+                          </td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{(d.expected_apy_bp / 100).toFixed(2)}%</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{d.risk_score.toFixed(2)}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{d.confidence.toFixed(2)}</td>
@@ -174,7 +182,12 @@ export default function AnalyticsPage() {
                     <tbody>
                       {eventsData.items.map((e) => (
                         <tr key={e.id} className="border-t border-[var(--border)]">
-                          <td className="py-2 pr-4 text-[var(--foreground)]">{new Date(e.timestamp * 1000).toLocaleString()}</td>
+                          <td className="py-2 pr-4 text-[var(--foreground)]">
+                            <div className="flex flex-col">
+                              <span>{format(new Date(e.timestamp * 1000), 'MMM d, yyyy')}</span>
+                              <span className="text-xs text-foreground/60">{format(new Date(e.timestamp * 1000), 'h:mm a')}</span>
+                            </div>
+                          </td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{e.eventType}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">
                             <ExplorerLink address={e.strategy} label={`${e.strategy.slice(0, 6)}…${e.strategy.slice(-4)}`} />
@@ -220,7 +233,12 @@ export default function AnalyticsPage() {
                     <tbody>
                       {flowsData.items.map((f) => (
                         <tr key={f.id} className="border-t border-[var(--border)]">
-                          <td className="py-2 pr-4 text-[var(--foreground)]">{new Date(f.timestamp * 1000).toLocaleString()}</td>
+                          <td className="py-2 pr-4 text-[var(--foreground)]">
+                            <div className="flex flex-col">
+                              <span>{format(new Date(f.timestamp * 1000), 'MMM d, yyyy')}</span>
+                              <span className="text-xs text-foreground/60">{format(new Date(f.timestamp * 1000), 'h:mm a')}</span>
+                            </div>
+                          </td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{f.type}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{f.assetsWei}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{f.sharesWei}</td>
@@ -262,7 +280,12 @@ export default function AnalyticsPage() {
                     <tbody>
                       {rebalancesData.items.map((r) => (
                         <tr key={r.id} className="border-t border-[var(--border)]">
-                          <td className="py-2 pr-4 text-[var(--foreground)]">{new Date(r.timestamp * 1000).toLocaleString()}</td>
+                          <td className="py-2 pr-4 text-[var(--foreground)]">
+                            <div className="flex flex-col">
+                              <span>{format(new Date(r.timestamp * 1000), 'MMM d, yyyy')}</span>
+                              <span className="text-xs text-foreground/60">{format(new Date(r.timestamp * 1000), 'h:mm a')}</span>
+                            </div>
+                          </td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{r.strategies.length}</td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{r.allocations.join(', ')}</td>
                           <td className="py-2 pr-4 text-foreground/70">
@@ -302,7 +325,12 @@ export default function AnalyticsPage() {
                     <tbody>
                       {harvestsData.items.map((h) => (
                         <tr key={h.id} className="border-t border-[var(--border)]">
-                          <td className="py-2 pr-4 text-[var(--foreground)]">{new Date(h.timestamp * 1000).toLocaleString()}</td>
+                          <td className="py-2 pr-4 text-[var(--foreground)]">
+                            <div className="flex flex-col">
+                              <span>{format(new Date(h.timestamp * 1000), 'MMM d, yyyy')}</span>
+                              <span className="text-xs text-foreground/60">{format(new Date(h.timestamp * 1000), 'h:mm a')}</span>
+                            </div>
+                          </td>
                           <td className="py-2 pr-4 text-[var(--foreground)]">{h.totalYieldWei}</td>
                           <td className="py-2 pr-4 text-foreground/70">
                             <ExplorerLink tx={h.txHash} label={`${h.txHash.slice(0, 10)}…`} />

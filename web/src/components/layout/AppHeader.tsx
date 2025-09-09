@@ -11,7 +11,7 @@ export default function AppHeader() {
   const link = (href: string, label: string) => (
     <Link
       href={href}
-      className={`px-3 py-1.5 rounded-md text-sm transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${pathname === href ? 'bg-accent text-accent-foreground' : 'text-foreground/70 hover:text-foreground hover:bg-accent'}`}
+      className={`px-4 py-2.5 rounded-md text-base font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${pathname === href ? 'bg-accent text-accent-foreground' : 'text-foreground/70 hover:text-foreground hover:bg-accent'}`}
       aria-current={pathname === href ? 'page' : undefined}
     >
       {label}

@@ -1,21 +1,51 @@
 services:
-  indexer:
+  server:
     build:
       context: ./server
       dockerfile: Dockerfile
-      target: prod
+      target: dev
     working_dir: /app
-    command: [ "npm", "run", "indexer:dev" ]
+    command: [ "npm", "run", "dev" ]
     env_file:
       - server/.env
     ports:
       - "8080:8080"
     volumes:
-      - ./server/ponder.config.ts:/app/ponder.config.ts
-      - ./server/ponder.schema.ts:/app/ponder.schema.ts
-      - ./server/ponder-env.d.ts:/app/ponder-env.d.ts
+      - ./server/src:/app/src
+      - ./server/package.json:/app/package.json
+      - ./server/tsconfig.json:/app/tsconfig.json
+      - /app/node_modules
+    depends_on:
+      indexer:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD", "node", "-e", "require('http').get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  indexer:
+    build:
+      context: ./ponder
+      dockerfile: Dockerfile
+      target: prod
+    working_dir: /app
+    command: [ "npm", "run", "dev" ]
+    env_file:
+      - ponder/.env
+    ports:
+      - "42069:42069"
+    volumes:
+      - ./ponder/src:/app/src
+      - ./ponder/ponder.config.ts:/app/ponder.config.ts
+      - ./ponder/ponder.schema.ts:/app/ponder.schema.ts
+      - ./ponder/package.json:/app/package.json
+      - ./ponder/tsconfig.json:/app/tsconfig.json
+      - ./ponder/scripts:/app/scripts
+      - /app/node_modules
+    healthcheck:
+      test: [ "CMD", "node", "-e", "require('http').get('http://localhost:42069/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))" ]
       interval: 30s
       timeout: 10s
       retries: 3

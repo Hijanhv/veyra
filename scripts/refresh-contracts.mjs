@@ -67,7 +67,7 @@ for (const filePath of files) {
     if (seen.has(base)) continue;
     seen.add(base);
     selected.push({ base, filePath });
-  } catch {}
+  } catch { }
 }
 
 // Remove stale files in server/src/abi (keep README.md)
@@ -76,7 +76,7 @@ let removedServer = 0;
 for (const entry of fs.existsSync(serverAbiDir) ? fs.readdirSync(serverAbiDir) : []) {
   if (entry === 'README.md') continue;
   if (entry.endsWith('.json') && !keepServer.has(entry)) {
-    try { fs.unlinkSync(path.join(serverAbiDir, entry)); removedServer++; } catch {}
+    try { fs.unlinkSync(path.join(serverAbiDir, entry)); removedServer++; } catch { }
   }
 }
 
@@ -94,7 +94,7 @@ let removedWeb = 0;
 for (const entry of fs.readdirSync(webAbiDir)) {
   if (!entry.endsWith('.json')) continue;
   if (!keepWeb.has(entry)) {
-    try { fs.unlinkSync(path.join(webAbiDir, entry)); removedWeb++; } catch {}
+    try { fs.unlinkSync(path.join(webAbiDir, entry)); removedWeb++; } catch { }
   }
 }
 let copiedWeb = 0;

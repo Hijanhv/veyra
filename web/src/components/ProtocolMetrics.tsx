@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useVault } from '@/context/VaultContext'
 import { useAgentDecisionsQuery } from '@/queries/analytics'
 import { useStrategyDetailsQuery, useVaultMetricsQuery } from '@/queries/vaults'
+import ReactMarkdown from 'react-markdown'
 
 export function ProtocolMetrics() {
   const { selectedVaultId } = useVault()
@@ -99,9 +100,21 @@ export function ProtocolMetrics() {
               </div>
               {latestDecision.reasoning && (
                 <div className="p-3 rounded-lg bg-secondary">
-                  <p className="text-foreground/85 text-sm break-words overflow-wrap-anywhere">
-                    <strong>Reasoning:</strong> {latestDecision.reasoning}
-                  </p>
+                  <div className="text-foreground/85 text-sm">
+                    <strong>Reasoning:</strong>
+                    <div className="prose prose-sm prose-invert max-w-none text-foreground/70 mt-1">
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <span>{children}</span>,
+                          code: ({ children }) => <code className="bg-gray-800 px-1 py-0.5 rounded text-xs">{children}</code>,
+                          strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                          em: ({ children }) => <em className="italic">{children}</em>
+                        }}
+                      >
+                        {latestDecision.reasoning}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
                 </div>
               )}
               <div className="flex flex-wrap gap-4 text-sm text-foreground/90">

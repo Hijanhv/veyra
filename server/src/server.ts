@@ -22,18 +22,30 @@ async function start() {
   }
   const fastify = Fastify({ logger: loggerOptions, trustProxy: true });
 
+  const ALLOW = new Set([
+    'https://www.veyra.finance',
+    'https://veyra.finance',
+    ...(process.env.NODE_ENV === 'development' ? ['http://localhost:3000'] : [])
+  ]);
+
   await fastify.register(cors, {
-    origin: ['https://www.veyra.finance'],
-    credentials: true,                      // set true only if you use cookies/Authorization in browser
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    exposedHeaders: [],
-    // Preflight tuning
-    maxAge: 86400,
-    preflight: true,              // default, but be explicit
-    strictPreflight: false,       // don't 400 if headers don't perfectly match
-    optionsSuccessStatus: 204,
-    hook: 'onRequest',
+    origin(origin, cb) {
+      // allow same-origin/no-origin (e.g., curl, mobile webviews)
+      if (!origin) return cb(null, true);
+      cb(null, ALLOW.has(origin));
+    },
+    credentials: true,
+    methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+    allowedHeaders: ['Content-Type','Authorization','X-Requested-With'],
+    exposedHeaders: ['Content-Length'],
+    maxAge: 600,
+    strictPreflight: false, // reply even if headers are slightly off
+  });
+
+  // Ensure caches don't mix responses for different Origin values
+  fastify.addHook('onSend', async (req, reply, payload) => {
+    reply.header('Vary', 'Origin');
+    return payload;
   });
 
 

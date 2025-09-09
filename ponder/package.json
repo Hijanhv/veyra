@@ -1,0 +1,21 @@
+{
+  "name": "veyra-ponder-indexer",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "node scripts/run-ponder.mjs dev",
+    "start": "node scripts/run-ponder.mjs start",
+    "build": "tsc",
+    "abis:sync": "node ../scripts/refresh-contracts.mjs"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "viem": "^2.37.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "ponder": "^0.12.21",
+    "typescript": "^5.9.2"
+  }
+}

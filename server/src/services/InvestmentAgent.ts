@@ -4,8 +4,8 @@ import { z } from 'zod';
 import { VaultService } from './VaultService.js';
 import dotenv from 'dotenv';
 import type { RecommendedAllocation, StrategyAnalysis } from '../types/ai.js';
-import type { StrategyDetails } from '../types/vault.js';
-import type { Address } from '../types/common.js';
+import type { StrategyDetails, UnderlyingProtocol } from '../types/vault.js';
+import type { Address } from '../types/index.js';
 import { Repository } from './db/Repository.js';
 import { AgentCache } from '../cache/agent/AgentCache.js';
 import { Config } from '../config.js';
@@ -227,7 +227,7 @@ export class InvestmentAgent {
       prompt += `  * Leverage Risk: ${strategy.riskFactors.leverageRisk.toFixed(2)}/1.0\n`;
       if (strategy.underlying.length > 0) {
         prompt += `- Underlying Protocols:\n`;
-        strategy.underlying.forEach(protocol => {
+        strategy.underlying.forEach((protocol: UnderlyingProtocol) => {
           const label = (protocol as any).label as string | undefined;
           prompt += `  * ${label || protocol.name}`;
           if ('supplyApy' in protocol && protocol.supplyApy) prompt += ` (Supply: ${protocol.supplyApy}bp)`;

@@ -2,7 +2,7 @@ import { VaultService } from '../services/VaultService.js';
 import { RebalancingService } from '../services/RebalancingService.js';
 import { Repository } from '../services/db/Repository.js';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import type { Address } from '../types/index.js';
+import type { Address } from '../types/common.js';
 
 /**
  * API routes for working with Veyra vaults.
@@ -12,15 +12,14 @@ export async function vaultRoutes(fastify: FastifyInstance) {
   const vaultService = new VaultService();
   const rebalancingService = new RebalancingService(vaultService);
 
-  // List configured vaults and default (from env)
+  // List configured vaults
   fastify.get('/', async (_request: FastifyRequest, _reply: FastifyReply) => {
     try {
       const list = (process.env.VAULT_ADDRESSES || '')
         .split(',')
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
-      const def = process.env.DEFAULT_VAULT_ID || null;
-      return { success: true, data: { vaults: list, defaultVaultId: def } };
+      return { success: true, data: { vaults: list } };
     } catch (error) {
       fastify.log.error(error);
       return { success: false, error: 'Failed to load vault list' };

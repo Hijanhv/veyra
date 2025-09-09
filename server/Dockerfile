@@ -1,47 +1,75 @@
-# syntax=docker/dockerfile:1
+# Build stage
+FROM node:20-slim as builder
 
-ARG NODE_VERSION=20
-
-FROM node:${NODE_VERSION}-bullseye-slim AS base
+# Setting up the work directory
 WORKDIR /app
 
-# Install dependencies (including dev deps for Ponder CLI)
-FROM base AS deps
-ENV CI=true
+# COPY package.json and package-lock.json
 COPY package.json package-lock.json ./
+
+# Installing all dependencies (including dev dependencies for building)
 RUN npm ci
 
-# Build TypeScript server to dist/
-FROM deps AS build
+# Copying all the files in our project
 COPY . ./
+
+# Build TypeScript server to dist/
 RUN npm run build
 
-# Production/runtime image (used for both API and Indexer)
-FROM node:${NODE_VERSION}-bullseye-slim AS prod
+# Development stage
+FROM node:20-slim as dev
+
+# Setting up the work directory
 WORKDIR /app
-ENV NODE_ENV=production
 
-# Keep dev deps because Ponder is declared as a devDependency
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/package-lock.json ./package-lock.json
+# Declaring env
+ENV NODE_ENV=development
 
-# Server runtime (compiled)
-COPY --from=build /app/dist ./dist
+# COPY package.json and package-lock.json
+COPY package.json package-lock.json ./
 
-# Source files required for Ponder (TS loaded by Vite in-process)
-COPY --from=build /app/src ./src
-COPY --from=build /app/ponder.config.ts ./ponder.config.ts
-COPY --from=build /app/ponder.schema.ts ./ponder.schema.ts
-COPY --from=build /app/ponder-env.d.ts ./ponder-env.d.ts
-COPY --from=build /app/tsconfig.json ./tsconfig.json
-COPY --from=build /app/scripts ./scripts
+# Installing all dependencies (including dev dependencies)
+RUN npm ci && npm cache clean --force
 
-EXPOSE 8080 42069
+# Copy source code
+COPY . ./
+
+# Exposing server port
+EXPOSE 8080
 
 # Health check for API server
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
+    CMD node -e "import('http').then(http => http.get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1)))"
 
-# Default command runs the API server. Compose overrides the command for the indexer service.
-CMD ["node", "dist/server.js"]
+# Starting our application in dev mode
+CMD ["npm", "run", "dev"]
+
+# Production stage
+FROM node:20-slim as prod
+
+# Setting up the work directory
+WORKDIR /app
+
+# Declaring env
+ENV NODE_ENV=production
+
+# COPY package.json and package-lock.json
+COPY package.json package-lock.json ./
+
+# Installing only production dependencies
+RUN npm ci --only=production && npm cache clean --force
+
+# Copy built application from builder stage
+COPY --from=builder /app/dist ./dist
+
+# Copy any static assets if needed (abi files are copied during postbuild step)
+
+# Exposing server port
+EXPOSE 8080
+
+# Health check for API server
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD node -e "import('http').then(http => http.get('http://localhost:8080/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1)))"
+
+# Starting our application
+CMD ["npm", "start"]

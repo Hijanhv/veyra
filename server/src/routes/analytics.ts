@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
-import type { Address } from '../types/index.js'
-import { listStrategyEvents, fetchFlows, fetchRebalances, fetchHarvests } from '../services/PostgresClient.js'
+import type { Address } from '../types/common.js'
+import { listStrategyEvents, fetchFlows, fetchRebalances, fetchHarvests } from '../services/PonderClient.js'
 
 export async function analyticsRoutes(fastify: FastifyInstance) {
   // Strategy events (deposit/withdrawal/allocation_updated) via direct SQL, paginated
@@ -39,7 +39,7 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
         fastify.log.error(error)
         const e = error as unknown as { name?: string }
         if (e && e.name === 'IndexerUnavailable') {
-          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Ensure DATABASE_URL is configured correctly.' })
+          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Ensure Ponder service is running.' })
         }
         reply.status(500).send({ success: false, error: 'Failed to fetch strategy events' })
       }
@@ -80,7 +80,7 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
         fastify.log.error(error)
         const e = error as unknown as { name?: string }
         if (e && e.name === 'IndexerUnavailable') {
-          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Ensure DATABASE_URL is configured correctly.' })
+          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Ensure Ponder service is running.' })
         }
         reply.status(500).send({ success: false, error: 'Failed to fetch flows' })
       }
@@ -117,7 +117,7 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
         fastify.log.error(error)
         const e = error as unknown as { name?: string }
         if (e && e.name === 'IndexerUnavailable') {
-          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Ensure DATABASE_URL is configured correctly.' })
+          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Ensure Ponder service is running.' })
         }
         reply.status(500).send({ success: false, error: 'Failed to fetch rebalances' })
       }
@@ -153,7 +153,7 @@ export async function analyticsRoutes(fastify: FastifyInstance) {
         fastify.log.error(error)
         const e = error as unknown as { name?: string }
         if (e && e.name === 'IndexerUnavailable') {
-          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Ensure DATABASE_URL is configured correctly.' })
+          return reply.status(503).send({ success: false, error: 'Indexer unavailable. Ensure Ponder service is running.' })
         }
         reply.status(500).send({ success: false, error: 'Failed to fetch harvests' })
       }

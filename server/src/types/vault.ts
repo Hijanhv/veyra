@@ -1,4 +1,4 @@
-import type { Address, BasisPoints } from './common.js';
+import type { Address, BasisPoints } from '../types/common.js';
 
 export interface VaultMetrics {
   vaultId: Address;

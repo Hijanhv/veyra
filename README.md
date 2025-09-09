@@ -23,7 +23,8 @@ Participant: Janhavi Chavada — B.Tech student, Ajeenkya DY Patil University, P
 
 ## Monorepo Overview
 - `contracts/`: Solidity sources, Foundry scripts, mocks, tests
-- `server/`: Fastify API (TypeScript), Ponder indexer, scheduler, AI agent
+- `server/`: Fastify API (TypeScript), scheduler, AI agent
+- `ponder/`: Ponder indexer for on-chain events
 - `web/`: Next.js 15 app with RainbowKit/wagmi on Sonic
 - `supabase/`: SQL migrations and CLI config for hosted/local
 - `scripts/`: Repo‑level helpers (deploy, ABI sync)
@@ -37,6 +38,7 @@ Prerequisites
 
 Install
 - `cd server && npm install`
+- `cd ../ponder && npm install`
 - `cd ../web && npm install`
 - `cd ../contracts && forge install`
 
@@ -58,10 +60,15 @@ Server (`server/.env`) — see `server/.env-example`
 - Admin: `ADMIN_API_KEY` (protects scheduler/rebalance)
 - AI (optional): `ANTHROPIC_API_KEY`, `ENABLE_AUTO_REBALANCING`
 - Scheduler/agent tuning: `REBALANCE_THRESHOLD_BP`, `REBALANCE_MIN_CONFIDENCE`, `REBALANCE_GAS_LIMIT`, `SCHED_ANALYSIS_CRON`, `SCHED_MONITOR_CRON`
-- Indexer write: `DATABASE_URL` (Postgres for Ponder), optional `DATABASE_SCHEMA`
-- Indexer schema strategy: `INDEXER_DEV_SCHEMA`, `INDEXER_SCHEMA_PREFIX`, `INDEXER_VIEWS_SCHEMA`
-- Indexer read (API→Ponder): `PONDER_SQL_URL` (default `http://localhost:42069/sql`)
+- Database: `DATABASE_URL` (Postgres for Ponder)
 - Supabase (off‑chain decisions): `SUPABASE_PROJECT_REF`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+- Deployment: `TUNNEL_TOKEN`, `FEEM_PROJECT_ID`
+
+Ponder (`ponder/.env`)
+- Chain: `SONIC_RPC_URL`, `CHAIN_ID`
+- Vaults: `VAULT_ADDRESSES` (comma‑sep), `INDEXER_START_BLOCK`
+- Database: `DATABASE_URL` (Postgres for Ponder)
+- Schema strategy: `INDEXER_DEV_SCHEMA`, `INDEXER_SCHEMA_PREFIX`, `INDEXER_VIEWS_SCHEMA`
 
 Web (`web/.env.local`)
 - `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`
@@ -84,13 +91,6 @@ Sonic FeeM (optional)
 - Contracts expose `registerMe(uint256)` and default to Sonic FeeM registry `0xDC2B0D2Dd2b7759D97D50db4eabDC36973110830`
 - Set `FEEM_PROJECT_ID` and use the one‑command deploy to register automatically
 
-## Indexer (Ponder)
-
-- Config: `server/ponder.config.ts` (reads `VAULT_ADDRESSES`, `CHAIN_ID`, `SONIC_RPC_URL`)
-- Dev: `cd server && npm run indexer:dev` (stable schema via `INDEXER_DEV_SCHEMA`)
-- Prod: `npm run indexer:prod` (unique schema + published views)
-- Read from API via SQL gateway: set `PONDER_SQL_URL` (default `http://localhost:42069/sql`)
-
 Tracked tables
 - `deposits`, `withdrawals`, `rebalances`, `yield_harvests`, `user_balances`, `vault_metrics`
 
@@ -99,13 +99,18 @@ Tracked tables
 - Dev: `cd server && npm run dev`
 - Prod: `npm run build && npm start`
 
+## Ponder Indexer
+
+- Dev: `cd ponder && npm run dev`
+- Prod: `npm run start`
+
 Key endpoints
 - `GET /api/vaults` — list configured vaults
 - `GET /api/vaults/:vaultId/metrics` — live metrics
 - `GET /api/vaults/:vaultId/strategy` — latest AI recommendation (from Supabase)
 - `GET /api/vaults/:vaultId/ai-rebalance` — detailed recommendation
 - `POST /api/vaults/:vaultId/ai-rebalance` — execute rebalance (requires `x-admin-key`)
-- `GET /api/vaults/:vaultId/flows|rebalances|harvests` — indexed events (Ponder SQL)
+- `GET /api/vaults/:vaultId/flows|rebalances|harvests` — indexed events (from Ponder database)
 - `GET /health` — server/indexer/AI status
 
 ## Frontend (web)
@@ -136,7 +141,7 @@ Pages
 - `Compiling... No files changed, compilation skipped`: cache hit; run `forge clean` to force rebuild
 - `History restored`: Foundry broadcast info; new txs still send
 - Missing broadcast file: ensure `CHAIN_ID` and path `contracts/broadcast/DeployMockSuite.s.sol/<CHAIN_ID>/run-latest.json`
-- Indexer errors: set `PONDER_SQL_URL` and ensure `npm run indexer:dev`/`prod` is running
+- Indexer errors: ensure `DATABASE_URL` is set and `npm run indexer:dev`/`prod` is running
 - `MULTICALL3_ADDRESS is required`: set correct Multicall3 for Sonic in `server/.env`
 
 ## Contributing

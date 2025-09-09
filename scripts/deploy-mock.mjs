@@ -217,6 +217,23 @@ envText = upsertEnv(envText, kv);
 writeFileSync(serverEnvPath, envText, 'utf8');
 console.log(`Updated ${path.relative(root, serverEnvPath)} (VAULT_ADDRESSES, DEFAULT_VAULT_ID, CHAIN_ID)`);
 
+// 4b) Update ponder/.env with vault addresses
+const ponderEnvPath = path.join(root, 'ponder', '.env');
+if (vaults.length > 0) {
+  if (!existsSync(ponderEnvPath)) {
+    writeFileSync(ponderEnvPath, '', 'utf8');
+    console.log(`Created ${path.relative(root, ponderEnvPath)}`);
+  }
+  let ponderEnvText = readFileSync(ponderEnvPath, 'utf8');
+  const ponderKv = { 
+    VAULT_ADDRESSES: vaults.join(','),
+    CHAIN_ID: String(CHAIN_ID)
+  };
+  ponderEnvText = upsertEnv(ponderEnvText, ponderKv);
+  writeFileSync(ponderEnvPath, ponderEnvText, 'utf8');
+  console.log(`Updated ${path.relative(root, ponderEnvPath)} (VAULT_ADDRESSES, CHAIN_ID)`);
+}
+
 // 5) If FEEM_PROJECT_ID is provided, call registerMe(projectId) on each target
 if (FEEM_PROJECT_ID) {
   const targets = [...vaults, ...strategies];
